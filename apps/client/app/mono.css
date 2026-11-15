@@ -75,7 +75,10 @@
 .mono-theme .eyebrow { font-size: 11px; letter-spacing: .08em; color: var(--mono-muted); }
 .mono-theme main > nav { gap: 0; padding: 0; margin-bottom: 32px; }
 .mono-theme main > nav button { padding: 18px 24px; font-size: 12px; border: 0; border-bottom: 2px solid transparent; }
-.mono-theme main > nav button:first-child { padding-left: 0; padding-right: 32px; }
+.mono-theme main > nav button:first-child { padding-left: 24px; padding-right: 24px; }
+/* Centered tab bar. Auto margins (not justify-content:center) so a bar that overflows on a narrow screen still scrolls from the first tab. */
+.mono-theme main > nav button:first-child { margin-left: auto; }
+.mono-theme main > nav button:last-child { margin-right: auto; }
 .mono-theme main > nav button[aria-current] { border-bottom-color: var(--faze-red); background: transparent; color: white; }
 .mono-theme main > nav button:hover { background: #222; }
 .mono-theme :is(header, main, footer) button { border-radius: 4px; box-shadow: none; font-size: 12px; transition: background-color 140ms, border-color 140ms; }
