@@ -1,12 +1,19 @@
 {
   "name": "faze-collector-cards",
   "private": true,
-  "workspaces": ["packages/*", "services/*", "apps/*"],
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "apps/*",
+    "tests/*"
+  ],
   "scripts": {
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "test:integration": "npm run test --workspace tests/integration",
     "lint": "npm run lint --workspaces --if-present"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }
