@@ -26,7 +26,7 @@ npm install
 # Set DATABASE_URL to a Tiger Cloud development service URL with TLS
 cp .env.example .env                    # fill JWT_SECRET, INTERNAL_SECRET, SOLANA_TREASURY_PUBKEY
 npm run seed -w @faze/api               # demo data (labelled demo), idempotent
-tools/dev                               # api :4000, payments :4100, client :3000 (+ admin/worker when present)
+npm run dev                             # api :4000, payments :4100, client :3000, admin :3001, worker
 ```
 
 Demo accounts (seeded, demo only): `fan1@demo.faze` … `fan4@demo.faze` / `demo-fan-pass`, `admin@demo.faze` / `demo-admin-pass`.

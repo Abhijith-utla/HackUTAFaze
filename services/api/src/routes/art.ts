@@ -3,9 +3,12 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { requireAdmin } from "../auth.js";
+import { requireAdmin, requireUser } from "../auth.js";
 import { config } from "../config.js";
 import { fail } from "../errors.js";
+
+import { tx } from "../db.js";
+import { toSubmission } from "../mappers.js";
 
 const LIMIT = 2 * 1024 * 1024;
 const MAX_BASE64 = 4 * Math.ceil(LIMIT / 3);
@@ -34,6 +37,17 @@ export async function artRoutes(app: FastifyInstance, uploadDir = config.uploadD
     const filename = `${randomUUID()}.${extension}`;
     await writeFile(path.join(uploadDir, filename), bytes, { flag: "wx" });
     return reply.code(201).send({ artUrl: `/uploaded-art/${filename}` });
+  });
+  app.post("/submissions/fan-art", { bodyLimit: MAX_BASE64 + 2048 }, async (req, reply) => {
+    const user = requireUser(req);
+    const body = z.object({ name: z.string().trim().min(1).max(80), base64: z.string().max(MAX_BASE64), mimeType: z.enum(["image/png", "image/jpeg", "image/webp"]) }).strict().parse(req.body);
+    decodeArt({ base64: body.base64, mimeType: body.mimeType });
+    const submission = await tx(async c => {
+      const result = await c.query("INSERT INTO submissions(user_id,kind,payload,status) VALUES($1,'fan_art',$2,'pending') RETURNING *", [user.sub, { name: body.name, imageData: 'data:' + body.mimeType + ';base64,' + body.base64 }]);
+      await c.query("INSERT INTO jobs(kind,payload) VALUES('moderate',$1)", [{ submissionId: result.rows[0].id }]);
+      return result.rows[0];
+    });
+    return reply.code(201).send({ submission: toSubmission(submission) });
   });
   app.get<{ Params: { file: string } }>("/uploaded-art/:file", async (req, reply) => {
     const match = /^([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\.(png|jpg|webp)$/i.exec(req.params.file);
