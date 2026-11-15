@@ -1,0 +1,162 @@
+/*
+ * Splash timeline (full motion, ms from first paint):
+ *   0      field + grain + wordmark already on screen (static)
+ *   120    stroke 1 paints  L->R  440ms   (lead)
+ *   220    stroke 2 paints  R->L  400ms
+ *   300    stroke 3 flicks  TR    340ms
+ *   350    stroke 4 paints  L->R  330ms   (ends 680)
+ *   640    app grayscale(1) -> none      640ms (ends 1280, under the wipe)
+ *   760    wordmark fades out            200ms (clears before the wipe edge reaches it)
+ *   760    overlay wipes off L->R, clip-path inset, 520ms (ends 1280)
+ * Reduced motion: no strokes, no wipe, no grayscale; 250ms hold then 200ms fade.
+ * Easing: entrances use --ease-out; the wipe uses a strong in-out (.7,0,.2,1).
+ */
+
+.faze-splash {
+  --splash-red: var(--faze-red, #E4002B);
+  --splash-black: var(--faze-black, #111111);
+  --splash-white: var(--faze-white, #FFFFFF);
+  --splash-ease: var(--ease-out, cubic-bezier(.22, 1, .36, 1));
+  --splash-wipe: cubic-bezier(.7, 0, .2, 1);
+
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  overflow: hidden;
+  cursor: pointer;
+  clip-path: inset(0 0 0 0);
+  animation: faze-splash-wipe 520ms var(--splash-wipe) 760ms both;
+}
+
+.faze-splash[data-seen] { display: none; }
+
+.faze-splash > script { display: none; }
+
+.faze-splash-field {
+  position: absolute;
+  inset: 0;
+  background: var(--splash-black);
+}
+
+/* Paper/canvas grain over the black-and-white phase. Static, so it costs one paint. */
+.faze-splash-field::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: .05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
+}
+
+.faze-splash-strokes {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.faze-splash-stroke {
+  fill: none;
+  stroke: var(--splash-red);
+  stroke-linecap: butt;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+  animation: faze-splash-paint var(--d) var(--splash-ease) var(--t) both;
+}
+.faze-splash-stroke.s1 { --t: 120ms; --d: 440ms; }
+.faze-splash-stroke.s2 { --t: 220ms; --d: 400ms; opacity: .92; }
+.faze-splash-stroke.s3 { --t: 300ms; --d: 340ms; }
+.faze-splash-stroke.s4 { --t: 350ms; --d: 330ms; opacity: .88; }
+
+/* The mark is never filtered or recoloured: white on dark, opacity only. */
+.faze-splash-mark {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: max(48px, 8vmin);
+  pointer-events: none;
+  animation: faze-splash-fade 200ms var(--splash-ease) 760ms both;
+}
+.faze-splash-mark img {
+  display: block;
+  height: clamp(40px, 9vmin, 84px);
+  width: auto;
+  max-width: 100%;
+}
+.faze-splash-text {
+  font-family: var(--font-display, "Bebas Neue", "Anton", system-ui, sans-serif);
+  font-weight: 900;
+  font-size: clamp(40px, 10vmin, 96px);
+  line-height: 1;
+  letter-spacing: .04em;
+  color: var(--splash-white);
+}
+
+.faze-splash-skip {
+  position: absolute;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  padding: 10px 14px;
+  border: 1px solid rgb(255 255 255 / .28);
+  border-radius: var(--radius-sm, 4px);
+  background: rgb(17 17 17 / .55);
+  color: var(--splash-white);
+  font: 600 12px/1 var(--font-body, system-ui, sans-serif);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.faze-splash-skip:focus-visible {
+  outline: 2px solid var(--splash-white);
+  outline-offset: 3px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .faze-splash-skip:hover { border-color: var(--splash-white); }
+}
+
+/* Skipped: everything leaves at once, fast. */
+.faze-splash.is-leaving {
+  animation: faze-splash-fade 180ms var(--splash-ease) both;
+  pointer-events: none;
+}
+
+/* The app under the splash: grayscale draining to colour as the wipe passes. */
+.faze-splash-app {
+  animation: faze-splash-color 640ms var(--splash-ease) 640ms both;
+}
+.faze-splash-app.is-colored,
+.faze-splash[data-seen] + .faze-splash-app {
+  animation: none;
+  filter: none;
+}
+
+@keyframes faze-splash-paint {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes faze-splash-wipe {
+  0% { clip-path: inset(0 0 0 0); visibility: visible; }
+  99.9% { visibility: visible; }
+  100% { clip-path: inset(0 0 0 100%); visibility: hidden; }
+}
+@keyframes faze-splash-fade {
+  0% { opacity: 1; visibility: visible; }
+  99.9% { visibility: visible; }
+  100% { opacity: 0; visibility: hidden; }
+}
+@keyframes faze-splash-color {
+  from { filter: grayscale(1); }
+  to { filter: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faze-splash {
+    clip-path: none;
+    animation: faze-splash-fade 200ms linear 250ms both;
+  }
+  .faze-splash-strokes { display: none; }
+  .faze-splash-mark { animation: none; }
+  .faze-splash-app { animation: none; filter: none; }
+}
