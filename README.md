@@ -1,64 +1,91 @@
-# HackUTAFaze — FaZe Collector Cards
+# ClipDeck
 
-HackUTA 2026, FaZe track. Fans open packs of digital FaZe cards, build a collection, trade with other fans, climb the leaderboard, and buy coins with **Phantom wallet on Solana devnet** (test payments, no real value).
+Collect the moments. Build your deck. Play your fandom.
 
-| Doc | What |
-|---|---|
-| `master.md` | Product, demo flow, rules, architecture, ownership, milestones |
-| `AGENTS.md` | Agent rules, message board, git workflow |
-| `agents/` | Per-person feature briefs |
-| `docs/api.md`, `docs/data-model.md` | Frozen contract (v1.2) |
-| `docs/phantom-checkout.md` | Client Phantom/Solana payment flow |
+## 💡 Inspiration
 
-## Team
+An impossible clutch. An iconic trickshot. A stream reaction everyone remembers.
 
-| Area | Owner |
-|---|---|
-| Lead + payments & integration QA | @Abhijith-utla |
-| Core API & game economy | @toosh-legacy |
-| Fan client (web + mobile) | @Jaideepo7 |
-| Content pipeline & moderation | @tanejakeshav |
+These moments turn viewers into FaZe fans, but they quickly disappear into endless feeds. We built ClipDeck to give them a lasting home: digital cards fans can collect, trade, and use in a strategy game.
 
-## Run it
+## 🃏 What it does
 
-```bash
-npm install
-docker compose up -d db                 # local Postgres (or point DATABASE_URL at managed Postgres with sslmode=require)
-cp .env.example .env                    # fill JWT_SECRET, INTERNAL_SECRET, SOLANA_TREASURY_PUBKEY
-npm run seed -w @faze/api               # demo data (labelled demo), idempotent
-npm run dev                             # api :4000, payments :4100, client :3000 (staff: /admin, Control Room: /admin/control), worker
-```
+ClipDeck is a collectible card platform built around FaZe moments. It connects the fan experience with staff tools for creating and publishing new collections.
 
-Demo accounts (seeded, demo only): `fan1@demo.faze` … `fan4@demo.faze` / `demo-fan-pass`, `admin@demo.faze` / `demo-admin-pass`.
+- Open packs: Discover individually numbered cards through animated reveals, with rarity odds published before purchase.
+- Build a binder: Explore collections organized by era and set, including previews of cards you have yet to collect.
+- Trade with fans: List cards publicly and propose exchanges with other collectors.
+- Play Clip Clash: Choose five different cards and compete against a friend or CPU. Each round presents a prompt; matching your card’s tags to that prompt earns points. Suitability determines the score, rather than rarity.
+- Watch and contribute: Watch Twitch streams, VODs, and clips, then submit moments for staff review. Approved contributions can receive optional devnet SOL rewards.
+- Manage new drops: Staff use the Control Room to discover opportunities, draft cards, review rights, publish packs, and track activity.
 
-Payments without a wallet: set `PAYMENTS_SIMULATE=1` (test-only; signatures `sim_<reference>_<lamports>`). With a wallet: Phantom → Settings → Developer settings → Testnet mode → Solana Devnet, fund at https://faucet.solana.com, and put a separate treasury wallet's **public** address in `SOLANA_TREASURY_PUBKEY`.
+Demo scope: Payments and contribution rewards use Solana devnet test SOL, with no real monetary value. Demo content and simulated engagement are labeled.
 
-## Test
+## 🛠️ How we built it
 
-```bash
-npm run typecheck
-npm test                    # unit tests in every workspace (api tests need the db)
-npm run test:integration    # full demo flow against real api + payments processes
-```
+We built a TypeScript and JavaScript monorepo with Next.js and React for the interface, Fastify for backend services, and shared Zod schemas for validation.
 
-CI (`.github/workflows/ci.yml`) runs all three on `main` and every `agent-*/**` branch.
+### The collection and payment flow
 
-## Demo script (≈3 min, master.md §2)
+1. Quote: The server creates a pack purchase quote with the price, payer wallet, treasury address, and unique payment reference.
+2. Sign: The fan approves the transfer in Phantom. Private keys remain inside the wallet.
+3. Verify: The backend checks Solana devnet for a finalized, successful transaction with the expected signer, reference, recipient, and exact transfer amount.
+4. Deliver: The server generates the pack and saves its cards, pull record, and purchase completion in one database transaction.
+5. Recover: Saved receipts let fans check interrupted purchases. Repeated confirmations return the same cards, preventing duplicate delivery.
 
-1. Sign up a new fan → 500 starter coins (demo label in the header).
-2. Store → open a pack → reveal animation with rarities.
-3. Collection → sets, rarity, duplicates, serial numbers → open a card's detail (hype stat).
-4. Buy coins → Phantom pops up on devnet → approve → "Confirming on Solana devnet…" → balance jumps. Mention: server verifies the transaction on-chain; client never reports a payment.
-5. Log in as `fan2` in a second window → trade offer from fan1 → accept → both collections update live.
-6. Leaderboard → admin triggers an engagement spike → a card's hype climbs in "Trending" (simulated, labelled).
-7. Admin → publish a new set → it appears in the store; approve a flagged display name.
+### Tiger Data: persistent ownership and game state
 
-## Rules that matter
+Tiger Data’s managed PostgreSQL service stores collections, artwork, trades, purchases, and Clip Clash matches.
 
-Server-authoritative pulls, odds, balances, trades and payments. Append-only ledger. Devnet only (mainnet refused at boot). Every seed, simulated engagement event and test payment is labelled. No secrets in code.
+Transactions, row locks, and unique constraints protect ownership. Trades update both collectors’ cards atomically, while reservations prevent conflicting marketplace, trade, and gameplay actions.
 
-Database: PostgreSQL via server-only `DATABASE_URL` (local default: `docker compose up -d db`). Managed Postgres such as Tiger Cloud works through the same URL with `sslmode=require`; adopting it is **pending the lead's decision**. Set a distinct `TEST_DATABASE_URL` before running tests. Live managed-DB and real Phantom devnet checks are manual.
+Architecture distinction: Card ownership lives in PostgreSQL. Solana verifies payments and contribution rewards.
 
-Public trading: visit http://localhost:3000/trades. After pulling this feature, run npm run migrate --workspace @faze/api, then restart services. See docs/marketplace.md for the exchange and notification contract.
+### The content pipeline
 
-Store payments now buy packs directly in Phantom with devnet SOL. After updating, apply migration 005 and restart. Set PAYMENTS_SIMULATE=0 for wallet interaction; see docs/direct-sol-packs.md.
+Source moment → frame extraction → suggested crops → staff draft → review → published set
+
+- FFmpeg extracts video frames.
+- Sharp processes card images.
+- YuNet through ONNX Runtime detects faces locally to suggest crops.
+- Staff review confirms context and rights before publication.
+
+The Control Room also ranks archive moments using explainable signals: anniversary timing, member momentum, collector demand, catalog gaps, and archive significance.
+
+### Clip Clash
+
+The server snapshots each lineup’s artwork and tags, scores cards against weighted prompts, and returns an explanation of the matching tags. Frontend animations reveal the result; the server determines the outcome.
+
+## 🧩 Challenges we ran into
+
+- Conflicting ownership actions: A card could be offered in a trade while being selected for gameplay. We added shared reservations and transactional checks.
+- Payment retries and interruptions: Blockchain transfers and database fulfillment happen separately. Persisted signatures and repeat-safe confirmation make purchases recoverable.
+- Meaningful gameplay: We developed curated tags and transparent prompt scoring so card selection matters beyond rarity.
+- Browser capture restrictions: Twitch embeds limit direct frame access. We supported approved tab capture and screenshot uploads as a fallback.
+- Parallel development: Shared contracts and forward database migrations helped keep the frontend, API, payments, and content tools aligned.
+
+## 🏆 Accomplishments that we're proud of
+
+- One connected experience: Watching, collecting, trading, playing, and contributing share the same card ecosystem.
+- Recoverable checkout: Verified payments connect to transactional card delivery and saved purchase records.
+- Explainable gameplay: Players can see which tags earned points in Clip Clash.
+- A complete publishing workflow: Staff can take a source moment through drafting, rights review, publication, and analytics.
+- Community participation: Fans can propose the moments that deserve a place in future collections.
+
+## 📚 What we learned
+
+Reliability shapes trust. Recovering a purchase and protecting a trade matter as much as the pack reveal.
+
+Blockchain and relational databases serve complementary roles. Solana verifies transfers; PostgreSQL maintains ownership and application state.
+
+Gameplay should reflect the collection. Using the meaning of each moment in scoring gives fans another reason to care about their cards.
+
+Automation benefits from human judgment. Detection and recommendations help prepare content, while staff remain responsible for approval.
+
+## 🚀 What's next
+
+- Community-shaped drops: Connect approved submissions directly to publishing, preserving source information and contributor credit.
+- More Clip Clash testing: Refine balance, multiplayer reconnect behavior, and match cleanup.
+- Automatic purchase reconciliation: Complete verified orders without requiring fans to check manually.
+- Faster media delivery: Improve caching as the catalog grows.
+- Seasonal sets and shareable binders: Give fans more ways to collect together and showcase their favorite moments.
