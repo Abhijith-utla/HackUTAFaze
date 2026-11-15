@@ -23,7 +23,7 @@ export async function buyCoins(bundleId: string, onStatus: (s: string) => void) 
     const order = await request<CheckoutResponse>('/payments/checkout', { bundleId }, PAYMENTS);
     if (order.cluster !== 'devnet')
         throw Error('Only Solana devnet demo payments are supported.');
-    const conn = new Connection('https://api.devnet.solana.com', 'confirmed');
+    const conn = new Connection(process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.devnet.solana.com', 'confirmed');
     const ix = SystemProgram.transfer({ fromPubkey: publicKey, toPubkey: new PublicKey(order.recipient), lamports: order.lamports });
     ix.keys.push({ pubkey: new PublicKey(order.reference), isSigner: false, isWritable: false });
     const tx = new Transaction().add(ix);

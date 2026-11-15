@@ -14,10 +14,19 @@ export default function Trades({ busy, run, notify }: {
     }[]>([]), [recipient, setRecipient] = useState(''), [mine, setMine] = useState<CollectionEntry[]>([]), [theirs, setTheirs] = useState<CollectionEntry[]>([]), [offered, setOffered] = useState<string[]>([]), [requested, setRequested] = useState<string[]>([]), [trades, setTrades] = useState<{
         incoming: Trade[];
         outgoing: Trade[];
-    }>({ incoming: [], outgoing: [] });
-    async function refresh() { setTrades(await request('/me/trades')); setMine((await request<{
-        cards: CollectionEntry[];
-    }>('/me/cards')).cards); }
+    }>({ incoming: [], outgoing: [] }), [labels, setLabels] = useState<Record<string, string>>({});
+    async function refresh() {
+        const t = await request<{ incoming: Trade[]; outgoing: Trade[] }>('/me/trades');
+        const own = (await request<{ cards: CollectionEntry[] }>('/me/cards')).cards;
+        setTrades(t); setMine(own);
+        // Name the cards in each offer: offered/requested ids live in my or the counterpart's collection.
+        const others = [...new Set([...t.incoming.map(x => x.fromUser.id), ...t.outgoing.map(x => x.toUser.id)])];
+        const cols = [own, ...await Promise.all(others.map(id => request<{ cards: CollectionEntry[] }>(`/users/${id}/collection`).then(r => r.cards).catch(() => [] as CollectionEntry[])))];
+        const map: Record<string, string> = {};
+        for (const col of cols) for (const e of col) for (const i of e.instances) map[i.id] = `${e.card.name} #${i.serial} (${e.card.rarity})`;
+        setLabels(map);
+    }
+    const names = (ids: string[]) => ids.length ? ids.map(id => labels[id] ?? 'card no longer held').join(', ') : 'nothing';
     useEffect(() => { run(refresh); }, []);
     const toggle = (id: string, list: string[], setter: (v: string[]) => void) => setter(list.includes(id) ? list.filter(x => x !== id) : [...list, id]);
     function picker(items: CollectionEntry[], selected: string[], setter: (v: string[]) => void) { return <div className="picker">{items.flatMap(e => e.instances.map(i => <label key={i.id}><input type="checkbox" disabled={busy || i.locked} checked={selected.includes(i.id)} onChange={() => toggle(i.id, selected, setter)}/><span>{e.card.name} <small>#{i.serial} · {e.card.rarity}{i.locked ? ' · locked' : ''}</small></span></label>))}{!items.length && <p>No cards to select.</p>}</div>; }
@@ -30,5 +39,5 @@ export default function Trades({ busy, run, notify }: {
         cards: CollectionEntry[];
     }>(`/users/${u.id}/collection`)).cards); })}>{u.displayName}</button>)}</div>{recipient && <form onSubmit={e => { e.preventDefault(); const message = String(new FormData(e.currentTarget).get('message') ?? ''); run(async () => { await request('/trades', { toUserId: recipient, offeredInstanceIds: offered, requestedInstanceIds: requested, message: message || undefined }); setOffered([]); setRequested([]); await refresh(); setTheirs((await request<{
         cards: CollectionEntry[];
-    }>(`/users/${recipient}/collection`)).cards); notify('Offer sent. Cards are locked until the offer is resolved.'); }); }}><div className="trade-columns"><section><h4>You offer</h4>{picker(mine, offered, setOffered)}</section><section><h4>You request</h4>{picker(theirs, requested, setRequested)}</section></div><label>Message (reviewed before others see it)<textarea name="message" maxLength={200}/></label><button className="primary" disabled={busy || (!offered.length && !requested.length)}>Send offer</button></form>}</section><div className="trade-columns">{(['incoming', 'outgoing'] as const).map(side => <section key={side}><h3>{side.toUpperCase()}</h3>{trades[side].map(t => <article className="panel" key={t.id}><h4>{side === 'incoming' ? t.fromUser.displayName : t.toUser.displayName}</h4><p>{t.offeredInstanceIds.length} offered ↔ {t.requestedInstanceIds.length} requested</p><p>{t.message ?? (t.messageStatus === 'pending' ? 'Message awaiting moderation' : 'No message')}</p><small>{t.status} · {new Date(t.createdAt).toLocaleString()}</small>{t.status === 'open' && <div className="actions">{(side === 'incoming' ? ['accept', 'decline'] : ['cancel']).map(action => <button disabled={busy} key={action} onClick={() => run(async () => { await request(`/trades/${t.id}/${action}`, {}); await refresh(); notify(`Trade ${action} completed.`); })}>{action}</button>)}</div>}</article>)}{!trades[side].length && <p className="empty">No {side} offers.</p>}</section>)}</div></>;
+    }>(`/users/${recipient}/collection`)).cards); notify('Offer sent. Cards are locked until the offer is resolved.'); }); }}><div className="trade-columns"><section><h4>You offer</h4>{picker(mine, offered, setOffered)}</section><section><h4>You request</h4>{picker(theirs, requested, setRequested)}</section></div><label>Message (reviewed before others see it)<textarea name="message" maxLength={200}/></label><button className="primary" disabled={busy || (!offered.length && !requested.length)}>Send offer</button></form>}</section><div className="trade-columns">{(['incoming', 'outgoing'] as const).map(side => <section key={side}><h3>{side.toUpperCase()}</h3>{trades[side].map(t => <article className="panel" key={t.id}><h4>{side === 'incoming' ? t.fromUser.displayName : t.toUser.displayName}</h4><p><b>{side === 'incoming' ? 'They give' : 'You give'}:</b> {names(t.offeredInstanceIds)}</p><p><b>{side === 'incoming' ? 'They want' : 'You get'}:</b> {names(t.requestedInstanceIds)}</p><p>{t.message ?? (t.messageStatus === 'pending' ? 'Message awaiting moderation' : 'No message')}</p><small>{t.status} · {new Date(t.createdAt).toLocaleString()}</small>{t.status === 'open' && <div className="actions">{(side === 'incoming' ? ['accept', 'decline'] : ['cancel']).map(action => <button disabled={busy} key={action} onClick={() => run(async () => { await request(`/trades/${t.id}/${action}`, {}); await refresh(); notify(`Trade ${action} completed.`); })}>{action}</button>)}</div>}</article>)}{!trades[side].length && <p className="empty">No {side} offers.</p>}</section>)}</div></>;
 }
