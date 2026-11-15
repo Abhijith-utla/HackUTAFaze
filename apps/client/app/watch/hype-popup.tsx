@@ -22,7 +22,8 @@ export default function HypePopup({ offer, channel, score, demo, signedIn, onClo
   const [speaking, setSpeaking] = useState(false);
   const [retryKey] = useState(key); // one key per popup: a retry after a dropped connection can never charge twice
 
-  useEffect(() => () => stopCardVoice(), []);
+  // The announcer calls it out as the popup appears. Browsers may block audio before any interaction: that is fine, it just stays silent.
+  useEffect(() => { playCardVoice('hype-alert').catch(() => {}); return () => stopCardVoice(); }, []);
   useEffect(() => { // fade away if ignored
     if (phase !== 'idle') return;
     const t = setTimeout(onClose, 45_000);

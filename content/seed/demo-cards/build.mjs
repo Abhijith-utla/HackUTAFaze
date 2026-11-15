@@ -16,43 +16,43 @@ const id = (n) => `d0000000-0000-4000-8000-00000000${String(n).padStart(4, "0")}
 const CARDS = [
   { n: 2001, file: "where it all began.png", name: "Where It All Began", set: "og", tier: "mythic", rarity: "legendary", date: "May 30, 2010",
     lore: "FaZe uploads its first YouTube video, FaZe Sniping Intro. The beginning of the clan's history.",
-    voice: "May, twenty ten. Three friends. One sniper rifle. A brand new YouTube channel. They upload FaZe Sniping Intro, and nobody on Earth knows what is coming. This is Where It All Began. A Mythic card, number one of one thousand. Every championship, every house, every million subscribers, it all traces back to this single upload. This is where the legacy starts!" },
+    voice: "Right, listen up! May, twenty ten. Three mates. One sniper rifle. A brand new YouTube channel. They hit upload on FaZe Sniping Intro, and nobody, I mean NOBODY, has a clue what is coming. This is Where It All Began. Mythic. Number one of one thousand. Every trophy, every house, every million subscribers, all of it starts with that one upload. Absolutely legendary!" },
   { n: 2002, file: "the first illcam.png", name: "The First ILLCAM", set: "og", tier: "legendary", rarity: "legendary", date: "June 2, 2010",
     lore: "The first episode of the trickshot series that helped define FaZe's identity.",
-    voice: "June second, twenty ten. The first ILLCAM drops, three days after the channel opens. A killcam compilation. Sounds simple, right? That simple idea becomes the engine that grows the channel for four straight years. Forty nine episodes. One format. And it all started right here. Legendary!" },
+    voice: "June the second, twenty ten. The very first ILLCAM drops, just three days after the channel opens. A killcam compilation! Sounds simple, doesn't it? That simple idea powers the channel for four straight years. Forty nine episodes. One format. And it all kicked off right here. Proper legendary!" },
   { n: 2003, file: "faze_card_003_the_million_club_mythic_5x7.png", name: "The Million Club", set: "og", tier: "mythic", rarity: "legendary", date: "October 8, 2012",
     lore: "FaZe celebrates one million subscribers with an 11-minute-plus teamtage, a milestone that cemented FaZe as a global force in gaming.",
-    voice: "October eighth, twenty twelve. One million subscribers. FaZe celebrates with an eleven minute teamtage, and the whole world finally notices. This is The Million Club. Mythic. Number three of one thousand. A trickshot crew from YouTube just became a global force. Welcome to the club!" },
+    voice: "October the eighth, twenty twelve. ONE MILLION subscribers! FaZe marks it with an eleven minute teamtage, and suddenly the whole world is paying attention. This is The Million Club. Mythic. Number three of one thousand. A trickshot crew from YouTube has just become a global force. Welcome to the club, lads!" },
   { n: 2004, file: "faze_card_004_welcome_to_faze_house_legendary_5x7.png", name: "Welcome to the FaZe House", set: "creators", tier: "legendary", rarity: "legendary", date: "December 2014",
     lore: "The New York creator house turns FaZe into more than a trickshot channel. This is where the group's shared lifestyle content takes shape.",
-    voice: "December, twenty fourteen. The New York creator house opens its doors, and FaZe becomes so much more than a trickshot channel. Late nights. Shared jokes. Content that feels like family. This is where the group's lifestyle brand takes shape. Welcome to the FaZe House!" },
+    voice: "December, twenty fourteen. The New York creator house opens its doors, and FaZe becomes so much more than a trickshot channel. Late nights. Shared jokes. Content that feels like family. This is where the whole lifestyle brand takes shape. Welcome to the FaZe House!" },
   { n: 2005, file: "I love it .png", name: "I Love It!", set: "creators", tier: "epic", rarity: "epic", date: "August 28, 2015",
     lore: "An old-school FaZe meme featuring Adapt and Rain, a nostalgia-fueled moment fans still remember.",
-    voice: "August twenty eighth, twenty fifteen. Adapt and Rain. One meme that fans still shout back at their screens. I love it! An old school FaZe moment, wrapped in pure nostalgia. If you were there, you remember. Epic!" },
+    voice: "August the twenty eighth, twenty fifteen. Adapt and Rain. One meme that fans STILL shout back at their screens. I love it! Pure old school FaZe, soaked in nostalgia. If you were there, you remember. Epic!" },
   { n: 2006, file: "the hot ones challenge.png", name: "The Hot Ones Challenge", set: "creators", tier: "silver", rarity: "rare", date: "March 2015",
     lore: "FaZe takes on the viral Hot Ones challenge at the FaZe House, creating a fan-favorite group video packed with chaos and reactions.",
-    voice: "March, twenty fifteen. The whole crew at the FaZe House. Hot wings. Zero mercy. The Hot Ones Challenge turns into a fan favorite group video, packed with chaos, sweating, and reactions you cannot unsee. One point three million views and counting. A Silver edition, number thirteen of ten thousand!" },
+    voice: "March, twenty fifteen. The whole crew at the FaZe House. Hot wings. Zero mercy. The Hot Ones Challenge becomes a fan favourite group video, packed with chaos, sweating, and reactions you cannot unsee. One point three million views and counting! Silver edition. Number thirteen of ten thousand. Mental!" },
   { n: 2007, file: "the impossible death run .png", name: "The Impossible Deathrun", set: "esports", tier: "epic", rarity: "epic", date: "December 2018",
     lore: "FaZe Cizzorz's nine-level Fortnite Deathrun becomes a viral community challenge. Suezhoo completes it in 7:45 on December 21.",
-    voice: "December, twenty eighteen. Cizzorz builds a nine level Fortnite deathrun, and the community loses its mind. Suezhoo finishes it in seven minutes, forty five seconds, on December twenty first. Impossible? Not anymore. Epic!" },
+    voice: "December, twenty eighteen. Cizzorz builds a nine level Fortnite deathrun, and the community loses the plot. Suezhoo clears it in seven minutes, forty five seconds, on December the twenty first. Impossible? Not anymore! Epic!" },
   { n: 2008, file: "the elimination squad.png", name: "The 57-Elimination Squad", set: "esports", tier: "legendary", rarity: "legendary", date: "September 22, 2018",
     lore: "FaZe's Tfue and Cloak, alongside ZexRow and Kreo, briefly set a PC squads elimination record of 57 in Fortnite.",
-    voice: "September twenty second, twenty eighteen. Tfue and Cloak, alongside ZexRow and Kreo, briefly set a PC squads elimination record. Fifty seven. Fifty seven eliminations in one Fortnite match! That is not a game, that is a statement. Legendary!" },
+    voice: "September the twenty second, twenty eighteen. Tfue and Cloak, with ZexRow and Kreo, briefly set a PC squads elimination record. Fifty seven! FIFTY SEVEN eliminations in a single Fortnite match! That is not a game, that is a statement. Legendary!" },
   { n: 2009, file: "call of duty world cup.png", name: "Call of Duty World Champions", set: "stream", tier: "legendary", rarity: "legendary", date: "August 22, 2021",
     lore: "Atlanta FaZe defeats Toronto Ultra 5–3 to win the Call of Duty League Championship.",
-    voice: "August twenty second, twenty twenty one. Atlanta FaZe beats Toronto Ultra, five to three, to win the Call of Duty League Championship. World champions, in the game where it all started! Legendary!" },
+    voice: "August the twenty second, twenty twenty one. Atlanta FaZe beat Toronto Ultra, five to three, to win the Call of Duty League Championship. World champions, in the game where it all began! Absolutely unreal. Legendary!" },
   { n: 2010, file: "the antrep major.png", name: "The Antwerp Major", set: "esports", tier: "mythic", rarity: "legendary", date: "May 22, 2022",
     lore: "FaZe defeats NAVI 2–0 to win its first CS:GO Major, becoming the first international roster to win one.",
-    voice: "May twenty second, twenty twenty two. FaZe beats Natus Vincere, two to zero, to lift its first CS:GO Major. The first international roster to ever do it. Antwerp is painted red! This is The Antwerp Major. Mythic!" },
+    voice: "May the twenty second, twenty twenty two. FaZe beat Natus Vincere, two nil, to lift their first CS:GO Major. The first international roster to ever do it! Antwerp has gone RED. This is The Antwerp Major. Mythic!" },
   { n: 2011, file: "million dollar grand slam.png", name: "The Million-Dollar Grand Slam", set: "esports", tier: "mythic", rarity: "legendary", date: "March 26, 2023",
     lore: "FaZe beats Cloud9 3–1 to complete Intel Grand Slam IV and earn its $1 million award, cementing FaZe's legacy in Counter-Strike.",
-    voice: "March twenty sixth, twenty twenty three. FaZe beats Cloud9, three to one, to complete Intel Grand Slam Four, and takes home one million dollars. A million dollars. A legacy cemented in Counter-Strike. This is The Million Dollar Grand Slam. Mythic!" },
+    voice: "March the twenty sixth, twenty twenty three. FaZe beat Cloud9, three one, to complete Intel Grand Slam Four and pocket one million dollars! A million dollars. A legacy cemented in Counter-Strike. This is The Million Dollar Grand Slam. Mythic!" },
   { n: 2012, file: "the faze reboot.png", name: "The FaZe Reboot", set: "creators", tier: "legendary", rarity: "legendary", date: "April 27, 2024",
     lore: "The new creator lineup is unveiled. GameSquare later reports more than 350 million estimated impressions during the relaunch.",
-    voice: "April twenty seventh, twenty twenty four. A new creator lineup is unveiled, and GameSquare later reports more than three hundred fifty million estimated impressions during the relaunch. New faces. Same FaZe. This is The FaZe Reboot. Legendary!" },
+    voice: "April the twenty seventh, twenty twenty four. A brand new creator lineup is unveiled, and GameSquare later reports over three hundred and fifty million estimated impressions around the relaunch. New faces, same FaZe. This is The FaZe Reboot. Legendary!" },
   { n: 2013, file: "the subathon finale.png", name: "The Subathon Finale", set: "creators", tier: "legendary", rarity: "legendary", date: "September 30, 2024",
     lore: "Banks gets emotional at the end of a month-long stream. GameSquare reports more than 2.2 billion minutes watched across the subathon.",
-    voice: "September thirtieth, twenty twenty four. A month long stream comes to an end, and Banks gets emotional. GameSquare reports more than two point two billion minutes watched across the subathon. That is billion, with a B. The Subathon Finale. Legendary!" },
+    voice: "September the thirtieth, twenty twenty four. A month long stream comes to an end, and Banks gets emotional. GameSquare reports over two point two BILLION minutes watched across the subathon. Billion! With a B! This is The Subathon Finale. Legendary!" },
 ];
 
 // One unique, grounded description per catalog card (ids d0000000-...-0000000010NN).
@@ -107,5 +107,6 @@ for (const c of CARDS) {
   const info = await sharp(path.join(SRC, c.file)).webp({ quality: 84, effort: 5 }).toFile(dest);
   out.special.push({ id: id(c.n), setId: SET[c.set], name: c.name, tier: c.tier, rarity: c.rarity, date: c.date, lore: c.lore, voiceScript: c.voice, art: `art/${slug}.webp`, width: info.width, height: info.height, bytes: info.size });
 }
+out.announcer = { "hype-alert": "Chat is going absolutely mental! A limited card just dropped. Grab it now!" };
 writeFileSync(path.join(here, "demo-cards.json"), JSON.stringify(out, null, 2) + "\n");
 console.log(`${out.special.length} special cards, ${Object.keys(out.lore).length} lore lines; webp total ${(out.special.reduce((n, s) => n + s.bytes, 0) / 1024 / 1024).toFixed(1)} MB`);
