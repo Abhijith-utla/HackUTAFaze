@@ -46,12 +46,10 @@
 ### Task 2: Contribution and payout API
 
 **Files:**
-- Create: `services/api/migrations/010_contribution_proposals.sql`
+- Create: `services/api/migrations/008_contribution_proposals.sql` (007 is active uncommitted work in the shared checkout)
 - Create: `services/api/src/contributions.ts`
 - Create: `services/api/src/routes/contributions.ts`
 - Modify: `services/api/src/app.ts`
-- Modify: `services/api/src/config.ts`
-- Modify: `services/api/package.json`
 - Modify: `docs/api.md`
 - Modify: `docs/data-model.md`
 - Test: `services/api/test/contributions.test.ts`

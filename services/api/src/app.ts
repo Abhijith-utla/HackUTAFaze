@@ -15,12 +15,14 @@ import { artRoutes } from "./routes/art.js";
 import { adminRoutes } from "./routes/admin.js";
 import { controlRoutes } from "./routes/control.js"; // FaZe Control Room (lead, contract v1.6)
 import { insightsRoutes } from "./routes/insights.js"; // Control Room analytics + sponsors (lead, v1.8)
+import { contributionRoutes } from "./routes/contributions.js";
 
 import { marketplaceRoutes } from './routes/marketplace.js';
 
 import { paidPackRoutes, type PackChain } from './pack-payment.js';
+import { type ContributionChain } from "./contributions.js";
 
-export async function buildApp(options: {packChain?: PackChain} = {}) {
+export async function buildApp(options: { packChain?: PackChain; contributionChain?: ContributionChain } = {}) {
   const app = Fastify({ logger: process.env.VITEST ? false : { level: "info" } });
   await app.register(cookie);
   await app.register(cors, { origin: config.clientOrigins, credentials: true, methods: ["GET", "HEAD", "POST", "PATCH", "DELETE"] });
@@ -46,6 +48,7 @@ export async function buildApp(options: {packChain?: PackChain} = {}) {
   await app.register(marketplaceRoutes);
   await app.register(leaderboardRoutes);
   await app.register(adminRoutes);
+  await contributionRoutes(app, options.contributionChain);
   await app.register(controlRoutes);
   await app.register(insightsRoutes);
   await artRoutes(app);

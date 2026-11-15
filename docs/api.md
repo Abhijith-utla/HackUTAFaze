@@ -113,6 +113,20 @@ See [marketplace.md](marketplace.md) for public listings, private exchange offer
 ## Direct SOL pack purchases
 Fan Store now uses direct devnet SOL checkout and fulfillment. See [direct-sol-packs.md](direct-sol-packs.md). GET /packs adds priceLamports; POST /packs/:id/checkout, POST /pack-purchases/:id/confirm and GET /me/pack-purchases use the authenticated API session. Legacy coin checkout remains backward compatible but is no longer used by the fan client.
 
+## Open Contributions — card ideas and devnet rewards
+
+`POST /contributions` lets an authenticated fan submit `{title, pitch, fazeMember, sourceUrl?, recipientWallet}`. All review and payment routes require an admin session:
+
+| Method | Route | Contract |
+|---|---|---|
+| GET | `/admin/contributions?status?` | Lists pending, reviewed and payout-state pitches. |
+| POST | `/admin/contributions/:id/approve` | `{bountyLamports, note?}` moves a pending pitch to `approved`. |
+| POST | `/admin/contributions/:id/reject` | `{note}` rejects a pending pitch. |
+| POST | `/admin/contributions/:id/payouts` | `{payerWallet}` returns one idempotent devnet `PayoutQuote`. |
+| POST | `/admin/contributions/:id/payouts/confirm` | `{signature}` verifies and records exactly one payout. |
+
+The browser signs the quoted System Program transfer in Phantom. The server fetches the finalized **devnet** receipt and requires the exact quoted payer, recipient, lamports and unique reference before marking a contribution `paid`. The server never stores or signs with a wallet key; rejected, unapproved, duplicate-signature and replayed payouts are refused.
+
 ## Control Room — intelligence, sponsors, operations (lead, v1.8; all `requireAdmin`)
 `services/api/src/routes/insights.ts`, migration `006_sponsors.sql`. UI: `/admin/control/fans`, `/revenue`, `/trust`.
 

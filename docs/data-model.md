@@ -46,6 +46,12 @@ Keep economy, inventory, purchases, moderation and jobs as ordinary PostgreSQL t
 | `campaign_assets` | campaign_id, position, name, faze_member, rarity, lore, art_url, base_power, max_supply, duplicate_of, similarity, card_id | Studio; card_id set at launch |
 | `audit_log` | actor_id, action, entity, entity_id, detail (jsonb) — append-only | every Control Room action |
 
+## Open Contributions (`services/api/migrations/008_contribution_proposals.sql`)
+
+| Table | Core fields | Invariants |
+|---|---|---|
+| `contribution_proposals` | creator_user_id, contributor_name, title, pitch, faze_member, source_url, recipient_wallet, bounty_lamports, status, review/audit fields, payout_reference, payout_payer_wallet, payout_signature, payout_cluster, paid_at, demo | State is `pending` → `approved` → `payout_pending` → `paid`, or `pending` → `rejected`. A payout reference and signature are globally unique; only `devnet` is accepted; `paid` requires a quote, signature and timestamp. |
+
 ## Marketplace extension
 Migration 004 adds market_listings (owner, listed instance, state), market_offers (listing, bidder, offered UUIDs, state), and notifications (recipient, kind/message, offer, read/creation timestamps). card_instances gains market_listing_id and market_offer_id; at most one direct/listing/offer lock may be non-null. See marketplace.md.
 
