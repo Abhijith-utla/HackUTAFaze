@@ -10,6 +10,7 @@ import { packsRoutes } from "./routes/packs.js";
 import { collectionRoutes } from "./routes/collection.js";
 import { tradesRoutes } from "./routes/trades.js";
 import { leaderboardRoutes } from "./routes/leaderboard.js";
+import { artRoutes } from "./routes/art.js";
 import { adminRoutes } from "./routes/admin.js";
 
 export async function buildApp() {
@@ -36,5 +37,6 @@ export async function buildApp() {
   await app.register(tradesRoutes);
   await app.register(leaderboardRoutes);
   await app.register(adminRoutes);
+  await artRoutes(app);
   return app;
 }
