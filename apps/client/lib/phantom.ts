@@ -69,7 +69,7 @@ export async function buyPack(packId: string, userId: string, onStatus: (status:
     catch { }
     if (!saved?.key || saved.wallet !== publicKey.toBase58()) {
         if (saved?.order)
-            throw Error('A purchase is pending with another wallet. Check it below before buying again.');
+            throw Error('A purchase is pending with a different wallet. Switch Phantom back to the wallet you used before and press Buy again.');
         saved = { key: crypto.randomUUID(), wallet: publicKey.toBase58() };
     }
     const save = () => localStorage.setItem(storageKey, JSON.stringify(saved));
@@ -143,5 +143,5 @@ export async function buyPack(packId: string, userId: string, onStatus: (status:
         }
         await new Promise(r => setTimeout(r, 2000));
     }
-    throw Error('Still confirming. Use Check payment in Store purchases; do not pay again.');
+    throw Error('Still confirming. Press Buy again to resume; you will not be charged twice.');
 }
