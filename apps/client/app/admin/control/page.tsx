@@ -20,6 +20,7 @@ export default function OverviewPage() {
     <>
       <Heading eyebrow="FAZE CONTROL ROOM / OVERVIEW" title="The business, live.">
         <span className="cr-live"><i className="cr-pulse" /> Refreshing every 5s</span>
+        <Link className="cr-btn" href="/admin/control/scout">Discover videos</Link>
       </Heading>
       {error && <p className="cr-error" role="alert">{error}</p>}
       <div className="cr-kpis">
