@@ -2,8 +2,10 @@
 // Uses D's catalog (content/seed/catalog.json, ids preserved) when present; otherwise the built-in sets below.
 import bcrypt from "bcryptjs";
 import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { Card, CardSet, Pack } from "@faze/shared";
 import { z } from "zod";
+import { storeArt } from "./art-store.js";
 import { config } from "./config.js";
 import { pool, tx } from "./db.js";
 import { postEntry } from "./ledger.js";
@@ -110,8 +112,29 @@ const Catalog = z.object({
   cardStats: z.array(z.object({ cardId: z.string().uuid(), hype: z.number().int().min(0).max(100) })).default([]),
 });
 
-/** Relative art paths (e.g. /demo-art/<id>.svg) become absolute API URLs so every client can use them. */
-const absArt = (u: string) => (u.startsWith("/") ? `${config.publicUrl}${u}` : u);
+/**
+ * v1.5: catalog art (`/demo-art/<file>.svg`) is imported into `card_art` and cards store the RELATIVE
+ * `/art/<id>.svg`. Reads the trusted seed SVGs from DEMO_ART_DIR up front so a missing file fails the seed.
+ */
+const DEMO_ART = /^\/demo-art\/([A-Za-z0-9_-]+\.svg)$/;
+async function loadSeedArt(cards: { id: string; artUrl: string }[]): Promise<Map<string, Buffer>> {
+  const files = new Map<string, Buffer>();
+  for (const k of cards) {
+    if (!k.artUrl.startsWith("/demo-art/")) continue; // non-seed art (e.g. external) is kept as-is
+    const m = DEMO_ART.exec(k.artUrl);
+    if (!m) throw new Error(`catalog: card ${k.id} has an invalid demo art path ${k.artUrl}`);
+    if (files.has(k.artUrl)) continue;
+    try {
+      files.set(k.artUrl, await readFile(path.join(config.demoArtDir, m[1])));
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code === "ENOENT") {
+        throw new Error(`catalog: card ${k.id} art ${k.artUrl} not found in ${config.demoArtDir}`);
+      }
+      throw e;
+    }
+  }
+  return files;
+}
 
 async function importCatalog(counts: Record<string, number>): Promise<boolean> {
   let raw: string;
@@ -129,6 +152,7 @@ async function importCatalog(counts: Record<string, number>): Promise<boolean> {
     const sum = Object.values(p.odds).reduce((n, v) => n + (v ?? 0), 0);
     if (Math.abs(sum - 100) > 1e-9) throw new Error(`catalog: pack ${p.id} odds sum to ${sum}, not 100`);
   }
+  const seedArt = await loadSeedArt(cat.cards);
   await tx(async (c) => {
     // Older built-in seed rows with the same set name but a different id would show twice in the store.
     const old = await c.query(
@@ -146,14 +170,34 @@ async function importCatalog(counts: Record<string, number>): Promise<boolean> {
       );
       counts.sets += r.rowCount ?? 0;
     }
+    // sha256 dedupe in storeArt keeps re-runs from adding card_art rows.
+    const artUrl = new Map<string, string>();
+    for (const [src, bytes] of seedArt) {
+      artUrl.set(src, (await storeArt(c, { mime: "image/svg+xml", bytes, demo: true })).url);
+    }
+    let rewired = 0;
     for (const k of cat.cards) {
+      const url = artUrl.get(k.artUrl) ?? k.artUrl;
       const r = await c.query(
         `INSERT INTO cards (id, set_id, name, faze_member, rarity, art_url, base_power, max_supply, demo)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true) ON CONFLICT (id) DO NOTHING`,
-        [k.id, k.setId, k.name, k.fazeMember, k.rarity, absArt(k.artUrl), k.basePower, k.maxSupply],
+        [k.id, k.setId, k.name, k.fazeMember, k.rarity, url, k.basePower, k.maxSupply],
       );
       counts.cards += r.rowCount ?? 0;
+      if (url === k.artUrl) continue;
+      // Existing rows still pointing at seed art (v1.4 absolute http://host/demo-art/..., the raw /demo-art/...
+      // path, or an older imported /art/<id>.svg demo row) move to the relative DB-backed URL.
+      // Art an admin replaced with something else is left alone.
+      const u = await c.query(
+        `UPDATE cards SET art_url=$2
+         WHERE id=$1 AND art_url <> $2
+           AND (art_url = $3 OR art_url LIKE '%' || $3
+                OR art_url IN (SELECT '/art/' || id || '.svg' FROM card_art WHERE demo AND mime = 'image/svg+xml'))`,
+        [k.id, url, k.artUrl],
+      );
+      rewired += u.rowCount ?? 0;
     }
+    if (rewired) console.log(`moved ${rewired} card(s) to relative /art/ URLs`);
     const hype = new Map(cat.cardStats.map((x) => [x.cardId, x.hype]));
     for (const k of cat.cards) {
       await c.query("INSERT INTO card_stats (card_id, hype) VALUES ($1,$2) ON CONFLICT DO NOTHING", [k.id, hype.get(k.id) ?? 0]);
