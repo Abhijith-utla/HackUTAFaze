@@ -23,7 +23,7 @@ HackUTA 2026, FaZe track. Fans open packs of digital FaZe cards, build a collect
 
 ```bash
 npm install
-# Set DATABASE_URL to a Tiger Cloud development service URL with TLS
+docker compose up -d db                 # local Postgres (or point DATABASE_URL at managed Postgres with sslmode=require)
 cp .env.example .env                    # fill JWT_SECRET, INTERNAL_SECRET, SOLANA_TREASURY_PUBKEY
 npm run seed -w @faze/api               # demo data (labelled demo), idempotent
 npm run dev                             # api :4000, payments :4100, client :3000, admin :3001, worker
@@ -57,4 +57,4 @@ CI (`.github/workflows/ci.yml`) runs all three on `main` and every `agent-*/**` 
 
 Server-authoritative pulls, odds, balances, trades and payments. Append-only ledger. Devnet only (mainnet refused at boot). Every seed, simulated engagement event and test payment is labelled. No secrets in code.
 
-Database: Tiger Cloud by Tiger Data. Follow https://www.tigerdata.com/docs/get-started/quickstart/quickstart-5-minutes and configure server-only DATABASE_URL. Configure a distinct TEST_DATABASE_URL before tests. CI uses isolated PostgreSQL for compatibility checks; live Tiger Cloud and Phantom verification remain manual until credentials and a funded devnet wallet are available.
+Database: PostgreSQL via server-only `DATABASE_URL` (local default: `docker compose up -d db`). Managed Postgres such as Tiger Cloud works through the same URL with `sslmode=require`; adopting it is **pending the lead's decision**. Set a distinct `TEST_DATABASE_URL` before running tests. Live managed-DB and real Phantom devnet checks are manual.

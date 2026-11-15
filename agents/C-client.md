@@ -20,4 +20,4 @@ Consumes: `docs/api.md` via `packages/shared` types. Never computes pulls, odds,
 - Checkout flow with @Abhijith-utla. Card art URLs come from @tanejakeshav's content pipeline.
 
 ## Current payment and database requirements
-Use Phantom + Solana devnet payment routes from docs/api.md and show success only after server confirmation. Tiger Cloud by Tiger Data is server-side; never expose its connection string or credentials in browser code.
+Use Phantom + Solana devnet payment routes from docs/api.md and show success only after server confirmation. The database is server-side only; never expose its connection string or credentials in browser code.

@@ -23,4 +23,4 @@ Consumed by: C (client), D (admin, worker), B (payments ledger credits, integrat
 - Tell @Jaideepo7 when each endpoint is live on `main`; tell @tanejakeshav when admin endpoints are live.
 
 ## Current payment and database requirements
-Use Tiger Cloud by Tiger Data through server-only DATABASE_URL with TLS and pooling. Own shared migrations and isolated development/test seed commands. Preserve ledger, trade, serial and payment uniqueness/transaction guarantees.
+Use the shared Postgres through server-only DATABASE_URL (TLS for remote hosts) with pooling. Own shared migrations and isolated development/test seed commands. Preserve ledger, trade, serial and payment uniqueness/transaction guarantees.

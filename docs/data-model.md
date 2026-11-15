@@ -1,6 +1,6 @@
 # Data model — v1.1 FROZEN (2026-11-15, payments → Solana devnet; changes only via the lead on the board)
 
-Tiger Cloud by Tiger Data (managed PostgreSQL with TimescaleDB), one database shared by all services. Connect from server services through DATABASE_URL with TLS and connection pooling. Use isolated development/test databases. Preserve all existing SQL transaction and uniqueness invariants. Migrations owned by Agent A in `services/api/migrations/` (including tables other agents write, e.g. `purchases`, `card_stats`, `engagement_events`). All ids are UUIDs; all timestamps `timestamptz`. `demo boolean` marks seeded or simulated rows.
+PostgreSQL, one database shared by all services (local docker by default; managed hosting such as Tiger Cloud pending the lead's decision). Connect from server services through DATABASE_URL with TLS and connection pooling. Use isolated development/test databases. Preserve all existing SQL transaction and uniqueness invariants. Migrations owned by Agent A in `services/api/migrations/` (including tables other agents write, e.g. `purchases`, `card_stats`, `engagement_events`). All ids are UUIDs; all timestamps `timestamptz`. `demo boolean` marks seeded or simulated rows.
 
 | Table | Key columns | Writer |
 |---|---|---|
@@ -31,7 +31,7 @@ Tiger Cloud by Tiger Data (managed PostgreSQL with TimescaleDB), one database sh
 - `packs.odds` sums to 100; every pull stores the `odds_version` it used.
 - Nothing with a `pending` or `rejected` moderation status is visible to other fans.
 
-## Database provisioning
+## Optional managed provisioning (only if the lead adopts Tiger Cloud)
 Follow the [Tiger Data quickstart](https://www.tigerdata.com/docs/get-started/quickstart/quickstart-5-minutes): create a Tiger Cloud service, securely save its downloaded database configuration, configure DATABASE_URL from the service URL, and verify SELECT CURRENT_DATE before migrations. Never commit downloaded credentials.
 
 Keep economy, inventory, purchases, moderation and jobs as ordinary PostgreSQL tables. Hypertables for engagement time-series are optional and require a lead-reviewed migration covering partitioning and unique-key compatibility.
