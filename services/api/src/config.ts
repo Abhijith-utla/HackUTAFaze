@@ -17,7 +17,7 @@ function required(name: string, testFallback?: string): string {
 }
 
 export const config = {
-  uploadDir: path.resolve(process.env.UPLOAD_DIR || path.join(here, "..", "..", "..", ".data", "uploads")),
+  uploadDir: path.resolve(process.env.UPLOAD_DIR || process.env.ART_DIR || path.join(here, "..", "..", "..", ".data", "uploads")),
   databaseUrl: databaseUrlFor(process.env, isTest),
   jwtSecret: required("JWT_SECRET", "test-jwt-secret"),
   internalSecret: required("INTERNAL_SECRET", "test-internal-secret"),
@@ -27,4 +27,11 @@ export const config = {
     .map((s) => s.trim())
     .filter(Boolean),
   secureCookies: process.env.NODE_ENV === "production",
+  /** Public base URL of this API, used to build absolute art URLs. */
+  publicUrl: (process.env.API_URL || `http://localhost:${process.env.PORT || 4000}`).replace(/\/$/, ""),
+  /** Where uploaded card art is stored (v1.3). */
+  artDir: process.env.ART_DIR || path.join(here, "..", "uploads"),
+  /** D's committed demo content (read-only). */
+  catalogPath: process.env.SEED_CATALOG || path.join(here, "..", "..", "..", "content", "seed", "catalog.json"),
+  demoArtDir: process.env.DEMO_ART_DIR || path.join(here, "..", "..", "..", "content", "seed", "art"),
 };

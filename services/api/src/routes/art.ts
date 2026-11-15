@@ -32,11 +32,14 @@ export function decodeArt(body: unknown): { bytes: Buffer; extension: keyof type
 export async function artRoutes(app: FastifyInstance, uploadDir = config.uploadDir) {
   app.post("/admin/art", { bodyLimit: MAX_BASE64 + 1024 }, async (req, reply) => {
     requireAdmin(req);
-    const { bytes, extension } = decodeArt(req.body);
+    const input = req.body as Record<string, unknown>;
+    const legacy = input && 'dataBase64' in input;
+    const { bytes, extension } = decodeArt(legacy ? { base64: input.dataBase64, mimeType: input.contentType } : req.body);
     await mkdir(uploadDir, { recursive: true });
     const filename = `${randomUUID()}.${extension}`;
     await writeFile(path.join(uploadDir, filename), bytes, { flag: "wx" });
-    return reply.code(201).send({ artUrl: `/uploaded-art/${filename}` });
+    const origin = (process.env.PUBLIC_API_URL || process.env.API_URL || 'http://localhost:4000').replace(/\/$/, '');
+    return reply.code(201).send({ artUrl: legacy ? origin + '/art/' + filename : '/uploaded-art/' + filename });
   });
   app.post("/submissions/fan-art", { bodyLimit: MAX_BASE64 + 2048 }, async (req, reply) => {
     const user = requireUser(req);
@@ -49,7 +52,7 @@ export async function artRoutes(app: FastifyInstance, uploadDir = config.uploadD
     });
     return reply.code(201).send({ submission: toSubmission(submission) });
   });
-  app.get<{ Params: { file: string } }>("/uploaded-art/:file", async (req, reply) => {
+  app.get<{ Params: { file: string } }>(["/uploaded-art/:file", "/art/:file"], async (req, reply) => {
     const match = /^([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\.(png|jpg|webp)$/i.exec(req.params.file);
     if (!match) return fail("NOT_FOUND", "Image not found");
     try {
