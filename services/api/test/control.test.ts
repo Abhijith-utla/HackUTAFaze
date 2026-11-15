@@ -31,6 +31,14 @@ describe("KAM scoring (pure)", () => {
     expect(viewsIn("475,099 lifetime views. The channel")).toBe(475_099);
     expect(viewsIn("No numbers here")).toBe(0);
   });
+  it("uses live external views (Moment Scout) instead of archive text when provided", () => {
+    const m = { id: "y", occurredOn: "2016-08-06", precision: "day", title: "#TheReturn teamtage", summary: "Curator-written summary with no API stats.", members: [], tags: ["montage"], source: "YouTube https://youtu.be/x", citations: [] };
+    const off = scoreMoment(m, new Map(), 0, new Date("2026-11-15T00:00:00Z"));
+    const on = scoreMoment(m, new Map(), 0, new Date("2026-11-15T00:00:00Z"), 4_020_000);
+    const sig = (r: typeof on) => r.signals.find((s) => s.key === "archive")!;
+    expect(sig(on).points).toBeGreaterThan(sig(off).points);
+    expect(sig(on).detail).toMatch(/4\.0M views \(live, refreshed ≤30 days\)/);
+  });
   it("score equals the sum of explained signal points, each within its weight", () => {
     const m = { id: "x", occurredOn: "2012-10-12", precision: "day", title: "Introducing FaZe Rain", summary: "490,526 views. Rain becomes one of the most-watched personalities.", members: ["Rain"], tags: ["creator"], source: "FaZe Clan: A Timeline, 2010–2026 (PDF), p.6", citations: [] };
     const stats = new Map([["rain", { cards: 3, hype: 80, pulls7d: 30, owners: 9, eng24: 300, engPrev24: 100 }]]);
