@@ -24,3 +24,5 @@ export async function request<T>(path: string, body?: unknown, origin = API): Pr
     return res.status === 204 ? undefined as T : res.json();
 }
 export const art = (url: string) => url.startsWith('/') ? API + url : forThisHost(url);
+/** Resized card art for grids (API `?w=`); falls back to the full image for non-API or SVG art. */
+export const thumb = (url: string, w = 360) => /^\/art\/[0-9a-f-]{36}\.(png|jpe?g|webp)$/i.test(url) ? `${API}${url}?w=${w}` : art(url);

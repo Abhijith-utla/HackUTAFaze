@@ -20,6 +20,7 @@ import { contributionRoutes } from "./routes/contributions.js";
 
 import { marketplaceRoutes } from './routes/marketplace.js';
 import { pipelineRoutes } from "./routes/pipeline.js"; // clip/frame → face → card art (A, v1.9 draft)
+import { binderRoutes } from "./routes/binder.js"; // GET /binder (eras -> sets -> cards)
 import { twitchRoutes } from "./routes/twitch.js"; // GET /twitch/live (Twitch Helix, cached 60 s)
 
 import { paidPackRoutes, type PackChain } from './pack-payment.js';
@@ -56,6 +57,7 @@ export async function buildApp(options: { packChain?: PackChain; contributionCha
   await app.register(insightsRoutes);
   await app.register(pipelineRoutes);
   await app.register(twitchRoutes);
+  await app.register(binderRoutes);
   await artRoutes(app);
   await app.register(clipClashRoutes);
   return app;
