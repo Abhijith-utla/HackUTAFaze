@@ -9,7 +9,8 @@ import { fulfill, PaymentError } from "./fulfill.js";
 import { BUNDLES, findBundle } from "./bundles.js";
 import { toApi, type PurchaseRepo } from "./repo.js";
 import type { LedgerClient } from "./ledger.js";
-import { checkTransfer, newReference, solanaPayUrl, type ChainReader } from "./solana.js";
+import { newReference, solanaPayUrl, type ChainReader } from "./solana.js";
+import { fulfill, PaymentError } from "./fulfill.js";
 
 export interface AppDeps {
   repo: PurchaseRepo;

@@ -1,4 +1,4 @@
-# API contract — v1.1 FROZEN (2026-11-15, payments → Solana devnet; changes only via the lead on the board)
+# API contract — v1.3 FROZEN (2026-11-15: v1.1 payments → Solana devnet, v1.2 user search, v1.3 art upload; changes only via the lead on the board)
 
 Base URL `services/api`: `http://localhost:4000`. Payments `services/payments`: `http://localhost:4100`. JSON in and out. Auth via httpOnly JWT cookie `session`: HS256 signed with `JWT_SECRET`, claims `{sub: userId, role: "fan"|"admin", exp}`, 7-day expiry, `SameSite=Lax`, `Path=/`. Every service that needs the user verifies this cookie with the shared `JWT_SECRET`.
 
@@ -12,6 +12,11 @@ Errors: `{ "error": { "code": "STRING_CODE", "message": "human text" } }`. Codes
 | POST | `/auth/logout` | → `204` |
 | GET | `/me` | → `{user, balance}` |
 | GET | `/users?q=<prefix>` | → `{users: [{id, displayName}]}` — approved display names only, max 10 (v1.2, trade picker) |
+
+## Art (A)
+| Method | Path | Body → Response |
+|---|---|---|
+| GET | `/art/:file` | public image; served with its stored content type and `X-Content-Type-Options: nosniff`; file names are server-generated (v1.3) |
 
 ## Packs & collection (A)
 | Method | Path | Body → Response |
@@ -58,6 +63,7 @@ Payment rules: the client builds `SystemProgram.transfer(payer → recipient, la
 | GET/POST | `/admin/cards` | list / create `{setId, name, fazeMember, rarity, artUrl, basePower, maxSupply?}` |
 | PATCH | `/admin/cards/:id` | edit |
 | POST/PATCH | `/admin/packs` | create / edit odds and price |
+| POST | `/admin/art` | `{filename, contentType: "image/png"\|"image/jpeg"\|"image/webp", dataBase64}` (≤ 2 MB decoded) → `{artUrl}` (v1.3). SVG not accepted. |
 | GET | `/admin/moderation?status=pending` | → `{submissions}` |
 | POST | `/admin/moderation/:id` | `{decision: "approve"\|"reject"}` |
 | POST | `/admin/engagement/spike` | `{fazeMember}` → `{jobId}`; inserts a `jobs` row (`engagement_spike`) that D's worker picks up |

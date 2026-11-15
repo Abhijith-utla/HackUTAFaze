@@ -118,10 +118,17 @@ export function pgRepo(pool: pg.Pool): PurchaseRepo {
       const { rowCount } = await pool.query(`SELECT 1 FROM purchases WHERE tx_signature = $1`, [signature]);
       return (rowCount ?? 0) > 0;
     },
-    async markPaid(id, signature) {
+    async pendingSince(since, limit) {
+      const { rows } = await pool.query<DbRow>(
+        `SELECT ${COLS} FROM purchases WHERE status = 'pending' AND created_at >= $1 ORDER BY created_at LIMIT $2`,
+        [since, limit],
+      );
+      return rows.map(fromDb);
+    },
+    async markPaid(id) {
       const res = await pool.query(
-        `UPDATE purchases SET status = 'paid', tx_signature = $2, paid_at = now() WHERE id = $1 AND status <> 'paid'`,
-        [id, signature],
+        `UPDATE purchases SET status = 'paid', paid_at = now() WHERE id = $1 AND status = 'pending' AND tx_signature IS NOT NULL`,
+        [id],
       );
       return (res.rowCount ?? 0) > 0;
     },
@@ -170,6 +177,15 @@ export function memoryRepo(): PurchaseRepo & { rows: PurchaseRow[] } {
       if (rows.some((x) => x.id !== id && x.txSignature === signature)) return false;
       r.status = "paid";
       r.txSignature = signature;
+      return true;
+    },
+    async pendingSince(since, limit) {
+      return rows.filter((r) => r.status === "pending" && new Date(r.createdAt) >= since).slice(0, limit);
+    },
+    async markPaid(id) {
+      const r = rows.find((x) => x.id === id);
+      if (!r || r.status !== "pending" || !r.txSignature) return false;
+      r.status = "paid";
       r.paidAt = new Date().toISOString();
       return true;
     },

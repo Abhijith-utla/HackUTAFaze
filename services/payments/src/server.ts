@@ -8,6 +8,7 @@ import { loadConfig } from "./config.js";
 import { httpLedger, memoryLedger } from "./ledger.js";
 import { memoryRepo, pgRepo } from "./repo.js";
 import { rpcReader, simulatedReader } from "./solana.js";
+import { reconcile } from "./fulfill.js";
 
 // services/payments/.env first, then the repo-root .env (first value wins; real env beats both).
 const here = path.dirname(fileURLToPath(import.meta.url));

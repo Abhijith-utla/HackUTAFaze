@@ -4,6 +4,7 @@ import { Keypair } from "@solana/web3.js";
 import { SignJWT } from "jose";
 import { reconcile } from "../src/fulfill.js";
 import { buildApp } from "../src/app.js";
+import { reconcile } from "../src/fulfill.js";
 import { loadConfig } from "../src/config.js";
 import { memoryLedger } from "../src/ledger.js";
 import { memoryRepo } from "../src/repo.js";
