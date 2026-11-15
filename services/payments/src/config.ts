@@ -8,7 +8,7 @@ export interface Config {
   jwtSecret: string;
   internalSecret: string;
   apiUrl: string;
-  clientUrl: string;
+  clientOrigins: string[];
   cluster: SolanaCluster;
   rpcUrl: string;
   treasury: string;
@@ -62,7 +62,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     jwtSecret: req(env, "JWT_SECRET"),
     internalSecret: req(env, "INTERNAL_SECRET"),
     apiUrl: env.API_URL ?? "http://localhost:4000",
-    clientUrl: env.CLIENT_URL ?? "http://localhost:3000",
+    // Same variable as services/api; CLIENT_URL kept as a single-origin fallback.
+    clientOrigins: (env.CLIENT_ORIGINS || env.CLIENT_URL || "http://localhost:3000,http://localhost:3001")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
     cluster,
     rpcUrl,
     treasury,

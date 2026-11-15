@@ -20,7 +20,7 @@ await api.listen({ port: 0, host: '127.0.0.1' });
 const address = api.server.address();
 assert.ok(address && typeof address === 'object');
 const treasury = '11111111111111111111111111111112';
-const payments = paymentApp({ repo: pgRepo(pool), ledger: httpLedger(`http://127.0.0.1:${address.port}`, process.env.INTERNAL_SECRET), chain: simulatedReader(treasury, 'devnet'), treasury, jwtSecret: process.env.JWT_SECRET, clientUrl: 'http://localhost:3000' });
+const payments = paymentApp({ repo: pgRepo(pool), ledger: httpLedger(`http://127.0.0.1:${address.port}`, process.env.INTERNAL_SECRET), chain: simulatedReader(treasury, 'devnet'), treasury, jwtSecret: process.env.JWT_SECRET, clientOrigins: ['http://localhost:3000'] });
 const marker = randomUUID();
 async function request(app: any, method: any, url: string, cookie?: string, payload?: any, expected = 200) {
  const res = await app.inject({ method, url, headers: cookie ? { cookie } : {}, payload });

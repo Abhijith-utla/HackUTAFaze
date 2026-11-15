@@ -16,6 +16,7 @@ PostgreSQL, one database shared by all services (local docker by default; manage
 | `purchases` | id, user_id, bundle_id, coins, lamports (bigint), reference (unique, Solana Pay reference pubkey), recipient (treasury pubkey), tx_signature (unique, nullable), cluster (`devnet`), test_mode (always true), status (`pending`\|`paid`\|`expired`), created_at, paid_at | B |
 | `submissions` | id, user_id, kind (`display_name`\|`trade_message`\|`fan_art`), ref_id (user or trade id), payload (jsonb), status (`pending`\|`approved`\|`rejected`), auto_flags (text[]), reviewed_by, reviewed_at, created_at | A inserts `pending` rows (same transaction as signup / trade create); D's worker sets `auto_flags`; admin decides via A's admin API |
 | `jobs` | id, kind (`engagement_spike`\|`publish_set`\|`moderate`), payload (jsonb), status (`queued`\|`running`\|`done`\|`failed`), error, created_at, updated_at | A inserts; D's worker polls with `FOR UPDATE SKIP LOCKED` |
+| `card_art` | id, mime (`image/png`\|`image/jpeg`\|`image/webp`\|`image/svg+xml` seed-only), bytes (bytea, ≤ 2 MB), sha256, demo, created_at (v1.5) | A (admin upload, fan-art, seed import) |
 | `engagement_events` | id, faze_member, metric (`views`\|`likes`\|`mentions`), value, simulated (always true for demo), created_at | D (worker) |
 
 ## Roles
