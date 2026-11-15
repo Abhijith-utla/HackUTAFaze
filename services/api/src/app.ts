@@ -18,7 +18,9 @@ import { insightsRoutes } from "./routes/insights.js"; // Control Room analytics
 
 import { marketplaceRoutes } from './routes/marketplace.js';
 
-export async function buildApp() {
+import { paidPackRoutes, type PackChain } from './pack-payment.js';
+
+export async function buildApp(options: {packChain?: PackChain} = {}) {
   const app = Fastify({ logger: process.env.VITEST ? false : { level: "info" } });
   await app.register(cookie);
   await app.register(cors, { origin: config.clientOrigins, credentials: true, methods: ["GET", "HEAD", "POST", "PATCH", "DELETE"] });
@@ -38,6 +40,7 @@ export async function buildApp() {
   await app.register(authRoutes);
   await app.register(internalRoutes);
   await app.register(packsRoutes);
+  await paidPackRoutes(app,options.packChain);
   await app.register(collectionRoutes);
   await app.register(tradesRoutes);
   await app.register(marketplaceRoutes);

@@ -60,3 +60,5 @@ Server-authoritative pulls, odds, balances, trades and payments. Append-only led
 Database: PostgreSQL via server-only `DATABASE_URL` (local default: `docker compose up -d db`). Managed Postgres such as Tiger Cloud works through the same URL with `sslmode=require`; adopting it is **pending the lead's decision**. Set a distinct `TEST_DATABASE_URL` before running tests. Live managed-DB and real Phantom devnet checks are manual.
 
 Public trading: visit http://localhost:3000/trades. After pulling this feature, run npm run migrate --workspace @faze/api, then restart services. See docs/marketplace.md for the exchange and notification contract.
+
+Store payments now buy packs directly in Phantom with devnet SOL. After updating, apply migration 005 and restart. Set PAYMENTS_SIMULATE=0 for wallet interaction; see docs/direct-sol-packs.md.

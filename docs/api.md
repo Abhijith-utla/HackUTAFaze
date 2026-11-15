@@ -109,6 +109,9 @@ KAM score = sum of 5 explained signals (anniversary 30, member momentum 25, coll
 ## Public marketplace extension
 See [marketplace.md](marketplace.md) for public listings, private exchange offers and notifications. Existing direct-trade endpoints remain supported.
 
+## Direct SOL pack purchases
+Fan Store now uses direct devnet SOL checkout and fulfillment. See [direct-sol-packs.md](direct-sol-packs.md). GET /packs adds priceLamports; POST /packs/:id/checkout, POST /pack-purchases/:id/confirm and GET /me/pack-purchases use the authenticated API session. Legacy coin checkout remains backward compatible but is no longer used by the fan client.
+
 ## Control Room — intelligence, sponsors, operations (lead, v1.8; all `requireAdmin`)
 `services/api/src/routes/insights.ts`, migration `006_sponsors.sql`. UI: `/admin/control/fans`, `/revenue`, `/trust`.
 
