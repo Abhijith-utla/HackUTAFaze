@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { FastifyInstance } from "fastify";
 import { randomUUID } from "node:crypto";
 import { cookieFrom, makeApp, pool, signup } from "./helpers.js";
+import { config } from "../src/config.js";
 
 let app: FastifyInstance;
 beforeAll(async () => {
@@ -70,7 +71,7 @@ describe("internal ledger credit", () => {
   it("credits once per idempotency key", async () => {
     const u = await signup(app);
     const payload = { userId: u.id, amount: 1000, reason: "purchase", refId: "evt_1", idempotencyKey: `evt_${randomUUID()}` };
-    const headers = { "x-internal-secret": "test-internal-secret" };
+    const headers = { "x-internal-secret": config.internalSecret };
     const a = await app.inject({ method: "POST", url: "/internal/ledger/credit", payload, headers });
     const b = await app.inject({ method: "POST", url: "/internal/ledger/credit", payload, headers });
     expect(a.statusCode).toBe(200);
@@ -81,7 +82,7 @@ describe("internal ledger credit", () => {
   it("concurrent replays still credit once", async () => {
     const u = await signup(app);
     const payload = { userId: u.id, amount: 250, reason: "purchase", refId: "x", idempotencyKey: `evt_${randomUUID()}` };
-    const headers = { "x-internal-secret": "test-internal-secret" };
+    const headers = { "x-internal-secret": config.internalSecret };
     await Promise.all(
       Array.from({ length: 5 }, () => app.inject({ method: "POST", url: "/internal/ledger/credit", payload, headers })),
     );
