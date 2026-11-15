@@ -52,7 +52,7 @@ function setup() {
   const repo = memoryRepo();
   const ledger = memoryLedger();
   const chain = fakeChain();
-  const app = buildApp({ repo, ledger, chain, treasury: TREASURY, jwtSecret: JWT_SECRET, clientUrl: "http://localhost:3000" });
+  const app = buildApp({ repo, ledger, chain, treasury: TREASURY, jwtSecret: JWT_SECRET, clientOrigins: ["http://localhost:3000"] });
   return { app, repo, ledger, chain };
 }
 
@@ -259,7 +259,7 @@ describe("simulated signatures through the app", () => {
   it("are accepted by validation and credited (PAYMENTS_SIMULATE path)", async () => {
     const repo = memoryRepo();
     const ledger = memoryLedger();
-    const app = buildApp({ repo, ledger, chain: simulatedReader(TREASURY, "devnet"), treasury: TREASURY, jwtSecret: JWT_SECRET, clientUrl: "http://localhost:3000" });
+    const app = buildApp({ repo, ledger, chain: simulatedReader(TREASURY, "devnet"), treasury: TREASURY, jwtSecret: JWT_SECRET, clientOrigins: ["http://localhost:3000"] });
     const uid = randomUUID();
     const cookies = { session: await token(uid) };
     const c = (await app.inject({ method: "POST", url: "/payments/checkout", cookies, payload: { bundleId: "coins_1000" } })).json();
@@ -278,6 +278,16 @@ describe("simulated signatures through the app", () => {
     const c = (await t.app.inject({ method: "POST", url: "/payments/checkout", cookies, payload: { bundleId: "coins_1000" } })).json();
     const res = await t.app.inject({ method: "POST", url: "/payments/confirm", cookies, payload: { purchaseId: c.purchaseId, signature: sig() } });
     expect(res.statusCode).toBe(409);
+  });
+});
+
+describe("CORS", () => {
+  it("allows every configured client origin (phone/LAN demo) and rejects others", async () => {
+    const app = buildApp({ repo: memoryRepo(), ledger: memoryLedger(), chain: fakeChain(), treasury: TREASURY, jwtSecret: JWT_SECRET, clientOrigins: ["http://localhost:3000", "http://192.168.1.20:3000"] });
+    const pre = (origin: string) => app.inject({ method: "OPTIONS", url: "/payments/checkout", headers: { origin, "access-control-request-method": "POST" } });
+    expect((await pre("http://192.168.1.20:3000")).headers["access-control-allow-origin"]).toBe("http://192.168.1.20:3000");
+    expect((await pre("http://localhost:3000")).headers["access-control-allow-origin"]).toBe("http://localhost:3000");
+    expect((await pre("http://evil.example")).headers["access-control-allow-origin"]).toBeUndefined();
   });
 });
 
@@ -300,6 +310,11 @@ describe("simulatedReader", () => {
 
 describe("config", () => {
   const base = { DATABASE_URL: "postgres://localhost/test", JWT_SECRET: "j", INTERNAL_SECRET: "i", SOLANA_TREASURY_PUBKEY: TREASURY };
+  it("reads CLIENT_ORIGINS as a list, falling back to CLIENT_URL", () => {
+    expect(loadConfig({ ...base, CLIENT_ORIGINS: "http://localhost:3000, http://192.168.1.20:3000" }).clientOrigins).toEqual(["http://localhost:3000", "http://192.168.1.20:3000"]);
+    expect(loadConfig({ ...base, CLIENT_URL: "http://localhost:3005" }).clientOrigins).toEqual(["http://localhost:3005"]);
+    expect(loadConfig(base).clientOrigins).toEqual(["http://localhost:3000", "http://localhost:3001"]);
+  });
   it("defaults to devnet", () => {
     expect(loadConfig(base)).toMatchObject({ cluster: "devnet", rpcUrl: "https://api.devnet.solana.com" });
   });

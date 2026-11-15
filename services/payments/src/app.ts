@@ -17,7 +17,8 @@ export interface AppDeps {
   chain: ChainReader;
   treasury: string;
   jwtSecret: string;
-  clientUrl: string;
+  /** Browser origins allowed by CORS (with credentials). */
+  clientOrigins: string[];
   logger?: boolean;
 }
 
@@ -35,7 +36,7 @@ export function buildApp(deps: AppDeps) {
   const key = new TextEncoder().encode(deps.jwtSecret);
 
   app.register(cookie);
-  app.register(cors, { origin: deps.clientUrl, credentials: true });
+  app.register(cors, { origin: deps.clientOrigins, credentials: true });
 
   app.setErrorHandler((err, _req, reply) => {
     if (err instanceof HttpError || err instanceof PaymentError) {

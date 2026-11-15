@@ -25,7 +25,7 @@ const deps = {
   chain: cfg.simulate ? simulatedReader(cfg.treasury, cfg.cluster) : rpcReader(cfg.rpcUrl, cfg.cluster),
   treasury: cfg.treasury,
   jwtSecret: cfg.jwtSecret,
-  clientUrl: cfg.clientUrl,
+  clientOrigins: cfg.clientOrigins,
   logger: true,
 };
 const app = buildApp(deps);
