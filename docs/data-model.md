@@ -54,3 +54,19 @@ Migration 004 adds market_listings (owner, listed instance, state), market_offer
 |---|---|---|
 | `sponsors` | name (unique), category (energy_drink…other), notes, status (`active`\|`paused`), demo | Control Room |
 | `sponsor_activations` | sponsor_id, campaign_id (unique pair), fee_usd (demo), deliverables, status (`active`\|`ended`), ended_at | Control Room |
+
+## Moment Scout (v1.7 — draft for lead review)
+
+Migration: `services/api/migrations/005_moment_scout.sql` (idempotent table/index creation and replaceable view). Stored in the same server-side PostgreSQL database as the Control Room, not browser storage or filesystem clip files.
+
+| Table / view | Fields and lifecycle |
+|---|---|
+| `scout_source` | Singleton `id=true`; `next_page`, `completed`, `pages_scanned`, `last_scan_at`. Bounded discovery progress for the fixed official channel. Scans update candidates and cursor atomically; inactive cursor resets after 30 days. |
+| `scout_candidates` | `video_id` PK (11-character YouTube ID); nullable `metadata` JSONB; `fetched_at`; status `new\|shortlisted\|rejected\|promoted`; curator `note`, `editorial_summary`; optional `moment_id` FK to archive; `reviewed_by` FK to users; `reviewed_at`, `created_at`. Rediscovery updates metadata/time while preserving editorial decisions and archive linkage. |
+| `scout_moment_views` | View with `moment_key='yt:' || video_id`, `views::bigint`, `fetched_at`; only promoted candidates with available counts fetched within 30 days. Read by the lead's KAM reach hook; no duplicated counters in archive prose. |
+
+Metadata shape: `{title,publishedAt,thumbnailUrl,duration,views,likes,comments}`. Only official-channel videos are accepted. Thumbnail URLs must be HTTPS `i.ytimg.com`; image bytes are never downloaded into storage. Counts may be null if unavailable. JSONB becomes null after 30 days or when refresh no longer returns an eligible public video. Expiry preserves review notes/status and human-authored archive content. The API startup/read path and minute timer clean expired metadata; freshness is also enforced in the view and promotion checks. API downtime delays physical cleanup until restart, but stale metadata is removed before Scout is served.
+
+Promotion requires fresh shortlisted metadata and a curator-written title/summary/member list/event date, plus optional source timestamp. It inserts into the existing `archive_moments` table with unique key `yt:<videoId>`, `precision='day'`, `tags=['youtube','curated']`, source/citation watch links, and weighted title/member/summary `tsvector`. It then marks the candidate promoted inside the same transaction. Candidate locking and the unique archive key prevent duplicate promotion. Neither thumbnails nor API view counts are copied into permanent archive text or card art. Final card creation uses the existing KAM → Studio → campaign approval flow.
+
+`audit_log` records `scout.*` actions. Scan audits count processed records/pages/requests, review audits record status changes, refresh audits record availability, promotion audits link the archive ID, and expiry audits count removed metadata records. No API key, video title, thumbnail URL or upstream response is copied into audit detail.
