@@ -9,7 +9,7 @@ const RARITY_RANK = "CASE c.rarity WHEN 'legendary' THEN 0 WHEN 'epic' THEN 1 WH
 
 export async function collectionOf(userId: string): Promise<CollectionEntry[]> {
   const r = await pool.query(
-    `SELECT c.*, ci.id AS ci_id, ci.serial, ci.locked_by_trade_id
+    `SELECT c.*, ci.id AS ci_id, ci.serial, ci.locked_by_trade_id, ci.market_listing_id, ci.market_offer_id
        FROM card_instances ci JOIN cards c ON c.id = ci.card_id
        JOIN card_sets s ON s.id = c.set_id
       WHERE ci.owner_id = $1
@@ -23,7 +23,7 @@ export async function collectionOf(userId: string): Promise<CollectionEntry[]> {
       e = { card: toCard(row), instances: [], count: 0 };
       out.set(row.id, e);
     }
-    e.instances.push({ id: row.ci_id, serial: row.serial, locked: row.locked_by_trade_id !== null });
+    e.instances.push({ id: row.ci_id, serial: row.serial, locked: row.locked_by_trade_id !== null || row.market_listing_id !== null || row.market_offer_id !== null });
     e.count++;
   }
   return [...out.values()];

@@ -15,6 +15,8 @@ import { artRoutes } from "./routes/art.js";
 import { adminRoutes } from "./routes/admin.js";
 import { controlRoutes } from "./routes/control.js"; // FaZe Control Room (lead, contract v1.6)
 
+import { marketplaceRoutes } from './routes/marketplace.js';
+
 export async function buildApp() {
   const app = Fastify({ logger: process.env.VITEST ? false : { level: "info" } });
   await app.register(cookie);
@@ -37,6 +39,7 @@ export async function buildApp() {
   await app.register(packsRoutes);
   await app.register(collectionRoutes);
   await app.register(tradesRoutes);
+  await app.register(marketplaceRoutes);
   await app.register(leaderboardRoutes);
   await app.register(adminRoutes);
   await app.register(controlRoutes);
