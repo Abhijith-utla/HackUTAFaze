@@ -1,0 +1,40 @@
+/* Binder. Everything is scoped under .bd-root (the page) and its overlays; tokens fall back when the theme lacks them. */
+.bd-root {
+  --bd-red: var(--faze-red, #E4002B);
+  --bd-s0: var(--p-s0, #0b0b0b); --bd-s2: var(--p-s2, #181818); --bd-s3: var(--p-s3, #212121);
+  --bd-line: var(--p-line, #262626); --bd-text: var(--p-text, #F3F3F3); --bd-muted: var(--p-muted, #9C9C9C);
+  --bd-common: var(--rarity-common, #A4A4AA); --bd-rare: var(--rarity-rare, #3D9BFF);
+  --bd-epic: var(--rarity-epic, #A35CFF); --bd-legendary: var(--rarity-legendary, #F5B941);
+  display: grid; gap: 24px; min-width: 0;
+}
+.bd-root h3 { margin: 0; }
+.bd-root .bd-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 0; }
+.bd-root .bd-muted { color: var(--bd-muted); font-size: 13px; margin: 0; }
+.bd-root .bd-error { color: #ff6b6b; margin: 0; }
+.bd-root .bd-label { font-size: 10px; letter-spacing: .16em; color: var(--bd-muted); text-transform: uppercase; }
+.bd-root dd { margin: 0; }
+.bd-root .bd-set { display: grid; gap: 10px; margin: 12px 0 24px; }
+.bd-root .bd-bar { height: 8px; border-radius: 99px; background: var(--bd-s3); overflow: hidden; }
+.bd-root .bd-bar > i { display: block; height: 100%; width: var(--v, 0%); background: var(--bd-red); transition: width .4s; }
+.bd-root .bd-bar.is-done > i { background: var(--bd-legendary); }
+
+.bd-root .bd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.bd-root .bd-card { position: relative; display: grid; gap: 4px; padding: 8px; text-align: left; border-radius: 10px; border: 2px solid var(--rc, var(--bd-line)); background: var(--bd-s2); color: inherit; cursor: pointer; overflow: hidden; }
+.bd-root .bd-card.r-common { --rc: var(--bd-common); } .bd-root .bd-card.r-rare { --rc: var(--bd-rare); }
+.bd-root .bd-card.r-epic { --rc: var(--bd-epic); } .bd-root .bd-card.r-legendary { --rc: var(--bd-legendary); }
+.bd-root .bd-card img { width: 100%; aspect-ratio: 5 / 7; object-fit: cover; border-radius: 6px; background: #000; }
+.bd-root .bd-card b { font-size: 13px; line-height: 1.2; }
+.bd-root .bd-card small { color: var(--bd-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.bd-root .bd-card.is-missing { border-style: dashed; cursor: default; opacity: .85; }
+.bd-root .bd-card.is-missing img { filter: grayscale(.85) blur(6px) brightness(.55); transform: scale(1.04); }
+.bd-root .bd-card .bd-badge { position: absolute; top: 12px; right: 12px; background: #000c; border-radius: 99px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+.bd-root .bd-card:focus-visible { outline: 2px solid var(--bd-red); outline-offset: 2px; }
+
+.bd-root .bd-overlay { position: fixed; inset: 0; z-index: 60; background: #000d; display: grid; place-items: center; padding: 16px; overflow: auto; }
+.bd-root .bd-dialog { width: min(820px, 100%); max-height: 100%; overflow: auto; border: 1px solid var(--bd-line); border-radius: 12px; background: var(--bd-s0); padding: 20px; }
+.bd-root .bd-detail { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 640px) { .bd-root .bd-detail { grid-template-columns: 1fr; } }
+.bd-root .bd-detail img { width: 100%; border-radius: 10px; }
+.bd-root .bd-detail-body { display: grid; gap: 12px; align-content: start; }
+.bd-root .bd-lore { font-style: italic; color: var(--bd-text); margin: 0; }
+.bd-root .bd-chip { display: inline-block; border: 1px solid var(--bd-line); border-radius: 99px; padding: 2px 10px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }

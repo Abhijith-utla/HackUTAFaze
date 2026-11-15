@@ -36,6 +36,23 @@ export function decodeArt(body: unknown): { bytes: Buffer; extension: keyof type
  * `uploadDir` serves pre-v1.5 disk uploads (`/uploaded-art/…` and legacy `/art/<uuid>.<ext>`).
  * `db` is injectable so unit tests can run without Postgres.
  */
+// In-memory LRU of resized art so a grid of cards hits the database and sharp once per size, not on every load.
+const THUMBS = new Map<string, Buffer>();
+const THUMB_MAX = 300;
+async function thumbnail(id: string, w: number, bytes: Buffer): Promise<Buffer | null> {
+  const key = `${id}:${w}`;
+  const hit = THUMBS.get(key);
+  if (hit) { THUMBS.delete(key); THUMBS.set(key, hit); return hit; }
+  try {
+    const { loadSharp } = await import("../pipeline/deps.js");
+    const sharp = await loadSharp();
+    const out: Buffer = await sharp(bytes).rotate().resize({ width: w, withoutEnlargement: true }).webp({ quality: 78, effort: 3 }).toBuffer();
+    THUMBS.set(key, out);
+    if (THUMBS.size > THUMB_MAX) THUMBS.delete(THUMBS.keys().next().value as string);
+    return out;
+  } catch { return null; }
+}
+
 export async function artRoutes(app: FastifyInstance, uploadDir = config.uploadDir, db: Queryable = pool) {
   app.post("/admin/art", { bodyLimit: MAX_BASE64 + 1024 }, async (req, reply) => {
     requireAdmin(req);
@@ -84,6 +101,16 @@ export async function artRoutes(app: FastifyInstance, uploadDir = config.uploadD
     const art = await loadPublicArt(db, m[1]!.toLowerCase());
     if (!art) return serveLegacyFile(req.params.id, reply); // pre-v1.5 disk upload, else 404
     if (m[2] && mimeForExt(m[2]) !== art.mime) return fail("NOT_FOUND", "Image not found");
+    // ?w=<64..1200>: a resized WebP for grids (full-size card art is ~600 KB). SVG and failures fall back to the original.
+    const w = Number((req.query as { w?: string }).w);
+    if (Number.isInteger(w) && w >= 64 && w <= 1200 && art.mime !== "image/svg+xml") {
+      const thumb = await thumbnail(m[1]!.toLowerCase(), w, art.bytes);
+      if (thumb) {
+        return reply.type("image/webp").header("X-Content-Type-Options", "nosniff")
+          .header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
+          .header("Cache-Control", "public, max-age=31536000, immutable").send(thumb);
+      }
+    }
     return reply
       .type(art.mime)
       .header("X-Content-Type-Options", "nosniff")

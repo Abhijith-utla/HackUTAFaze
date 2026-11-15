@@ -1,0 +1,145 @@
+/* /watch: Twitch watch-along. Everything scoped under .watch-root; tokens have fallbacks. */
+.watch-root {
+  --w-red: var(--p-red, var(--faze-red, #E4002B));
+  --w-red-text: var(--p-red-text, #FF3B5C);
+  --w-panel: var(--p-s2, var(--panel, #181818));
+  --w-well: var(--p-s0, #0b0b0b);
+  --w-line: var(--p-line, var(--line, #262626));
+  --w-line-strong: var(--p-line-strong, #383838);
+  --w-text: var(--p-text, #F3F3F3);
+  --w-muted: var(--p-muted, var(--muted, #9C9C9C));
+  --w-fast: var(--p-fast, var(--dur-fast, 140ms));
+  display: flex; flex-direction: column; flex: 1 0 auto;
+  overflow-x: clip;
+}
+.watch-root main.watch { padding-bottom: 56px; min-width: 0; }
+.watch-root .watch-back { color: var(--w-text); text-decoration: none; font-size: 13px; font-weight: 700; letter-spacing: .04em; white-space: nowrap; }
+.watch-root .watch-back:hover { color: var(--w-red-text); }
+
+.watch-root .watch-head { padding: 40px 0 8px; }
+.watch-root .watch-head h1 { font-size: clamp(32px, 6vw, 64px); margin: 10px 0; letter-spacing: -1px; overflow-wrap: anywhere; }
+.watch-root .watch-head h1 span { color: var(--w-red); }
+.watch-root .watch-head .eyebrow { overflow-wrap: anywhere; }
+.watch-root .watch-status { margin: 0; font-size: 11px; letter-spacing: 2px; color: var(--w-muted); text-transform: uppercase; }
+.watch-root .watch-status.online { color: var(--w-red-text); font-weight: 800; }
+
+/* Hype ticker (outside the player: nothing overlays the embed). */
+.watch-root .watch-ticker { display: flex; align-items: stretch; border: 1px solid var(--w-line); border-radius: 6px; overflow: hidden; margin: 20px 0; background: var(--w-panel); min-width: 0; }
+.watch-root .watch-ticker-label { flex: none; display: flex; align-items: center; padding: 10px 12px; font-size: 10px; letter-spacing: 2px; background: var(--w-red); color: #fff; font-weight: 800; }
+.watch-root .watch-ticker-window { flex: 1; min-width: 0; overflow: hidden; display: flex; align-items: center; padding: 0 12px; }
+.watch-root .watch-ticker-track { display: flex; gap: 28px; width: max-content; white-space: nowrap; font-size: 13px; animation: watch-marquee 40s linear infinite; }
+.watch-root .watch-ticker:hover .watch-ticker-track { animation-play-state: paused; }
+.watch-root .watch-ticker-track b { margin-left: 6px; }
+.watch-root .watch-ticker-track em { font-style: normal; margin-left: 4px; font-size: 11px; }
+.watch-root .watch-ticker-track .up { color: #3ddc84; }
+.watch-root .watch-ticker-track .down { color: var(--w-muted); }
+.watch-root .watch-ticker-empty { font-size: 13px; color: var(--w-muted); padding: 10px 0; }
+@keyframes watch-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+  .watch-root .watch-ticker-window { overflow-x: auto; }
+  .watch-root .watch-ticker-track { animation: none; }
+}
+
+/* Stage: player (min 400x300 where width allows) + chat; chat stacks below on narrow screens. */
+.watch-root .watch-stage { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+.watch-root .watch-stage.with-chat { grid-template-columns: minmax(min(400px, 100%), 1fr) 340px; }
+.watch-root .watch-player { position: relative; width: 100%; aspect-ratio: 16 / 9; min-width: min(400px, 100%); min-height: 300px; background: #000; border: 1px solid var(--w-line); border-radius: 8px; overflow: hidden; }
+.watch-root .watch-player > #twitch-player,
+.watch-root .watch-player > iframe,
+.watch-root #twitch-player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.watch-root .watch-chat { width: 100%; height: 100%; min-height: 300px; border: 1px solid var(--w-line); border-radius: 8px; background: #18181b; }
+.watch-root .watch-fallback { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 8px; padding: 24px; text-align: center; background: radial-gradient(ellipse at 50% 120%, #e4002b33, transparent 60%), var(--w-well); }
+.watch-root .watch-fallback h2 { margin: 0; }
+.watch-root .watch-fallback p:not(.eyebrow) { color: var(--w-muted); max-width: 46ch; margin: 0 0 8px; font-size: 14px; }
+
+/* Branded offline state: below the player, never on top of it. */
+.watch-root .watch-offline { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 12px; padding: 18px 20px; border: 1px solid color-mix(in srgb, var(--w-red) 45%, var(--w-line)); border-radius: 8px; background: linear-gradient(90deg, color-mix(in srgb, var(--w-red) 12%, var(--w-panel)), var(--w-panel) 60%); }
+.watch-root .watch-offline h2 { margin: 4px 0; font-size: 22px; }
+.watch-root .watch-offline p:not(.eyebrow) { margin: 0; color: var(--w-muted); font-size: 14px; }
+
+.watch-root .watch-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 16px 0 28px; }
+.watch-root .watch-button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 16px; border: 1px solid var(--w-line-strong); border-radius: 4px; text-decoration: none; font-weight: 700; color: var(--w-text); white-space: nowrap; transition: background-color var(--w-fast), border-color var(--w-fast); }
+.watch-root .watch-button:hover { background: #212121; }
+.watch-root .watch-button.primary { background: var(--w-red); border-color: var(--w-red); color: #fff; }
+.watch-root .watch-button.primary:hover { background: var(--p-red-press, #C40025); }
+
+.watch-root .watch-cta { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 0 0 28px; }
+.watch-root .watch-cta p:not(.eyebrow) { color: var(--w-muted); margin: 0; }
+
+.watch-root .watch-hint { color: var(--w-muted); font-size: 13px; margin-top: 0; }
+.watch-root .watch-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 24px; }
+.watch-root .watch-chips button { padding: 8px 14px; border-radius: 999px; font-size: 13px; min-height: 40px; }
+.watch-root .watch-chips button[aria-pressed='true'] { border-color: var(--w-red); color: #fff; background: #e4002b26; }
+.watch-root .watch-chips .watch-chip-clear { color: var(--w-muted); }
+.watch-root .watch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.watch-root .watch-card { border: 1px solid color-mix(in srgb, var(--p-common, #A9BED1) 55%, var(--w-line)); border-radius: 8px; padding: 8px; background: var(--w-panel); min-width: 0; }
+.watch-root .watch-card.rare { border-color: color-mix(in srgb, var(--p-rare, #42BAFF) 55%, var(--w-line)); }
+.watch-root .watch-card.epic { border-color: color-mix(in srgb, var(--p-epic, #BE75FF) 55%, var(--w-line)); }
+.watch-root .watch-card.legendary { border-color: color-mix(in srgb, var(--p-legendary, #FFD270) 55%, var(--w-line)); }
+.watch-root .watch-card-art { position: relative; aspect-ratio: 5 / 6; overflow: hidden; border-radius: 6px; background: var(--w-well); }
+.watch-root .watch-card-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.watch-root .watch-card h4 { margin: 6px 0 2px; font-size: 14px; overflow-wrap: anywhere; }
+.watch-root .watch-card small { color: var(--w-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+.watch-root .watch-card p { margin: 2px 0 0; font-size: 11px; color: var(--w-muted); }
+.watch-root .watch-demo { position: absolute; top: 6px; right: 6px; font-size: 9px; letter-spacing: 1px; background: #000b; padding: 2px 5px; border-radius: 3px; }
+.watch-root .empty { color: var(--w-muted); }
+
+/* Paste-a-link */
+.watch-root .watch-link { margin: 18px 0 0; display: grid; gap: 8px; }
+.watch-root .watch-link > label { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--w-muted); }
+.watch-root .watch-link-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.watch-root .watch-link-row input { flex: 1 1 260px; min-width: 0; width: auto; }
+.watch-root .watch-link-row button { flex: none; }
+
+/* Clip Lab */
+.watch-root .watch-lab { margin: 0 0 28px; }
+.watch-root .watch-lab-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.watch-root .watch-lab-head h2 { margin: 4px 0; }
+.watch-root .watch-lab-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.watch-root .watch-lab-msg { font-size: 13px; margin: 8px 0 0; padding: 8px 12px; border-radius: 4px; border: 1px solid var(--w-line); color: var(--w-muted); }
+.watch-root .watch-lab-msg.ok { border-color: #1f6f43; color: #9be7bd; }
+.watch-root .watch-lab-msg.error, .watch-root .watch-lab-msg.auth { border-color: var(--w-red); color: var(--w-red-text); }
+.watch-root .watch-lab-msg.missing { border-color: #8a6a1f; color: #f5d78a; }
+.watch-root .watch-lab-msg a { color: inherit; font-weight: 700; }
+.watch-root .watch-lab-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; margin-top: 18px; }
+.watch-root .watch-lab-frame, .watch-root .watch-lab-side { min-width: 0; display: grid; gap: 12px; align-content: start; }
+.watch-root .watch-lab-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px 16px; margin: 0; font-size: 13px; }
+.watch-root .watch-lab-meta > div { display: block; padding: 0; border: 0; }
+.watch-root .watch-lab-meta dt { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--w-muted); }
+.watch-root .watch-lab-meta dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+.watch-root .watch-lab-step { display: grid; gap: 8px; }
+.watch-root .watch-lab-step h3 { margin: 6px 0 0; }
+.watch-root .watch-lab-step small { font-size: 12px; }
+.watch-root .watch-rights { border: 1px solid var(--w-line); border-radius: 6px; padding: 12px; margin: 0; display: grid; gap: 10px; }
+.watch-root .watch-rights legend { padding: 0 6px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--w-red-text); }
+.watch-root .watch-check { display: flex; gap: 10px; align-items: flex-start; }
+.watch-root .watch-check input { width: 18px; height: 18px; flex: none; margin-top: 2px; accent-color: var(--w-red); }
+
+.watch-root .watch-crop { position: relative; width: 100%; background: #000; border-radius: 6px; overflow: hidden; touch-action: none; user-select: none; cursor: crosshair; }
+.watch-root .watch-crop img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.watch-root .watch-crop-box { position: absolute; border: 2px solid #fff; box-shadow: 0 0 0 9999px #000000a6; cursor: move; outline: none; }
+.watch-root .watch-crop-box:focus-visible { border-color: var(--w-red); }
+.watch-root .watch-crop-handle { position: absolute; right: -9px; bottom: -9px; width: 18px; height: 18px; background: var(--w-red); border: 2px solid #fff; border-radius: 3px; cursor: nwse-resize; }
+.watch-root .watch-cand { position: absolute; padding: 0; border: 2px dashed #3ddc84; border-radius: 3px; background: transparent; z-index: 1; min-height: 0; }
+.watch-root .watch-cand.picked { border-style: solid; }
+.watch-root .watch-cand span { position: absolute; left: -2px; top: -20px; font-size: 10px; background: #3ddc84; color: #000; padding: 1px 4px; font-weight: 800; }
+.watch-root .watch-crop-preview { width: 100%; max-width: 220px; aspect-ratio: 5 / 6; border-radius: 8px; border: 1px solid var(--w-line-strong); background-color: #000; background-repeat: no-repeat; justify-self: center; }
+.watch-root .watch-cand-list { display: flex; gap: 8px; flex-wrap: wrap; }
+.watch-root .watch-cand-list button { padding: 2px; display: grid; justify-items: center; gap: 2px; font-size: 10px; }
+.watch-root .watch-cand-list button[aria-pressed='true'] { border-color: #3ddc84; }
+.watch-root .watch-cand-list img { width: 48px; height: 48px; object-fit: cover; border-radius: 3px; }
+.watch-root .watch-lab-result { display: grid; gap: 10px; justify-items: start; }
+.watch-root .watch-lab-result .watch-card { width: 100%; max-width: 220px; }
+
+@media (max-width: 900px) {
+  .watch-root .watch-lab-body { grid-template-columns: minmax(0, 1fr); }
+  .watch-root .watch-stage.with-chat { grid-template-columns: minmax(0, 1fr); }
+  .watch-root .watch-chat { height: 380px; }
+}
+@media (max-width: 650px) {
+  .watch-root .watch-head { padding-top: 24px; }
+  .watch-root .watch-cta, .watch-root .watch-offline { flex-direction: column; align-items: stretch; }
+  .watch-root .watch-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .watch-root .watch-chat { height: 320px; }
+  .watch-root .watch-button { white-space: normal; text-align: center; }
+}
