@@ -43,6 +43,7 @@ export function rpcReader(rpcUrl: string, cluster: SolanaCluster): ChainReader {
   return {
     cluster,
     async getTx(signature) {
+      if (!/^[1-9A-HJ-NP-Za-km-z]{64,90}$/.test(signature)) return null; // not a real signature
       const tx = await conn.getParsedTransaction(signature, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
       if (!tx || !tx.meta) return null;
       return {

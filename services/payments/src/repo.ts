@@ -24,10 +24,16 @@ export type NewPurchase = Pick<PurchaseRow, "userId" | "bundleId" | "coins" | "l
 export interface PurchaseRepo {
   create(p: NewPurchase): Promise<PurchaseRow>;
   get(id: string): Promise<PurchaseRow | undefined>;
-  /** True if this signature already paid for some purchase. */
-  signatureUsed(signature: string): Promise<boolean>;
-  /** Marks a pending purchase paid. Returns false if it was already paid. */
-  markPaid(id: string, signature: string): Promise<boolean>;
+  /**
+   * Atomically attach a VERIFIED signature to a pending purchase before any ledger side effect.
+   * False if the purchase is not pending, already holds a different signature, or the signature
+   * is attached to another purchase (unique constraint).
+   */
+  reserveSignature(id: string, signature: string): Promise<boolean>;
+  /** Pending purchases created after `since`, oldest first (for reconciliation). */
+  pendingSince(since: Date, limit: number): Promise<PurchaseRow[]>;
+  /** Marks a pending purchase (with a reserved signature) paid. Returns false if it was already paid. */
+  markPaid(id: string): Promise<boolean>;
   listForUser(userId: string): Promise<PurchaseRow[]>;
 }
 
@@ -98,14 +104,30 @@ export function pgRepo(pool: pg.Pool): PurchaseRepo {
       const { rows } = await pool.query<DbRow>(`SELECT ${COLS} FROM purchases WHERE id = $1`, [id]);
       return rows[0] ? fromDb(rows[0]) : undefined;
     },
-    async signatureUsed(signature) {
-      const { rowCount } = await pool.query(`SELECT 1 FROM purchases WHERE tx_signature = $1`, [signature]);
-      return (rowCount ?? 0) > 0;
+    async reserveSignature(id, signature) {
+      try {
+        const res = await pool.query(
+          `UPDATE purchases SET tx_signature = $2
+           WHERE id = $1 AND status = 'pending' AND (tx_signature IS NULL OR tx_signature = $2)`,
+          [id, signature],
+        );
+        return (res.rowCount ?? 0) > 0;
+      } catch (err) {
+        if ((err as { code?: string }).code === "23505") return false; // signature belongs to another purchase
+        throw err;
+      }
     },
-    async markPaid(id, signature) {
+    async pendingSince(since, limit) {
+      const { rows } = await pool.query<DbRow>(
+        `SELECT ${COLS} FROM purchases WHERE status = 'pending' AND created_at >= $1 ORDER BY created_at LIMIT $2`,
+        [since, limit],
+      );
+      return rows.map(fromDb);
+    },
+    async markPaid(id) {
       const res = await pool.query(
-        `UPDATE purchases SET status = 'paid', tx_signature = $2, paid_at = now() WHERE id = $1 AND status <> 'paid'`,
-        [id, signature],
+        `UPDATE purchases SET status = 'paid', paid_at = now() WHERE id = $1 AND status = 'pending' AND tx_signature IS NOT NULL`,
+        [id],
       );
       return (res.rowCount ?? 0) > 0;
     },
@@ -137,15 +159,20 @@ export function memoryRepo(): PurchaseRepo & { rows: PurchaseRow[] } {
     async get(id) {
       return rows.find((r) => r.id === id);
     },
-    async signatureUsed(signature) {
-      return rows.some((r) => r.txSignature === signature);
-    },
-    async markPaid(id, signature) {
+    async reserveSignature(id, signature) {
       const r = rows.find((x) => x.id === id);
-      if (!r || r.status === "paid") return false;
-      if (rows.some((x) => x.txSignature === signature)) return false;
-      r.status = "paid";
+      if (!r || r.status !== "pending" || (r.txSignature && r.txSignature !== signature)) return false;
+      if (rows.some((x) => x.id !== id && x.txSignature === signature)) return false;
       r.txSignature = signature;
+      return true;
+    },
+    async pendingSince(since, limit) {
+      return rows.filter((r) => r.status === "pending" && new Date(r.createdAt) >= since).slice(0, limit);
+    },
+    async markPaid(id) {
+      const r = rows.find((x) => x.id === id);
+      if (!r || r.status !== "pending" || !r.txSignature) return false;
+      r.status = "paid";
       r.paidAt = new Date().toISOString();
       return true;
     },
