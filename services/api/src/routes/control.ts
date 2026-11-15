@@ -9,7 +9,7 @@ import { pool, tx, type Db } from "../db.js";
 import { fail } from "../errors.js";
 import { ensureArchive, searchArchive, toMoment } from "../control/archive.js";
 import { runScan } from "../control/kam.js";
-import { campaignOdds, DUPLICATE_THRESHOLD, findDuplicate, ollamaLore, shortTitle, templateDrafts } from "../control/studio.js";
+import { campaignOdds, cleanLore, DUPLICATE_THRESHOLD, findDuplicate, ollamaLore, shortTitle, templateDrafts } from "../control/studio.js";
 
 const Id = z.object({ id: z.string().uuid() });
 const AssetParams = z.object({ id: z.string().uuid(), assetId: z.string().uuid() });
@@ -294,8 +294,11 @@ export async function controlRoutes(app: FastifyInstance) {
     if (!claim.rowCount) fail("CONFLICT", "Only approved campaigns can launch");
     const camp = claim.rows[0];
     try {
-      const { assets } = await loadCampaign(pool, id);
-      const set = (await call(req, "POST", "/admin/sets", { name: camp.name.slice(0, 80), description: `${camp.pitch}`.slice(0, 500) })).set;
+      const { assets, moment } = await loadCampaign(pool, id);
+      // Fan-facing set description: the moment itself, never KAM's internal pitch or scoring evidence.
+      const firstLine = moment ? cleanLore(moment.summary).split(/(?<=[.!?])\s/)[0] ?? "" : "";
+      const description = moment ? `${moment.occurredOn.slice(0, 4)} · ${firstLine}`.slice(0, 280) + " A FaZe Moments drop (demo)." : "A FaZe Moments drop (demo).";
+      const set = (await call(req, "POST", "/admin/sets", { name: camp.name.slice(0, 80), description })).set;
       for (const a of assets) {
         const card = (await call(req, "POST", "/admin/cards", { setId: set.id, name: a.name, fazeMember: a.fazeMember, rarity: a.rarity, artUrl: a.artUrl, basePower: a.basePower, maxSupply: a.maxSupply })).card;
         await pool.query("UPDATE campaign_assets SET card_id=$2 WHERE id=$1", [a.id, card.id]);

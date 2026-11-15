@@ -76,6 +76,15 @@ async function externalViews(db: Db): Promise<Map<string, number>> {
   return new Map(r.rows.map((x) => [x.moment_key, Number(x.views)]));
 }
 
+/** Human trend text that stays sane on tiny or empty baselines. */
+export function trendText(cur: number, prev: number): string {
+  if (!cur && !prev) return "no engagement in the last 48h";
+  if (prev < 10) return cur ? "new engagement in the last 24h (no meaningful prior baseline)" : "engagement dropped to zero";
+  const r = cur / prev;
+  if (r >= 10) return "engagement up more than 10× vs prior 24h";
+  return `engagement ${r >= 1 ? "up" : "down"} ${Math.abs((r - 1) * 100).toFixed(0)}% vs prior 24h`;
+}
+
 export function scoreMoment(m: ReturnType<typeof toMoment> & { key?: string }, stats: Map<string, MemberStats>, totalPulls7d: number, now: Date, liveViews?: number) {
   const signals: Signal[] = [];
   const push = (key: keyof typeof W, label: string, value: number, detail: string) =>
@@ -97,9 +106,10 @@ export function scoreMoment(m: ReturnType<typeof toMoment> & { key?: string }, s
   else {
     const hype = Math.max(...ms.map((x) => x.s!.hype));
     const top = ms.reduce((a, b) => (b.s!.hype > a.s!.hype ? b : a));
-    const trend = ms.reduce((a, x) => a + x.s!.eng24, 0) / Math.max(1, ms.reduce((a, x) => a + x.s!.engPrev24, 0));
+    const cur = ms.reduce((a, x) => a + x.s!.eng24, 0), prev = ms.reduce((a, x) => a + x.s!.engPrev24, 0);
+    const trend = cur / Math.max(1, prev);
     const v = 0.7 * (hype / 100) + 0.3 * Math.min(1, trend / 2);
-    push("momentum", "Member momentum", v, `${top.name}: avg card hype ${hype.toFixed(0)}/100; engagement ${trend >= 1 ? "up" : "down"} ${Math.abs((trend - 1) * 100).toFixed(0)}% vs prior 24h`);
+    push("momentum", "Member momentum", v, `${top.name}: avg card hype ${hype.toFixed(0)}/100; ${trendText(cur, prev)}`);
   }
 
   // 3. Collector demand: share of last-7-day pulls that featured these members
@@ -123,7 +133,7 @@ export function scoreMoment(m: ReturnType<typeof toMoment> & { key?: string }, s
 }
 
 /** Moments that should never become a fan collectible drop (legal, gambling, health, harm). */
-const UNFIT = /\b(lawsuit|sues|sued|court|arrest|betting|gambling|igaming|casino|depression|suicide|died|death|overdose|harass|assault|brawl|feud|scam|layoffs?|delist|bankrupt)/i;
+const UNFIT = /\b(lawsuit|sues|sued|court|arrest|betting|gambling|igaming|casino|depression|suicide|died|death|overdose|harass|assault|brawl|feud|scam|layoffs?|delist|bankrupt|accus\w*|allegation\w*|alleged|viewbot\w*|cheat\w*|fraud\w*|scandal\w*|controvers\w*|banned|suspen\w*|fired|backlash|racis\w*|slur\w*|apolog\w*)/i;
 export function collectibleFit(m: { title: string; summary: string; tags: string[]; members: string[] }): { ok: boolean; reason: string } {
   if (m.tags.includes("controversy")) return { ok: false, reason: "controversy" };
   const hit = UNFIT.exec(`${m.title} ${m.summary}`);

@@ -30,8 +30,18 @@ export function shortTitle(title: string, max = 26): string {
   return (cut || t.slice(0, max)).trim();
 }
 
-function sentences(text: string): string[] {
+/** Removes links and handles so fan-facing lore never carries raw URLs. */
+export function cleanLore(text: string): string {
   return text
+    .replace(/\bhttps?:\/\/\S+/gi, "")
+    .replace(/\b(?:www\.)?(?:x|twitter|youtube|youtu|instagram|tiktok|twitch)\.(?:com|be|tv)\/\S*/gi, "")
+    .replace(/\s+([,.;:])/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function sentences(text: string): string[] {
+  return cleanLore(text)
     .replace(/\s+/g, " ")
     .split(/(?<=[.!?])\s+(?=[A-Z“"])/)
     .map((s) => s.trim())
@@ -48,9 +58,9 @@ export function templateDrafts(m: Moment, artFor: (member: string, i: number) =>
   const lines = sentences(m.summary);
   return PLAN.map((p, i) => {
     const member = members[i % members.length];
-    const cite = `(${year} · ${m.source.replace(/^.*\(PDF\),\s*/, "PDF ")})`;
     // Use each archive sentence once; past that, a plain factual caption (no invented detail).
-    const lore = i < lines.length ? `${clip(lines[i], 220)} ${cite}` : `${p.angle} card from “${shortTitle(m.title, 60)}”, ${year}. ${cite}`;
+    // Provenance (PDF page, citations) stays on the campaign + source moment, not in fan-facing lore.
+    const lore = i < lines.length ? `${clip(lines[i], 220)} (${year})` : `${p.angle} card from “${shortTitle(cleanLore(m.title), 60)}”, ${year}.`;
     return {
       position: i,
       name: clip(member ? `${member} / ${base} · ${p.angle}` : `${base} · ${p.angle}`, 80),

@@ -43,10 +43,12 @@ describe("Control Room insights API", () => {
     const open = await app.inject({ method: "POST", url: `/packs/${packId}/open`, payload: { idempotencyKey: randomUUID() }, ...as(a.cookie) });
     expect(open.statusCode).toBe(200);
     const f = await get("/admin/control/fans");
-    expect(f.funnel.signedUp).toBe(before.funnel.signedUp + 2);
-    expect(f.funnel.openedPack).toBe(before.funnel.openedPack + 1);
+    // other test files share this DB and sign users up concurrently: assert lower bounds, not exact counts
+    expect(f.funnel.signedUp).toBeGreaterThanOrEqual(before.funnel.signedUp + 2);
+    expect(f.funnel.openedPack).toBeGreaterThanOrEqual(before.funnel.openedPack + 1);
     const today = f.cohorts.find((c: { ageDays: number }) => c.ageDays === 0);
     expect(today.size).toBeGreaterThanOrEqual(2);
+    expect(today.size).toBeLessThanOrEqual(f.funnel.signedUp);
     expect(today.activatedD0).toBeGreaterThanOrEqual(1);
     expect(today.retainedD1).toBeNull(); // not old enough to measure
     expect(f.segments.new).toBeGreaterThanOrEqual(2);
@@ -112,5 +114,14 @@ describe("Control Room insights API", () => {
     expect(item).toBeTruthy();
     expect(JSON.stringify(o.moderation)).not.toContain("base64");
     expect(Array.isArray(o.rights)).toBe(true);
+  });
+});
+
+describe("review fixes (Tush's trading E2E)", () => {
+  it("rejects oversized trade offers (max 20 ids per side)", async () => {
+    const a = await signup(app), b = await signup(app);
+    const ids = Array.from({ length: 21 }, () => randomUUID());
+    const r = await app.inject({ method: "POST", url: "/trades", payload: { toUserId: b.id, offeredInstanceIds: ids, requestedInstanceIds: [] }, ...as(a.cookie) });
+    expect(r.statusCode).toBe(400);
   });
 });
