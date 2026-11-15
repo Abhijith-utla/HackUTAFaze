@@ -33,7 +33,7 @@ Rules that matter in practice:
 | **Server verifies payments on-chain** | Implemented | The client never reports a payment as successful. The payments service reads the transaction from Solana RPC and checks the reference key, the treasury recipient and the amount, and that the signature hasn't already been used. Only then does it credit coins through the API's internal ledger. |
 | **Database: one shared PostgreSQL** | Implemented | Accessed through a server-only `DATABASE_URL`. Migrations live in `services/api/migrations/` and run on API boot. |
 | **Tiger Cloud (managed Postgres) for hosting** | **Pending lead decision** in `agents/lead.md` | The code supports it (`sslmode=require` is enforced for remote hosts). Jaideep's local `.env` already points at a Tiger Cloud service, and it's migrated and seeded. |
-| **Every `artUrl` is absolute** (`${API_URL}/...`) | Contract v1.4 | This causes the `localhost` problem in §6.1. |
+| **`artUrl` is stored and returned relative** (`/art/<id>.<ext>`) | Contract v1.5 (supersedes v1.4 "absolute") | Clients resolve it with `new URL(artUrl, API_BASE)`. Card art moves into a `card_art` table (migration 002). Assigned to @toosh-legacy. |
 | **Trade picker user search** `GET /users?q=` | Contract v1.2 | Returns approved display names only, max 10. |
 | **Fan-art submissions** `POST /submissions/fan-art` | Contract v1.4 | Image bytes stay private in moderation until staff approve. |
 
@@ -171,7 +171,7 @@ npm run dev                     # api :4000, payments :4100, client :3000, admin
 
 Ordered by impact. "Verified" means it was observed on the running stack against the live database.
 
-### 6.1 Card art is not stored in the database (verified) — owner: A (@toosh-legacy), contract: lead
+### 6.1 Card art is not stored in the database (verified) — owner: A (@toosh-legacy). **Fix approved as v1.5, in progress**
 - **Demo art:** the 40 seed SVGs are files in `content/seed/art/`, served from disk by `GET /demo-art/:file` (`services/api/src/app.ts`).
 - **Uploaded art:** `POST /admin/art` writes to `UPLOAD_DIR`, default `.data/uploads/` on local disk (`services/api/src/routes/art.ts`).
 - **What breaks:**
@@ -205,7 +205,7 @@ Ordered by impact. "Verified" means it was observed on the running stack against
 - Next 16's dev server blocks non-localhost origins, so pages render but never hydrate.
 - **Merge `agent-c/demo-fixes`.**
 
-### 6.5 Payments CORS allows only one origin — owner: B (@Abhijith-utla)
+### 6.5 Payments CORS allows only one origin — **FIXED on main (f6b0202)**: payments now reads `CLIENT_ORIGINS` (comma list)
 - `services/payments/src/app.ts` passes the single `CLIENT_URL` to CORS. The API accepts a list (`CLIENT_ORIGINS`).
 - With a phone and a laptop in the demo, one of them can't buy coins.
 - **Fix:** accept a comma-separated list, like the API.
@@ -278,8 +278,10 @@ Ordered by impact. "Verified" means it was observed on the running stack against
 
 ## 8. Open questions for the lead (@Abhijith-utla)
 1. Adopt Tiger Cloud as the shared database? (It's open in `agents/lead.md`.)
-2. Approve moving card art into Postgres (`card_art` table) and switching `artUrl` back to relative (reversing v1.4)?
-3. Payments CORS list (§6.5), and adding `NEXT_PUBLIC_SOLANA_RPC_URL` to `.env.example`?
-4. Merge `agent-c/demo-fixes`?
+2. ~~Card art in Postgres + relative `artUrl`~~ APPROVED as contract v1.5; @toosh-legacy is implementing it.
+3. ~~Payments CORS list, `NEXT_PUBLIC_SOLANA_RPC_URL` in `.env.example`~~ DONE on main (f6b0202).
+4. ~~Merge `agent-c/demo-fixes`~~ Approved by the lead and merged to main.
+
+Still open with @tanejakeshav (flagged demo-blocking by the lead): hype saturation (§6.2), the 1 s moderation re-scan (§6.3), and making the admin app resolve relative `artUrl`.
 
 All of the §6 items were posted to the board on 2026-11-15, addressed to each owner: comment #6891407199 on issue #1.
