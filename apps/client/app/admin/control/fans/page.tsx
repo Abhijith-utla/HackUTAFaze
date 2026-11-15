@@ -24,7 +24,7 @@ export default function FansPage() {
   const steps = f ? [
     { label: "Signed up", v: f.funnel.signedUp },
     { label: "Opened a pack", v: f.funnel.openedPack },
-    { label: "Bought coins (devnet)", v: f.funnel.boughtCoins },
+    { label: "Paid with SOL (coins or packs, devnet)", v: f.funnel.boughtCoins },
     { label: "Completed a trade", v: f.funnel.traded },
   ] : [];
   const risk = f?.creatorDependence.risk;

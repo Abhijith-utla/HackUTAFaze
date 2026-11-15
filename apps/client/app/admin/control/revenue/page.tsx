@@ -36,7 +36,7 @@ export default function RevenuePage() {
   return (
     <>
       <Heading eyebrow="INTELLIGENCE / REVENUE & SPONSORS" title="Where the value comes from." />
-      <p className="cr-lede">Coin purchases are Phantom payments on Solana devnet (test funds), credited only after the server verifies them on-chain. Sponsor fees are demo contract values for reporting.</p>
+      <p className="cr-lede">Coin bundles and direct pack purchases are Phantom payments on Solana devnet (test funds), fulfilled only after the server verifies them on-chain. Sponsor fees are demo contract values for reporting.</p>
       {rev.error && <p className="cr-error" role="alert">{rev.error}</p>}
       <div className="cr-kpis">
         <Kpi accent label="Devnet SOL received" value={r ? n(r.purchases.sol, 2) : "…"} sub={r ? `${n(r.purchases.paid)} verified payments · ${n(r.purchases.paid24h)} in 24h` : ""} />
