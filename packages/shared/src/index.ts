@@ -172,8 +172,8 @@ export const LoginBody = z.object({ email: z.string().email(), password: z.strin
 export const OpenPackBody = z.object({ idempotencyKey: z.string().min(8) });
 export const CreateTradeBody = z.object({
   toUserId: z.string().uuid(),
-  offeredInstanceIds: z.array(z.string().uuid()),
-  requestedInstanceIds: z.array(z.string().uuid()),
+  offeredInstanceIds: z.array(z.string().uuid()).max(20),
+  requestedInstanceIds: z.array(z.string().uuid()).max(20),
   message: z.string().max(200).optional(),
 });
 export const CheckoutBody = z.object({ bundleId: z.string() });

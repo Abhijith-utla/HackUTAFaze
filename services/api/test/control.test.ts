@@ -3,8 +3,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { FastifyInstance } from "fastify";
 import { makeAdmin, makeApp, makeSetWithPack, pool, signup } from "./helpers.js";
-import { collectibleFit, daysToAnniversary, scoreMoment, viewsIn } from "../src/control/kam.js";
-import { campaignOdds, findDuplicate, similarity, templateDrafts } from "../src/control/studio.js";
+import { collectibleFit, daysToAnniversary, scoreMoment, trendText, viewsIn } from "../src/control/kam.js";
+import { campaignOdds, cleanLore, findDuplicate, similarity, templateDrafts } from "../src/control/studio.js";
 
 let app: FastifyInstance;
 let admin: { id: string; cookie: string };
@@ -62,6 +62,26 @@ describe("KAM collectible fit", () => {
     expect(collectibleFit({ ...base, tags: ["controversy"] }).ok).toBe(false);
     expect(collectibleFit({ ...base, members: [], tags: ["business"] }).ok).toBe(false);
     expect(collectibleFit({ ...base, summary: "The 1 Million Subscribers Teamtage" }).ok).toBe(true);
+    // Tush's review: accusations / viewbotting / cheating leaked through
+    expect(collectibleFit({ ...base, title: "Subathon II viewbotting accusations" }).ok).toBe(false);
+    expect(collectibleFit({ ...base, summary: "accused of cheating in ranked" }).ok).toBe(false);
+    expect(collectibleFit({ ...base, summary: "suspended from the league" }).ok).toBe(false);
+  });
+});
+
+describe("review fixes (pure)", () => {
+  it("trend text stays sane on tiny or empty baselines", () => {
+    expect(trendText(9792, 1)).toMatch(/no meaningful prior baseline/);
+    expect(trendText(0, 0)).toMatch(/no engagement/);
+    expect(trendText(5000, 100)).toBe("engagement up more than 10× vs prior 24h");
+    expect(trendText(150, 100)).toBe("engagement up 50% vs prior 24h");
+    expect(trendText(9792, 1)).not.toMatch(/\d{4,}%/);
+  });
+  it("fan-facing lore never carries URLs or internal page cites", () => {
+    expect(cleanLore("Banks posts it on https://x.com/Banks/status/123 and fans go wild.")).toBe("Banks posts it on and fans go wild.");
+    expect(cleanLore("See youtu.be/abc123 for the clip.")).not.toMatch(/youtu/);
+    const d = templateDrafts({ title: "A night", summary: "The stream peaked at x.com/FaZeClan with a huge crowd. It ran all night long.", members: ["Banks"], occurredOn: "2020-03-01", source: "FaZe Clan: A Timeline, 2010–2026 (PDF), p.9" }, () => "");
+    for (const x of d) { expect(x.lore).not.toMatch(/x\.com|https?:|PDF|p\.\d/); }
   });
 });
 
@@ -72,10 +92,10 @@ describe("Moment Studio (pure)", () => {
     expect(d.map((x) => x.rarity)).toEqual(["common", "common", "rare", "epic", "legendary"]);
     for (const x of d) {
       expect(x.fazeMember).toBe("FaZe Temperrr");
-      const text = x.lore.replace(/\s*\(2010 · .*\)$/, "").replace(/…$/, "");
+      const text = x.lore.replace(/\s*\(2010\)$/, "").replace(/…$/, "");
       // either one of the archive's own sentences, or a plain caption naming the moment (no invented facts)
       const fromArchive = moment.summary.includes(text.slice(0, 30));
-      const caption = /^(Origin|Crowd|Highlight|Signature|Legend) card from “Introducing FaZe Temperrr”, 2010\.$/.test(text);
+      const caption = /^(Origin|Crowd|Highlight|Signature|Legend) card from “Introducing FaZe Temperrr”, 2010\.$/.test(x.lore);
       expect(fromArchive || caption).toBe(true);
     }
     expect(d[4].maxSupply).toBe(50);

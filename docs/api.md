@@ -111,3 +111,19 @@ See [marketplace.md](marketplace.md) for public listings, private exchange offer
 
 ## Direct SOL pack purchases
 Fan Store now uses direct devnet SOL checkout and fulfillment. See [direct-sol-packs.md](direct-sol-packs.md). GET /packs adds priceLamports; POST /packs/:id/checkout, POST /pack-purchases/:id/confirm and GET /me/pack-purchases use the authenticated API session. Legacy coin checkout remains backward compatible but is no longer used by the fan client.
+
+## Control Room — intelligence, sponsors, operations (lead, v1.8; all `requireAdmin`)
+`services/api/src/routes/insights.ts`, migration `006_sponsors.sql`. UI: `/admin/control/fans`, `/revenue`, `/trust`.
+
+| Method | Path | Body → Response |
+|---|---|---|
+| GET | `/admin/control/fans` | → `{funnel, cohorts[14d: size, activatedD0, retainedD1/D3/D7 (null until the cohort is old enough)], segments, spend.topDecileShare, creatorDependence{members, hhi, topMemberShare, risk}, topCollectors}` — fans only, activity = pack opens, trades, paid purchases |
+| GET | `/admin/control/revenue` | → `{purchases (devnet SOL, payers, conversion, ARPPU), byBundle, solByDay, economy{issued, issuedBy, sunk, outstanding, sinkRatio}, campaigns[coins + sponsorFeesUsd]}` |
+| GET | `/admin/control/sponsors` | → `{sponsors[{…, activations[{feeUsd, collectorsReached, packOpens, costPerCollectorUsd}], totalFeeUsd}]}` |
+| POST | `/admin/control/sponsors` | `{name, category, notes?}` → `201 {id}`; gambling/betting/alcohol/tobacco/vape refused (400); duplicate name 409 |
+| PATCH | `/admin/control/sponsors/:id` | `{status: active\|paused}` |
+| POST | `/admin/control/sponsors/:id/activations` | `{campaignId, feeUsd?, deliverables?}` → `201`; campaign must be approved/live/ended; one per sponsor+campaign |
+| POST | `/admin/control/sponsors/activations/:id/end` | → `{ok}` |
+| GET | `/admin/control/ops` | → `{health, jobs{byKindStatus, recent}, moderation[pending, text only — never image bytes], rights[register], migrations, users}` |
+
+Sponsor fees are demo contract values for reporting; no money moves. Moderation actions in the UI use the existing `POST /admin/moderation/:id`.

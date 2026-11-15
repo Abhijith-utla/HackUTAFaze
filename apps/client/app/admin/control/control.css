@@ -173,3 +173,34 @@ button.cr-small { min-height: 34px; padding: 6px 12px; align-self: flex-start; }
 }
 
 }
+
+/* ---- unified admin: sign-in, grouped nav, intelligence screens (lead) ---- */
+.admin-root .cr-group { display: flex; flex-direction: column; gap: 2px; }
+.admin-root .cr-signin { width: min(420px, 100%); display: grid; gap: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 32px; }
+.admin-root .cr-signin h1 { margin: 6px 0 0; }
+.admin-root .cr-signin label, .admin-root .cr-form label { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
+.admin-root .cr-signin input, .admin-root .cr-form input, .admin-root .cr-form select { background: #0f0f13; color: #f5f5f7; border: 1px solid var(--line); border-radius: 5px; padding: 11px 12px; font: inherit; width: 100%; }
+.admin-root .cr-form { display: grid; gap: 12px; }
+.admin-root .cr-funnel { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.admin-root .cr-funnel li { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.admin-root .cr-funnel-text { display: grid; gap: 3px; text-align: left; }
+.admin-root .cr-funnel-bar { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, rgba(238, 36, 65, 0.35), rgba(238, 36, 65, 0.08)); z-index: 0; }
+.admin-root .cr-funnel li > :not(.cr-funnel-bar) { position: relative; z-index: 1; }
+.admin-root .cr-funnel b { font: 800 24px/1 ui-monospace, Menlo, monospace; }
+.admin-root .cr-funnel em { font-style: normal; color: var(--muted); font-size: 12px; }
+.admin-root .cr-heat { color: #fff; font-weight: 700; }
+.admin-root .cr-inline-badge { margin-left: 8px; padding: 2px 6px; }
+.admin-root .cr-sponsors { display: grid; gap: 14px; }
+.admin-root .cr-sponsor { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; background: #131317; }
+.admin-root .cr-sponsor.paused { opacity: 0.6; }
+.admin-root .cr-sponsor header { all: unset; display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; align-items: center; }
+.admin-root .cr-sponsor h3 { margin: 0; font-size: 17px; }
+.admin-root .cr-stat { display: inline-flex; flex-direction: column; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.admin-root .cr-stat b { font: 800 18px/1.1 ui-monospace, Menlo, monospace; color: #fff; letter-spacing: 0; text-transform: none; }
+.admin-root .cr-sponsor .cr-table { margin-top: 12px; }
+.admin-root .cr-queue { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; max-height: 420px; overflow: auto; }
+.admin-root .cr-queue li { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; }
+.admin-root .cr-queue li > div:first-child { display: grid; gap: 3px; min-width: 0; }
+.admin-root .cr-queue b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-root .cr-migrations { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.admin-root .cr-migrations li { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }

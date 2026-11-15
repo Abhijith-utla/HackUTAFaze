@@ -51,3 +51,9 @@ Migration 004 adds market_listings (owner, listed instance, state), market_offer
 
 ## Direct SOL pack orders
 Migration 005 adds purchases.pack_snapshot (jsonb quote/config/payer/idempotency key) and pack_pull_id (nullable FK pulls). Direct pack receipts use coins=0 and the existing global tx_signature uniqueness. Signature verification persists before atomic card/pull fulfillment; retries return the same pull without coin ledger writes.
+
+## Sponsors (lead, v1.8 — `006_sponsors.sql`)
+| Table | Key columns | Writer |
+|---|---|---|
+| `sponsors` | name (unique), category (energy_drink…other), notes, status (`active`\|`paused`), demo | Control Room |
+| `sponsor_activations` | sponsor_id, campaign_id (unique pair), fee_usd (demo), deliverables, status (`active`\|`ended`), ended_at | Control Room |

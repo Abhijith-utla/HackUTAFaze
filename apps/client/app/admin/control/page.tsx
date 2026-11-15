@@ -30,7 +30,7 @@ export default function OverviewPage() {
         <Kpi label="Trades completed" value={k ? n(k.tradesAccepted) : "…"} sub={k ? `${n(k.tradesOpen)} open offers` : ""} />
         <Kpi label="Live campaigns" value={k ? n(k.campaignsLive) : "…"} sub={<Link href="/admin/control/campaigns">Campaign Command →</Link>} />
         <Kpi label="Awaiting approval" value={k ? n(k.approvalsPending) : "…"} sub={<Link href="/admin/control/studio">Moment Studio →</Link>} />
-        <Kpi label="Moderation queue" value={k ? n(k.moderationPending) : "…"} sub={<Link href="/admin">Review submissions →</Link>} />
+        <Kpi label="Moderation queue" value={k ? n(k.moderationPending) : "…"} sub={<Link href="/admin/control/trust">Review in Trust & Ops →</Link>} />
       </div>
       <div className="cr-grid2">
         <Panel title="Pack opens, last 24 hours" note="per hour · from pulls">

@@ -1,6 +1,6 @@
 # Agent D — Content pipeline & moderation — @tanejakeshav
 
-Owns: `services/worker/`, `apps/client/app/admin/page.tsx` (staff console at `/admin`), `content/seed/`.
+Owns: `services/worker/`, `apps/client/app/admin/control/content/page.tsx` (content ops at `/admin/control/content`), `content/seed/`.
 Consumes: A's admin endpoints and DB tables listed in `docs/data-model.md`.
 
 ## Features
