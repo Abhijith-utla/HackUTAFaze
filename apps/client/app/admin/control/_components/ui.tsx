@@ -1,6 +1,7 @@
 "use client";
 // FaZe Control Room — Business Operations shell + primitives (no chart dependency; plain SVG).
 import Link from "next/link";
+import Brand from "../../../brand";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { api, RARITY_COLORS, SIGNAL_COLORS, STATUS_LABEL, type Campaign, type Signal } from "./lib";
@@ -81,7 +82,7 @@ function SignIn({ onDone }: { onDone: (me: { user: { displayName: string; role: 
           }
         }}
       >
-        <div className="brand">F<span>/</span> CONTROL ROOM</div>
+        <Brand label="Control room" />
         <h1>Staff sign-in.</h1>
         <p className="cr-muted">One login for content, campaigns, intelligence and operations.</p>
         <label>Email<input name="email" type="email" required autoComplete="username" /></label>
@@ -116,7 +117,7 @@ export function Shell({ children }: { children: ReactNode }) {
   return (
     <>
       <header>
-        <div className="brand">F<span>/</span> CONTROL ROOM</div>
+        <Brand label="Control room" />
         <div className="staff">
           {me.user.displayName}
           <span className="badge">DEMO</span>

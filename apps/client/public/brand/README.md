@@ -10,6 +10,7 @@
 
 | File | What it shows |
 |---|---|
+| `faze-mark-dark.png` | Unaltered `_LOGOS/Logos/PNG/No Stroke/FaZe_NoStroke_On Dark.png` from the supplied ZIP. One-color mark for dark backgrounds; the shared `Brand` component displays it at 40px inside a 64px clear container. |
 | `faze-wordmark-white.png` | Unaltered copy of `wordmark/asset-5.png`. The white horizontal "FAZECLAN" lockup with the FaZe icon, which has a white fill and black/red outline. Transparent background, 1214x120. **For dark backgrounds only.** |
 | `faze-mark-white.png` | **Not present.** The toolkit has no standalone white icon or short "FaZe" mark. The icon appears only inside the lockups, and cropping it out would alter the logo, which the brand rules forbid. |
 
