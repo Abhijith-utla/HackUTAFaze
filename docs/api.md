@@ -81,7 +81,7 @@ POST `/admin/art` requires an admin session. Body `{base64,mimeType}` accepts ca
 Compatibility: `/admin/art` accepts both `{base64,mimeType}` and the v1.3 `{filename,contentType,dataBase64}` form. The legacy form returns an absolute `/art/<uuid>.<ext>` URL; the new form returns `/uploaded-art/<uuid>.<ext>`. Both public routes serve the same validated stored artwork. UPLOAD_DIR takes precedence over legacy ART_DIR.
 
 ## Control Room — business operations (lead, v1.6; all `requireAdmin`)
-Lives in `services/api/src/routes/control.ts` + `src/control/*`; UI in `apps/admin/app/control/**`. Launch and end call the existing `/admin/sets|cards|packs|publish` endpoints with the admin's own session, so their validation and publish checks still apply.
+Lives in `services/api/src/routes/control.ts` + `src/control/*`; UI in `apps/client/app/admin/control/**` (served at `/admin/control` in the fan app). Launch and end call the existing `/admin/sets|cards|packs|publish` endpoints with the admin's own session, so their validation and publish checks still apply.
 
 | Method | Path | Body → Response |
 |---|---|---|

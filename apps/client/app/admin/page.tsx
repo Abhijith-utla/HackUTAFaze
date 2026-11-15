@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, type FormEvent } from "react";
 import type { Card, CardSet, Pack, Submission, User } from "@faze/shared";
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API } from "../../lib/api";
 type AdminPack = Pack & { active: boolean };
 type View = "sets" | "cards" | "packs" | "moderation" | "engagement";
 async function api(path: string, method = "GET", body?: unknown) {
@@ -203,7 +203,7 @@ export default function Page() {
             </button>
           ))}
           <p className="eyebrow" style={{ marginTop: 28 }}>BUSINESS OPERATIONS</p>
-          <a className="cr-link" href="/control">KAM, Moment Studio, campaigns ↗</a>
+          <a className="cr-link" href="/admin/control">KAM, Moment Studio, campaigns ↗</a>
           <p className="aside-note">
             Demo content • Solana devnet
             <br />

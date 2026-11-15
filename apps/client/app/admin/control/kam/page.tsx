@@ -27,7 +27,7 @@ export default function KamPage() {
   });
   const createCampaign = (o: Opportunity) => act(o.id, async () => {
     const r = await api<{ campaign: { id: string } }>("/admin/control/campaigns", "POST", { opportunityId: o.id });
-    router.push(`/control/campaigns/${r.campaign.id}`);
+    router.push(`/admin/control/campaigns/${r.campaign.id}`);
   });
   const dismiss = (o: Opportunity) => act(o.id, async () => { await api(`/admin/control/opportunities/${o.id}/dismiss`, "POST"); await kam.reload(); });
   const search = (e: React.FormEvent) => { e.preventDefault(); void act("search", async () => setResults((await api<{ moments: (Moment & { rank: number })[] }>(`/admin/control/archive?q=${encodeURIComponent(q)}&limit=12`)).moments)); };

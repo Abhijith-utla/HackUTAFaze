@@ -127,7 +127,7 @@ Rules that matter in practice:
   - `lib/phantom.ts`: `NEXT_PUBLIC_SOLANA_RPC_URL` overrides the rate-limited public devnet RPC.
 - An older, superseded version of the client also exists on branch `agent-c/client` (`src/app/...` layout). Don't merge it; `main`'s client replaced it.
 
-### 4.5 Admin app: `apps/admin` (Next.js, port 3001)
+### 4.5 Admin: `apps/client/app/admin` (`/admin` + `/admin/control` in the fan app; was `apps/admin` on :3001)
 - A staff console (`app/page.tsx`): sets, cards (with art upload), packs and odds, publishing, the moderation queue and engagement spikes. It hasn't been reviewed in depth in this handoff; only that it loads (HTTP 200) was verified.
 
 ### 4.6 Shared and tooling
@@ -144,7 +144,7 @@ cp .env.example .env    # then fill the values below
 # test database (only needed for tests):
 sudo systemctl start docker && docker compose up -d db
 npm run seed -w @faze/api       # migrates + seeds demo data (idempotent)
-npm run dev                     # api :4000, payments :4100, client :3000, admin :3001, worker
+npm run dev                     # api :4000, payments :4100, client :3000 (admin at /admin, Control Room at /admin/control), worker
 ```
 
 **Values you must set in `.env`** (everything else has working defaults):

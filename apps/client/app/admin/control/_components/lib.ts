@@ -2,7 +2,9 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+// Same API base as the fan app (rewrites localhost to the page host for phone/LAN demos).
+import { API } from "../../../../lib/api";
+export { API };
 
 export async function api<T = any>(path: string, method = "GET", body?: unknown): Promise<T> {
   const r = await fetch(API + path, {

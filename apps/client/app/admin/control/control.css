@@ -1,4 +1,7 @@
-/* FaZe Control Room — Business Operations (lead). Builds on the console tokens in ../globals.css. */
+/* FaZe Control Room — Business Operations (lead). Scoped under .admin-root. */
+@keyframes cr-pulse { 70% { box-shadow: 0 0 0 9px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+.admin-root {
+
 .cr-main { position: relative; }
 .cr-main::before {
   content: ""; position: absolute; inset: 0; pointer-events: none; z-index: -1;
@@ -28,7 +31,7 @@ a { color: inherit; }
 /* live + pulse */
 .cr-live { display: inline-flex; gap: 8px; align-items: center; color: var(--muted); font-size: 12px; letter-spacing: 0.5px; }
 .cr-pulse { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); animation: cr-pulse 1.6s infinite; display: inline-block; }
-@keyframes cr-pulse { 70% { box-shadow: 0 0 0 9px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+
 @media (prefers-reduced-motion: reduce) { .cr-pulse { animation: none; } }
 
 /* KPIs */
@@ -167,4 +170,6 @@ button.cr-small { min-height: 34px; padding: 6px 12px; align-self: flex-start; }
   .cr-aside { flex-direction: row; flex-wrap: wrap; }
   .cr-aside .eyebrow, .cr-aside .aside-note { width: 100%; }
   .cr-hbar { grid-template-columns: 90px 1fr 44px; }
+}
+
 }
