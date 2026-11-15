@@ -108,6 +108,18 @@ describe("packs", () => {
   });
 });
 
+describe("GET /users?q=", () => {
+  it("returns approved names by prefix, hides pending ones, needs auth", async () => {
+    const tag = `Zq${randomUUID().slice(0, 6)}`;
+    const a = await signup(app, `${tag}Alpha`);
+    const b = await signup(app, `${tag}Beta`);
+    await pool.query("UPDATE users SET display_name_status='approved' WHERE id=$1", [a.id]);
+    const res = await app.inject({ method: "GET", url: `/users?q=${tag}`, headers: { cookie: b.cookie } });
+    expect(res.json().users).toEqual([{ id: a.id, displayName: `${tag}Alpha` }]);
+    expect((await app.inject({ method: "GET", url: "/users?q=x" })).statusCode).toBe(401);
+  });
+});
+
 describe("collection + leaderboard", () => {
   it("GET /cards/:id returns hype; public collection works; leaderboard scores by rarity", async () => {
     const { packId, cardIds } = await makeSetWithPack({ perPack: 2, odds: { legendary: 100 }, cards: [{ rarity: "legendary" }] });

@@ -35,6 +35,19 @@ export async function collectionRoutes(app: FastifyInstance) {
     return { cards: await collectionOf(s.sub) };
   });
 
+  // v1.2 trade picker: approved display names only, prefix match, max 10, excludes the caller.
+  app.get<{ Querystring: { q?: string } }>("/users", async (req) => {
+    const me = requireUser(req);
+    const q = (req.query.q ?? "").trim().replace(/[\\%_]/g, (m) => "\\" + m);
+    const r = await pool.query(
+      `SELECT id, display_name FROM users
+        WHERE display_name_status='approved' AND id <> $1 AND display_name ILIKE $2
+        ORDER BY display_name LIMIT 10`,
+      [me.sub, `${q}%`],
+    );
+    return { users: r.rows.map((u) => ({ id: u.id, displayName: u.display_name })) };
+  });
+
   app.get<{ Params: { id: string } }>("/users/:id/collection", async (req) => {
     const u = await pool.query("SELECT id FROM users WHERE id=$1", [req.params.id]);
     if (!u.rowCount) fail("NOT_FOUND", "User not found");
