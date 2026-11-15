@@ -32,6 +32,7 @@ export default function Home() {
     finally {
         setBusy(false);
     } }
+    useEffect(() => { if (!detail) return; const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setDetail(null); }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, [detail]);
     useEffect(() => { request<MeResponse>('/me').then(setMe).catch(e => { if (!(e instanceof ApiError) || e.status !== 401)
         setError(String(e)); }).finally(() => setReady(true)); request<{
         packs: Pack[];
@@ -70,5 +71,5 @@ export default function Home() {
         }>('/me/purchases', undefined, PAYMENTS)).purchases); })}>Connect Phantom & pay</button></article>)}</div><h3>PURCHASES</h3>{purchases.map(p => <article className="purchase panel" key={p.id}><div><strong>{p.coins} coins</strong><p>{new Date(p.createdAt).toLocaleString()} · {p.cluster} · TEST</p><small>{p.status}</small></div>{p.status === 'pending' && <button disabled={busy} onClick={() => run(async () => { await confirmPayment(p.id); await refresh(); setPurchases((await request<{
             purchases: Purchase[];
         }>('/me/purchases', undefined, PAYMENTS)).purchases); setNotice('Payment confirmed.'); })}>Check payment</button>}</article>)}</>}
- </>}{detail && <div className="modal" role="dialog" aria-modal="true" aria-label="Card details"><section className="panel"><button autoFocus onClick={() => setDetail(null)}>Close details ✕</button><CardView card={detail.card}/><p>Hype: {detail.stats.hype}/100 · simulated engagement</p><p>Set: {detail.card.setId}</p><p>Supply: {detail.card.maxSupply ?? 'Unlimited'}</p></section></div>}</main><footer>FΛZE VAULT / DEMO COLLECTIBLES <span>Coins cannot be redeemed for cash.</span></footer></>;
+ </>}{detail && <div className="modal" role="dialog" aria-modal="true" aria-label="Card details" onClick={e => { if (e.target === e.currentTarget) setDetail(null); }}><section className="panel"><button autoFocus onClick={() => setDetail(null)}>Close details ✕</button><CardView card={detail.card}/><p>Hype: {detail.stats.hype}/100 · simulated engagement</p><p>Set: {detail.card.setId}</p><p>Supply: {detail.card.maxSupply ?? 'Unlimited'}</p></section></div>}</main><footer>FΛZE VAULT / DEMO COLLECTIBLES <span>Coins cannot be redeemed for cash.</span></footer></>;
 }
