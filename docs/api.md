@@ -11,6 +11,7 @@ Errors: `{ "error": { "code": "STRING_CODE", "message": "human text" } }`. Codes
 | POST | `/auth/login` | `{email, password}` → `{user}` |
 | POST | `/auth/logout` | → `204` |
 | GET | `/me` | → `{user, balance}` |
+| GET | `/users?q=<prefix>` | → `{users: [{id, displayName}]}` — approved display names only, max 10 (v1.2, trade picker) |
 
 ## Packs & collection (A)
 | Method | Path | Body → Response |
