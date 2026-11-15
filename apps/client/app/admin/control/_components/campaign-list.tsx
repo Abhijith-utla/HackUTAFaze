@@ -17,12 +17,12 @@ export function CampaignList({ statuses, empty, poll = 0 }: { statuses: Campaign
         <tbody>
           {rows.map((c) => (
             <tr key={c.id}>
-              <td><Link href={`/control/campaigns/${c.id}`}><b>{c.name}</b></Link><small>{c.generator === "template" ? "Template writer" : c.generator}</small></td>
+              <td><Link href={`/admin/control/campaigns/${c.id}`}><b>{c.name}</b></Link><small>{c.generator === "template" ? "Template writer" : c.generator}</small></td>
               <td><StatusBadge status={c.status} /></td>
               <td className="num">{n(c.packPriceCoins)} coins</td>
               <td className="num">{c.packId ? n(c.pulls ?? 0) : "—"}</td>
               <td>{ago(c.endedAt ?? c.launchedAt ?? c.reviewedAt ?? c.submittedAt ?? c.createdAt)}</td>
-              <td><Link className="cr-open" href={`/control/campaigns/${c.id}`}>Open →</Link></td>
+              <td><Link className="cr-open" href={`/admin/control/campaigns/${c.id}`}>Open →</Link></td>
             </tr>
           ))}
         </tbody>

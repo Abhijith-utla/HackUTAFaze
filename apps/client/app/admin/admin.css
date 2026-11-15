@@ -1,4 +1,7 @@
-:root {
+/* Staff console styles (Keshav), scoped under .admin-root so they never leak into the fan app. */
+.admin-root {
+  min-height: 100vh;
+& {
   color-scheme: dark;
   --bg: #0b0b0e;
   --panel: #151519;
@@ -9,7 +12,7 @@
 * {
   box-sizing: border-box;
 }
-body {
+& {
   margin: 0;
   background: var(--bg);
   color: #f5f5f7;
@@ -334,3 +337,5 @@ footer {
 }
 /* link into /control (lead) */
 .cr-link { display: block; padding: 11px 12px; color: #fca5b4; text-decoration: none; font-weight: 700; border-left: 3px solid var(--red); background: #1c1013; border-radius: 3px; }
+
+}

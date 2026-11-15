@@ -7,7 +7,7 @@ export default function StudioPage() {
   return (
     <>
       <Heading eyebrow="MOMENT STUDIO / DRAFTS & APPROVALS" title="From archive moment to card set.">
-        <Link className="cr-btn" href="/control/kam">Find a moment in KAM →</Link>
+        <Link className="cr-btn" href="/admin/control/kam">Find a moment in KAM →</Link>
       </Heading>
       <p className="cr-lede">Drafts are grounded in the archive entry: card lore uses the moment&apos;s own sentences, names are checked against every existing card for duplicates, and nothing launches until someone confirms rights and approves it.</p>
       <CampaignList

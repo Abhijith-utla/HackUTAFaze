@@ -6,11 +6,11 @@ import { useEffect, useState, type ReactNode } from "react";
 import { api, RARITY_COLORS, SIGNAL_COLORS, STATUS_LABEL, type Campaign, type Signal } from "./lib";
 
 const NAV = [
-  { href: "/control", label: "Overview", code: "01" },
-  { href: "/control/kam", label: "KAM Intelligence", code: "02" },
-  { href: "/control/studio", label: "Moment Studio", code: "03" },
-  { href: "/control/campaigns", label: "Campaign Command", code: "04" },
-  { href: "/control/audit", label: "Trust & Audit", code: "05" },
+  { href: "/admin/control", label: "Overview", code: "01" },
+  { href: "/admin/control/kam", label: "KAM Intelligence", code: "02" },
+  { href: "/admin/control/studio", label: "Moment Studio", code: "03" },
+  { href: "/admin/control/campaigns", label: "Campaign Command", code: "04" },
+  { href: "/admin/control/audit", label: "Trust & Audit", code: "05" },
 ];
 
 export function Shell({ children }: { children: ReactNode }) {
@@ -27,7 +27,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <p className="eyebrow">FAZE CONTROL ROOM</p>
           <h1>Staff sign-in required.</h1>
           <p className="cr-muted">Sign in with an admin account on the staff console, then come back.</p>
-          <Link className="cr-btn" href="/">Go to staff sign-in</Link>
+          <Link className="cr-btn" href="/admin">Go to staff sign-in</Link>
         </div>
       </div>
     );
@@ -45,7 +45,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <aside className="cr-aside">
           <p className="eyebrow">BUSINESS OPERATIONS</p>
           {NAV.map((n) => {
-            const on = n.href === "/control" ? path === "/control" : path.startsWith(n.href);
+            const on = n.href === "/admin/control" ? path === "/admin/control" : path.startsWith(n.href);
             return (
               <Link key={n.href} href={n.href} className={`cr-nav${on ? " on" : ""}`}>
                 <span className="cr-code">{n.code}</span>
@@ -54,7 +54,7 @@ export function Shell({ children }: { children: ReactNode }) {
             );
           })}
           <p className="eyebrow cr-gap">CONTENT OPERATIONS</p>
-          <Link href="/" className="cr-nav"><span className="cr-code">↩</span>Sets, cards, packs, moderation</Link>
+          <Link href="/admin" className="cr-nav"><span className="cr-code">↩</span>Sets, cards, packs, moderation</Link>
           <p className="aside-note">
             Demo data · Solana devnet
             <br />

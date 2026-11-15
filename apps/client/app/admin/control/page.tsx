@@ -28,9 +28,9 @@ export default function OverviewPage() {
         <Kpi label="Coins spent on packs" value={k ? compact(k.coinsSpent) : "…"} sub={k ? `${compact(k.coinsPurchased)} coins bought` : ""} />
         <Kpi label="Devnet SOL received" value={k ? n(k.solReceived, 2) : "…"} sub={k ? `${n(k.purchasesPaid)} verified payments · test funds` : ""} />
         <Kpi label="Trades completed" value={k ? n(k.tradesAccepted) : "…"} sub={k ? `${n(k.tradesOpen)} open offers` : ""} />
-        <Kpi label="Live campaigns" value={k ? n(k.campaignsLive) : "…"} sub={<Link href="/control/campaigns">Campaign Command →</Link>} />
-        <Kpi label="Awaiting approval" value={k ? n(k.approvalsPending) : "…"} sub={<Link href="/control/studio">Moment Studio →</Link>} />
-        <Kpi label="Moderation queue" value={k ? n(k.moderationPending) : "…"} sub={<Link href="/">Review submissions →</Link>} />
+        <Kpi label="Live campaigns" value={k ? n(k.campaignsLive) : "…"} sub={<Link href="/admin/control/campaigns">Campaign Command →</Link>} />
+        <Kpi label="Awaiting approval" value={k ? n(k.approvalsPending) : "…"} sub={<Link href="/admin/control/studio">Moment Studio →</Link>} />
+        <Kpi label="Moderation queue" value={k ? n(k.moderationPending) : "…"} sub={<Link href="/admin">Review submissions →</Link>} />
       </div>
       <div className="cr-grid2">
         <Panel title="Pack opens, last 24 hours" note="per hour · from pulls">

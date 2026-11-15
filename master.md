@@ -32,7 +32,7 @@ Anything not on this list is a stretch goal (§9).
 
 ```
 apps/client  (Next.js web, responsive mobile)  ──HTTP/JSON──▶  services/api  (Node/TS, Postgres)
-apps/admin   (Next.js, staff only)             ──HTTP/JSON──▶  services/api
+apps/client/app/admin  (staff only, /admin + /admin/control) ──▶  services/api
 services/payments  (Solana devnet verify)       ──internal──▶  services/api ledger
                    ◀──RPC── api.devnet.solana.com      (client signs with Phantom)
 services/worker    (queues: moderation, engagement sim, set publishing)
@@ -75,7 +75,7 @@ Card crafting (burn 5 duplicates → 1 higher rarity), daily login reward, push 
 | A — Core API & game economy | @toosh-legacy | `services/api/` |
 | B — Payments & integration QA | @Abhijith-utla | `services/payments/`, `tests/integration/` |
 | C — Fan client (web + mobile) | @Jaideepo7 | `apps/client/` |
-| D — Content pipeline & moderation | @tanejakeshav | `services/worker/`, `apps/admin/`, `content/seed/` |
+| D — Content pipeline & moderation | @tanejakeshav | `services/worker/`, `apps/client/app/admin/` (staff console), `content/seed/` |
 
 ## 9. Milestones (hackathon clock)
 

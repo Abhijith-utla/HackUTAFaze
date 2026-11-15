@@ -54,10 +54,14 @@ One owner per area; matches master.md §8. Task briefs per person are in `agents
 | Agent A: Core API & game economy | @toosh-legacy | `services/api/` | `agents/A-core-api.md` |
 | Agent B: Payments & integration QA | @Abhijith-utla | `services/payments/`, `tests/integration/` | `agents/B-payments-qa.md` |
 | Agent C: Fan client (web + mobile) | @Jaideepo7 | `apps/client/` | `agents/C-client.md` |
-| Agent D: Content pipeline & moderation | @tanejakeshav | `services/worker/`, `apps/admin/`, `content/seed/` | `agents/D-content.md` |
+| Agent D: Content pipeline & moderation | @tanejakeshav | `services/worker/`, `apps/client/app/admin/` (staff console), `content/seed/` | `agents/D-content.md` |
 | Board tooling | Lead (@Abhijith-utla) | `tools/`, `.claude/`, `.github/` | |
 
 Team lead: **@Abhijith-utla**.
+
+Integrator: **@tanejakeshav** is authorized by the lead (2026-11-15) to merge work across all areas into `main`. Owners still review changes to their folders and can request reverts on the board.
+
+The admin is part of the fan app: staff console `apps/client/app/admin/page.tsx` (Agent D), Control Room `apps/client/app/admin/control/**` (lead; Moment Scout `.../control/scout/**` is @Jaideepo7's). There is no separate `apps/admin` workspace anymore.
 
 ## Stack (lead-decided)
 Payments: Phantom wallet + Solana devnet, server-verified (lead decision, Abhijith). Database: PostgreSQL via server-only `DATABASE_URL` (local default: `docker compose up -d db`). Managed Postgres such as Tiger Cloud works through the same URL with `sslmode=require`; adopting it is **pending the lead's decision**. Only the lead changes these lines.

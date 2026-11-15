@@ -165,7 +165,7 @@ export default function CampaignPage() {
             <span className="cr-muted">Or open the pack yourself in the fan app.</span>
           </div>
         )}
-        {c.status === "ended" && <p className="cr-muted">This drop is closed. Results above are final. <Link href="/control/kam">Find the next moment →</Link></p>}
+        {c.status === "ended" && <p className="cr-muted">This drop is closed. Results above are final. <Link href="/admin/control/kam">Find the next moment →</Link></p>}
       </Panel>
       {toast && <Toast msg={toast.msg} kind={toast.kind} onDone={() => setToast(null)} />}
     </>
