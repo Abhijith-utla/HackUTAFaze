@@ -1,0 +1,680 @@
+{
+  "demo": true,
+  "sets": [
+    {
+      "id": "d0000000-0000-4000-8000-000000000001",
+      "name": "OG Era",
+      "description": "OG Era: fictional demo collectibles with original geometric art.",
+      "status": "live",
+      "demo": true,
+      "publishedAt": "2026-11-15T00:00:00Z"
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000000002",
+      "name": "Creators",
+      "description": "Creators: fictional demo collectibles with original geometric art.",
+      "status": "live",
+      "demo": true,
+      "publishedAt": "2026-11-15T00:00:00Z"
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000000003",
+      "name": "Esports Moments",
+      "description": "Esports Moments: fictional demo collectibles with original geometric art.",
+      "status": "live",
+      "demo": true,
+      "publishedAt": "2026-11-15T00:00:00Z"
+    }
+  ],
+  "cards": [
+    {
+      "id": "d0000000-0000-4000-8000-000000001001",
+      "setId": "d0000000-0000-4000-8000-000000000001",
+      "name": "Banks / OG Era 1",
+      "fazeMember": "FaZe Banks",
+      "rarity": "common",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001001.svg",
+      "basePower": 25,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001002",
+      "setId": "d0000000-0000-4000-8000-000000000001",
+      "name": "Apex / OG Era 2",
+      "fazeMember": "FaZe Apex",
+      "rarity": "rare",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001002.svg",
+      "basePower": 45,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001003",
+      "setId": "d0000000-0000-4000-8000-000000000001",
+      "name": "Rain / OG Era 3",
+      "fazeMember": "FaZe Rain",
+      "rarity": "epic",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001003.svg",
+      "basePower": 65,
+      "maxSupply": 100,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001004",
+      "setId": "d0000000-0000-4000-8000-000000000001",
+      "name": "Adapt / OG Era 4",
+      "fazeMember": "FaZe Adapt",
+      "rarity": "legendary",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001004.svg",
+      "basePower": 85,
+      "maxSupply": 25,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001005",
+      "setId": "d0000000-0000-4000-8000-000000000001",
+      "name": "Rug / OG Era 5",
+      "fazeMember": "FaZe Rug",
+      "rarity": "common",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001005.svg",
+      "basePower": 25,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001006",
+      "setId": "d0000000-0000-4000-8000-000000000001",
+      "name": "Banks / OG Era 6",
+      "fazeMember": "FaZe Banks",
+      "rarity": "rare",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001006.svg",
+      "basePower": 45,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001007",
+      "setId": "d0000000-0000-4000-8000-000000000001",
+      "name": "Apex / OG Era 7",
+      "fazeMember": "FaZe Apex",
+      "rarity": "epic",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001007.svg",
+      "basePower": 65,
+      "maxSupply": 100,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001008",
+      "setId": "d0000000-0000-4000-8000-000000000001",
+      "name": "Rain / OG Era 8",
+      "fazeMember": "FaZe Rain",
+      "rarity": "legendary",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001008.svg",
+      "basePower": 85,
+      "maxSupply": 25,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001009",
+      "setId": "d0000000-0000-4000-8000-000000000001",
+      "name": "Adapt / OG Era 9",
+      "fazeMember": "FaZe Adapt",
+      "rarity": "common",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001009.svg",
+      "basePower": 25,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001010",
+      "setId": "d0000000-0000-4000-8000-000000000001",
+      "name": "Rug / OG Era 10",
+      "fazeMember": "FaZe Rug",
+      "rarity": "rare",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001010.svg",
+      "basePower": 45,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001011",
+      "setId": "d0000000-0000-4000-8000-000000000001",
+      "name": "Banks / OG Era 11",
+      "fazeMember": "FaZe Banks",
+      "rarity": "epic",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001011.svg",
+      "basePower": 65,
+      "maxSupply": 100,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001012",
+      "setId": "d0000000-0000-4000-8000-000000000001",
+      "name": "Apex / OG Era 12",
+      "fazeMember": "FaZe Apex",
+      "rarity": "legendary",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001012.svg",
+      "basePower": 85,
+      "maxSupply": 25,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001013",
+      "setId": "d0000000-0000-4000-8000-000000000001",
+      "name": "Rain / OG Era 13",
+      "fazeMember": "FaZe Rain",
+      "rarity": "common",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001013.svg",
+      "basePower": 25,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001014",
+      "setId": "d0000000-0000-4000-8000-000000000001",
+      "name": "Adapt / OG Era 14",
+      "fazeMember": "FaZe Adapt",
+      "rarity": "rare",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001014.svg",
+      "basePower": 45,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001015",
+      "setId": "d0000000-0000-4000-8000-000000000002",
+      "name": "Banks / Creators 1",
+      "fazeMember": "FaZe Banks",
+      "rarity": "common",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001015.svg",
+      "basePower": 25,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001016",
+      "setId": "d0000000-0000-4000-8000-000000000002",
+      "name": "Apex / Creators 2",
+      "fazeMember": "FaZe Apex",
+      "rarity": "rare",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001016.svg",
+      "basePower": 45,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001017",
+      "setId": "d0000000-0000-4000-8000-000000000002",
+      "name": "Rain / Creators 3",
+      "fazeMember": "FaZe Rain",
+      "rarity": "epic",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001017.svg",
+      "basePower": 65,
+      "maxSupply": 100,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001018",
+      "setId": "d0000000-0000-4000-8000-000000000002",
+      "name": "Adapt / Creators 4",
+      "fazeMember": "FaZe Adapt",
+      "rarity": "legendary",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001018.svg",
+      "basePower": 85,
+      "maxSupply": 25,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001019",
+      "setId": "d0000000-0000-4000-8000-000000000002",
+      "name": "Rug / Creators 5",
+      "fazeMember": "FaZe Rug",
+      "rarity": "common",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001019.svg",
+      "basePower": 25,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001020",
+      "setId": "d0000000-0000-4000-8000-000000000002",
+      "name": "Banks / Creators 6",
+      "fazeMember": "FaZe Banks",
+      "rarity": "rare",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001020.svg",
+      "basePower": 45,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001021",
+      "setId": "d0000000-0000-4000-8000-000000000002",
+      "name": "Apex / Creators 7",
+      "fazeMember": "FaZe Apex",
+      "rarity": "epic",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001021.svg",
+      "basePower": 65,
+      "maxSupply": 100,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001022",
+      "setId": "d0000000-0000-4000-8000-000000000002",
+      "name": "Rain / Creators 8",
+      "fazeMember": "FaZe Rain",
+      "rarity": "legendary",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001022.svg",
+      "basePower": 85,
+      "maxSupply": 25,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001023",
+      "setId": "d0000000-0000-4000-8000-000000000002",
+      "name": "Adapt / Creators 9",
+      "fazeMember": "FaZe Adapt",
+      "rarity": "common",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001023.svg",
+      "basePower": 25,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001024",
+      "setId": "d0000000-0000-4000-8000-000000000002",
+      "name": "Rug / Creators 10",
+      "fazeMember": "FaZe Rug",
+      "rarity": "rare",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001024.svg",
+      "basePower": 45,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001025",
+      "setId": "d0000000-0000-4000-8000-000000000002",
+      "name": "Banks / Creators 11",
+      "fazeMember": "FaZe Banks",
+      "rarity": "epic",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001025.svg",
+      "basePower": 65,
+      "maxSupply": 100,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001026",
+      "setId": "d0000000-0000-4000-8000-000000000002",
+      "name": "Apex / Creators 12",
+      "fazeMember": "FaZe Apex",
+      "rarity": "legendary",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001026.svg",
+      "basePower": 85,
+      "maxSupply": 25,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001027",
+      "setId": "d0000000-0000-4000-8000-000000000002",
+      "name": "Rain / Creators 13",
+      "fazeMember": "FaZe Rain",
+      "rarity": "common",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001027.svg",
+      "basePower": 25,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001028",
+      "setId": "d0000000-0000-4000-8000-000000000003",
+      "name": "Banks / Esports Moments 1",
+      "fazeMember": "FaZe Banks",
+      "rarity": "common",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001028.svg",
+      "basePower": 25,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001029",
+      "setId": "d0000000-0000-4000-8000-000000000003",
+      "name": "Apex / Esports Moments 2",
+      "fazeMember": "FaZe Apex",
+      "rarity": "rare",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001029.svg",
+      "basePower": 45,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001030",
+      "setId": "d0000000-0000-4000-8000-000000000003",
+      "name": "Rain / Esports Moments 3",
+      "fazeMember": "FaZe Rain",
+      "rarity": "epic",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001030.svg",
+      "basePower": 65,
+      "maxSupply": 100,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001031",
+      "setId": "d0000000-0000-4000-8000-000000000003",
+      "name": "Adapt / Esports Moments 4",
+      "fazeMember": "FaZe Adapt",
+      "rarity": "legendary",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001031.svg",
+      "basePower": 85,
+      "maxSupply": 25,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001032",
+      "setId": "d0000000-0000-4000-8000-000000000003",
+      "name": "Rug / Esports Moments 5",
+      "fazeMember": "FaZe Rug",
+      "rarity": "common",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001032.svg",
+      "basePower": 25,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001033",
+      "setId": "d0000000-0000-4000-8000-000000000003",
+      "name": "Banks / Esports Moments 6",
+      "fazeMember": "FaZe Banks",
+      "rarity": "rare",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001033.svg",
+      "basePower": 45,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001034",
+      "setId": "d0000000-0000-4000-8000-000000000003",
+      "name": "Apex / Esports Moments 7",
+      "fazeMember": "FaZe Apex",
+      "rarity": "epic",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001034.svg",
+      "basePower": 65,
+      "maxSupply": 100,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001035",
+      "setId": "d0000000-0000-4000-8000-000000000003",
+      "name": "Rain / Esports Moments 8",
+      "fazeMember": "FaZe Rain",
+      "rarity": "legendary",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001035.svg",
+      "basePower": 85,
+      "maxSupply": 25,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001036",
+      "setId": "d0000000-0000-4000-8000-000000000003",
+      "name": "Adapt / Esports Moments 9",
+      "fazeMember": "FaZe Adapt",
+      "rarity": "common",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001036.svg",
+      "basePower": 25,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001037",
+      "setId": "d0000000-0000-4000-8000-000000000003",
+      "name": "Rug / Esports Moments 10",
+      "fazeMember": "FaZe Rug",
+      "rarity": "rare",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001037.svg",
+      "basePower": 45,
+      "maxSupply": null,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001038",
+      "setId": "d0000000-0000-4000-8000-000000000003",
+      "name": "Banks / Esports Moments 11",
+      "fazeMember": "FaZe Banks",
+      "rarity": "epic",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001038.svg",
+      "basePower": 65,
+      "maxSupply": 100,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001039",
+      "setId": "d0000000-0000-4000-8000-000000000003",
+      "name": "Apex / Esports Moments 12",
+      "fazeMember": "FaZe Apex",
+      "rarity": "legendary",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001039.svg",
+      "basePower": 85,
+      "maxSupply": 25,
+      "demo": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000001040",
+      "setId": "d0000000-0000-4000-8000-000000000003",
+      "name": "Rain / Esports Moments 13",
+      "fazeMember": "FaZe Rain",
+      "rarity": "common",
+      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001040.svg",
+      "basePower": 25,
+      "maxSupply": null,
+      "demo": true
+    }
+  ],
+  "packs": [
+    {
+      "id": "d0000000-0000-4000-8000-000000000101",
+      "setId": "d0000000-0000-4000-8000-000000000001",
+      "name": "OG Era Demo Pack",
+      "priceCoins": 100,
+      "cardsPerPack": 5,
+      "odds": {
+        "common": 70,
+        "rare": 20,
+        "epic": 8,
+        "legendary": 2
+      },
+      "oddsVersion": 1,
+      "active": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000000102",
+      "setId": "d0000000-0000-4000-8000-000000000002",
+      "name": "Creators Demo Pack",
+      "priceCoins": 100,
+      "cardsPerPack": 5,
+      "odds": {
+        "common": 70,
+        "rare": 20,
+        "epic": 8,
+        "legendary": 2
+      },
+      "oddsVersion": 1,
+      "active": true
+    },
+    {
+      "id": "d0000000-0000-4000-8000-000000000103",
+      "setId": "d0000000-0000-4000-8000-000000000003",
+      "name": "Esports Moments Demo Pack",
+      "priceCoins": 100,
+      "cardsPerPack": 5,
+      "odds": {
+        "common": 70,
+        "rare": 20,
+        "epic": 8,
+        "legendary": 2
+      },
+      "oddsVersion": 1,
+      "active": true
+    }
+  ],
+  "cardStats": [
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001001",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001002",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001003",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001004",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001005",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001006",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001007",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001008",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001009",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001010",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001011",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001012",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001013",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001014",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001015",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001016",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001017",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001018",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001019",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001020",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001021",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001022",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001023",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001024",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001025",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001026",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001027",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001028",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001029",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001030",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001031",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001032",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001033",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001034",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001035",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001036",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001037",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001038",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001039",
+      "hype": 0
+    },
+    {
+      "cardId": "d0000000-0000-4000-8000-000000001040",
+      "hype": 0
+    }
+  ]
+}
