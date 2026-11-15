@@ -231,6 +231,32 @@ describe("payments (Solana devnet)", () => {
   });
 });
 
+describe("simulated signatures through the app", () => {
+  it("are accepted by validation and credited (PAYMENTS_SIMULATE path)", async () => {
+    const repo = memoryRepo();
+    const ledger = memoryLedger();
+    const app = buildApp({ repo, ledger, chain: simulatedReader(TREASURY, "devnet"), treasury: TREASURY, jwtSecret: JWT_SECRET, clientUrl: "http://localhost:3000" });
+    const uid = randomUUID();
+    const cookies = { session: await token(uid) };
+    const c = (await app.inject({ method: "POST", url: "/payments/checkout", cookies, payload: { bundleId: "coins_1000" } })).json();
+    const res = await app.inject({ method: "POST", url: "/payments/confirm", cookies, payload: { purchaseId: c.purchaseId, signature: `sim_${c.reference}_${c.lamports}` } });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().credited).toBe(1000);
+  });
+
+  it("RPC errors become a retryable 409, not a 500", async () => {
+    const t = setup();
+    t.chain.getTx = async () => {
+      throw new Error("429 too many requests");
+    };
+    const uid = randomUUID();
+    const cookies = { session: await token(uid) };
+    const c = (await t.app.inject({ method: "POST", url: "/payments/checkout", cookies, payload: { bundleId: "coins_1000" } })).json();
+    const res = await t.app.inject({ method: "POST", url: "/payments/confirm", cookies, payload: { purchaseId: c.purchaseId, signature: sig() } });
+    expect(res.statusCode).toBe(409);
+  });
+});
+
 describe("checkTransfer", () => {
   it("accepts an exact payment", () => {
     const ref = Keypair.generate().publicKey.toBase58();

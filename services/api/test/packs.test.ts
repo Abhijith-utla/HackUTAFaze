@@ -145,12 +145,13 @@ describe("collection + leaderboard", () => {
   });
 });
 
-it("concurrent purchases by different collectors retain unique serials", async () => {
-  const other = await signup(app);
-  const first = await signup(app);
-  const { packId } = await makeSetWithPack({ cards: [{ rarity: "common" }], odds: { common: 100 } });
-  const responses = await Promise.all([first, other].map(fan => app.inject({ method: "POST", url: `/packs/${packId}/open`, headers: { cookie: fan.cookie }, payload: { idempotencyKey: `concurrent-${fan.id}` } })));
-  expect(responses.map(r => r.statusCode)).toEqual([200, 200]);
-  const serials = responses.flatMap(r => r.json().cards.map((c: any) => c.serial));
-  expect(new Set(serials).size).toBe(10);
+describe("concurrency regressions", () => {
+  it("parallel opens by different users on one card never collide on serial", async () => {
+    const { packId } = await makeSetWithPack({ perPack: 2, cards: [{ rarity: "common" }] });
+    const users = await Promise.all(Array.from({ length: 6 }, () => signup(app)));
+    const res = await Promise.all(users.map((u) => open(packId, u.cookie)));
+    expect(res.map((r) => r.statusCode)).toEqual(Array(6).fill(200));
+    const serials = res.flatMap((r) => r.json().cards.map((c: any) => c.serial)).sort((a, b) => a - b);
+    expect(serials).toEqual(Array.from({ length: 12 }, (_, i) => i + 1));
+  });
 });

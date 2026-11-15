@@ -77,7 +77,9 @@ export async function packsRoutes(app: FastifyInstance) {
       const bal = await balanceOf(c, s.sub);
       if (bal < pack.price_coins) fail("INSUFFICIENT_COINS", `Need ${pack.price_coins} coins, have ${bal}`);
 
-      // Lock first, then read aggregates in a fresh statement snapshot after any lock wait.
+      // Lock every card in the set (stable order) FIRST, then read supply/serials in a new statement:
+      // under READ COMMITTED a statement that waited on the lock still uses its pre-wait snapshot for
+      // subqueries, which would miss instances minted by the transaction we waited on (found by @tanejakeshav).
       await c.query("SELECT id FROM cards WHERE set_id=$1 ORDER BY id FOR UPDATE", [pack.set_id]);
       const cr = await c.query(
         `SELECT c.id, c.rarity, c.max_supply,

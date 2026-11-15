@@ -162,11 +162,14 @@ describe("engagement spike", () => {
   });
 });
 
-it("PATCH cannot bypass publication validation", async () => {
-  const created = await app.inject({ method: "POST", url: "/admin/sets", payload: { name: "Unpublishable draft" }, ...as(admin.cookie) });
-  const id = created.json().set.id;
-  const patch = await app.inject({ method: "PATCH", url: `/admin/sets/${id}`, payload: { status: "live" }, ...as(admin.cookie) });
-  expect(patch.statusCode).toBe(400);
-  const stored = await pool.query("SELECT status, published_at FROM card_sets WHERE id=$1", [id]);
-  expect(stored.rows[0]).toEqual({ status: "draft", published_at: null });
+describe("publish guard", () => {
+  it("PATCH status=live cannot bypass publish validation", async () => {
+    const adm = await makeAdmin();
+    const created = await app.inject({ method: "POST", url: "/admin/sets", headers: { cookie: adm.cookie }, payload: { name: "Draft guard", description: "" } });
+    const id = created.json().set.id;
+    const patch = await app.inject({ method: "PATCH", url: `/admin/sets/${id}`, headers: { cookie: adm.cookie }, payload: { status: "live" } });
+    expect(patch.statusCode).toBe(400);
+    const row = await pool.query("SELECT status, published_at FROM card_sets WHERE id=$1", [id]);
+    expect(row.rows[0]).toEqual({ status: "draft", published_at: null });
+  });
 });

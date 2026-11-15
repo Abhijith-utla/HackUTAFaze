@@ -27,7 +27,8 @@ export class HttpError extends Error {
   }
 }
 
-const SIGNATURE_RE = /^[1-9A-HJ-NP-Za-km-z_]{32,128}$/;
+// Real Solana signatures are base58 (64-88 chars); "sim_<reference>_<lamports>" is the test-only simulated form.
+const SIGNATURE_RE = /^(?:[1-9A-HJ-NP-Za-km-z]{32,90}|sim_[1-9A-HJ-NP-Za-km-z]{32,44}_\d{1,19})$/;
 
 export function buildApp(deps: AppDeps) {
   const app = Fastify({ logger: deps.logger ?? false });
