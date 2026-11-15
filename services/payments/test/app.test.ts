@@ -1,46 +1,61 @@
 import { randomUUID } from "node:crypto";
-import { describe, expect, it, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { Keypair } from "@solana/web3.js";
 import { SignJWT } from "jose";
 import { buildApp } from "../src/app.js";
 import { loadConfig } from "../src/config.js";
 import { memoryLedger } from "../src/ledger.js";
 import { memoryRepo } from "../src/repo.js";
-import { makeGateway } from "../src/stripe.js";
+import { checkTransfer, simulatedReader, solanaPayUrl, type ChainReader, type ChainTx } from "../src/solana.js";
 
 const JWT_SECRET = "test-jwt-secret";
-const CLIENT = "http://localhost:3000";
+const TREASURY = Keypair.generate().publicKey.toBase58();
+const PAYER = Keypair.generate().publicKey.toBase58();
+const sig = () => Keypair.generate().publicKey.toBase58() + "x".repeat(20); // base58, sig-length
 
-async function token(sub: string, role: "fan" | "admin" = "fan") {
-  return new SignJWT({ role })
+async function token(sub: string) {
+  return new SignJWT({ role: "fan" })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(sub)
     .setExpirationTime("1h")
     .sign(new TextEncoder().encode(JWT_SECRET));
 }
 
+/** In-memory "chain": tests put transactions in it. */
+function fakeChain(): ChainReader & { txs: Map<string, ChainTx>; byRef: Map<string, string> } {
+  const txs = new Map<string, ChainTx>();
+  const byRef = new Map<string, string>();
+  return {
+    cluster: "devnet",
+    txs,
+    byRef,
+    async getTx(s) {
+      return txs.get(s) ?? null;
+    },
+    async findSignature(ref) {
+      return byRef.get(ref);
+    },
+  };
+}
+
+function transfer(reference: string, lamports: number, opts: { to?: string; err?: unknown } = {}): ChainTx {
+  return {
+    err: opts.err ?? null,
+    accountKeys: [PAYER, opts.to ?? TREASURY, "11111111111111111111111111111111", reference],
+    preBalances: [1_000_000_000, 5, 1, 0],
+    postBalances: [1_000_000_000 - lamports - 5000, 5 + lamports, 1, 0],
+  };
+}
+
 function setup() {
   const repo = memoryRepo();
   const ledger = memoryLedger();
-  const gateway = makeGateway({
-    stripeMode: "fake",
-    stripeSecretKey: "sk_test_fake",
-    stripeWebhookSecret: "whsec_test",
-    paymentsUrl: "http://localhost:4100",
-  });
-  const app = buildApp({ repo, ledger, gateway, jwtSecret: JWT_SECRET, clientUrl: CLIENT });
-  return { app, repo, ledger, gateway };
+  const chain = fakeChain();
+  const app = buildApp({ repo, ledger, chain, treasury: TREASURY, jwtSecret: JWT_SECRET, clientUrl: "http://localhost:3000" });
+  return { app, repo, ledger, chain };
 }
 
-function completedEvent(sessionId: string, userId: string, eventId = `evt_${randomUUID()}`) {
-  return JSON.stringify({
-    id: eventId,
-    object: "event",
-    type: "checkout.session.completed",
-    data: { object: { id: sessionId, payment_status: "paid", metadata: { userId } } },
-  });
-}
-
-describe("payments", () => {
+describe("payments (Solana devnet)", () => {
   let t: ReturnType<typeof setup>;
   const userId = randomUUID();
   beforeEach(() => {
@@ -48,146 +63,132 @@ describe("payments", () => {
   });
 
   async function checkout(bundleId = "coins_1000", uid = userId) {
-    const res = await t.app.inject({
-      method: "POST",
-      url: "/payments/checkout",
-      cookies: { session: await token(uid) },
-      payload: { bundleId },
-    });
-    return res;
+    return t.app.inject({ method: "POST", url: "/payments/checkout", cookies: { session: await token(uid) }, payload: { bundleId } });
+  }
+  async function confirm(payload: Record<string, unknown>, uid = userId) {
+    return t.app.inject({ method: "POST", url: "/payments/confirm", cookies: { session: await token(uid) }, payload });
   }
 
-  function webhook(payload: string, sig = t.gateway.sign(payload)) {
-    return t.app.inject({
-      method: "POST",
-      url: "/payments/webhook",
-      headers: { "content-type": "application/json", "stripe-signature": sig },
-      payload,
-    });
-  }
-
-  it("lists bundles in test mode", async () => {
+  it("lists devnet bundles with the treasury", async () => {
     const res = await t.app.inject({ method: "GET", url: "/payments/bundles" });
-    expect(res.statusCode).toBe(200);
-    expect(res.json().testMode).toBe(true);
-    expect(res.json().bundles.length).toBeGreaterThan(0);
+    expect(res.json()).toMatchObject({ cluster: "devnet", recipient: TREASURY, testMode: true });
   });
 
-  it("checkout requires a session", async () => {
+  it("checkout requires a valid session", async () => {
     const res = await t.app.inject({ method: "POST", url: "/payments/checkout", payload: { bundleId: "coins_1000" } });
     expect(res.statusCode).toBe(401);
-    expect(res.json().error.code).toBe("UNAUTHENTICATED");
-  });
-
-  it("rejects a forged session token", async () => {
-    const forged = await new SignJWT({ role: "fan" })
-      .setProtectedHeader({ alg: "HS256" })
-      .setSubject(userId)
-      .setExpirationTime("1h")
-      .sign(new TextEncoder().encode("wrong-secret"));
-    const res = await t.app.inject({ method: "POST", url: "/payments/checkout", cookies: { session: forged }, payload: { bundleId: "coins_1000" } });
-    expect(res.statusCode).toBe(401);
+    const forged = await new SignJWT({ role: "fan" }).setProtectedHeader({ alg: "HS256" }).setSubject(userId).setExpirationTime("1h").sign(new TextEncoder().encode("nope"));
+    const res2 = await t.app.inject({ method: "POST", url: "/payments/checkout", cookies: { session: forged }, payload: { bundleId: "coins_1000" } });
+    expect(res2.statusCode).toBe(401);
   });
 
   it("rejects unknown bundles", async () => {
-    const res = await checkout("coins_999999");
+    const res = await checkout("coins_free");
     expect(res.statusCode).toBe(400);
     expect(res.json().error.code).toBe("VALIDATION");
   });
 
-  it("creates a pending purchase and returns a checkout url", async () => {
-    const res = await checkout();
-    expect(res.statusCode).toBe(200);
-    expect(res.json().checkoutUrl).toMatch(/\/payments\/fake-checkout\/cs_fake_/);
-    expect(t.repo.rows).toHaveLength(1);
-    expect(t.repo.rows[0]!.status).toBe("pending");
-    expect(t.repo.rows[0]!.testMode).toBe(true);
+  it("checkout returns a unique reference and a Solana Pay URL", async () => {
+    const a = (await checkout()).json();
+    const b = (await checkout()).json();
+    expect(a.reference).not.toBe(b.reference);
+    expect(a).toMatchObject({ recipient: TREASURY, lamports: 50_000_000, cluster: "devnet" });
+    expect(a.solanaPayUrl).toBe(solanaPayUrl(TREASURY, 50_000_000, a.reference, "devnet"));
+    expect(a.solanaPayUrl).toContain("amount=0.05");
   });
 
-  it("credits coins once on a valid webhook, and a replay does not double-credit", async () => {
-    await checkout();
-    const sessionId = t.repo.rows[0]!.stripeSessionId;
-    const payload = completedEvent(sessionId, userId, "evt_same");
+  it("credits once after an on-chain transfer, and repeat confirms do not double-credit", async () => {
+    const c = (await checkout()).json();
+    const s = sig();
+    t.chain.txs.set(s, transfer(c.reference, c.lamports));
 
-    const first = await webhook(payload);
+    const first = await confirm({ purchaseId: c.purchaseId, signature: s });
     expect(first.statusCode).toBe(200);
-    expect(first.json().credited).toBe(1000);
-    expect(t.ledger.balances.get(userId)).toBe(1000);
+    expect(first.json()).toMatchObject({ status: "paid", credited: 1000, balance: 1000 });
 
-    const replay = await webhook(payload);
-    expect(replay.statusCode).toBe(200);
-    expect(replay.json().duplicate).toBe(true);
-
-    // A different event id for the same session also must not double-credit.
-    const other = await webhook(completedEvent(sessionId, userId));
-    expect(other.statusCode).toBe(200);
-    expect(t.ledger.balances.get(userId)).toBe(1000);
-    expect(t.repo.rows[0]!.status).toBe("paid");
-  });
-
-  it("concurrent duplicate deliveries still credit once (ledger idempotency key)", async () => {
-    await checkout();
-    const sessionId = t.repo.rows[0]!.stripeSessionId;
-    await Promise.all([webhook(completedEvent(sessionId, userId)), webhook(completedEvent(sessionId, userId))]);
+    const again = await confirm({ purchaseId: c.purchaseId, signature: s });
+    expect(again.json()).toMatchObject({ status: "paid", credited: 0, balance: 1000 });
     expect(t.ledger.balances.get(userId)).toBe(1000);
   });
 
-  it("rejects an invalid signature and credits nothing", async () => {
-    await checkout();
-    const payload = completedEvent(t.repo.rows[0]!.stripeSessionId, userId);
-    const res = await webhook(payload, "t=1,v1=deadbeef");
+  it("concurrent confirms credit once", async () => {
+    const c = (await checkout()).json();
+    const s = sig();
+    t.chain.txs.set(s, transfer(c.reference, c.lamports));
+    await Promise.all([confirm({ purchaseId: c.purchaseId, signature: s }), confirm({ purchaseId: c.purchaseId, signature: s })]);
+    expect(t.ledger.balances.get(userId)).toBe(1000);
+  });
+
+  it("finds the signature by reference when the client omits it", async () => {
+    const c = (await checkout()).json();
+    const s = sig();
+    t.chain.txs.set(s, transfer(c.reference, c.lamports));
+    t.chain.byRef.set(c.reference, s);
+    const res = await confirm({ purchaseId: c.purchaseId });
+    expect(res.json().credited).toBe(1000);
+  });
+
+  it("409 while the tx is not on-chain yet", async () => {
+    const c = (await checkout()).json();
+    expect((await confirm({ purchaseId: c.purchaseId })).statusCode).toBe(409);
+    expect((await confirm({ purchaseId: c.purchaseId, signature: sig() })).statusCode).toBe(409);
+    expect(t.ledger.balances.size).toBe(0);
+  });
+
+  it("rejects underpayment, wrong recipient, missing reference and failed txs", async () => {
+    const c = (await checkout()).json();
+    const cases: ChainTx[] = [
+      transfer(c.reference, c.lamports - 1),
+      transfer(c.reference, c.lamports, { to: Keypair.generate().publicKey.toBase58() }),
+      transfer(Keypair.generate().publicKey.toBase58(), c.lamports),
+      transfer(c.reference, c.lamports, { err: { InstructionError: [0, "Custom"] } }),
+    ];
+    for (const tx of cases) {
+      const s = sig();
+      t.chain.txs.set(s, tx);
+      const res = await confirm({ purchaseId: c.purchaseId, signature: s });
+      expect(res.statusCode).toBe(400);
+    }
+    expect(t.ledger.balances.size).toBe(0);
+  });
+
+  it("one transaction cannot pay for two purchases", async () => {
+    const a = (await checkout()).json();
+    const b = (await checkout()).json();
+    const s = sig();
+    t.chain.txs.set(s, transfer(a.reference, a.lamports));
+    expect((await confirm({ purchaseId: a.purchaseId, signature: s })).statusCode).toBe(200);
+    const res = await confirm({ purchaseId: b.purchaseId, signature: s });
     expect(res.statusCode).toBe(400);
-    expect(t.ledger.balances.size).toBe(0);
+    expect(t.ledger.balances.get(userId)).toBe(1000);
   });
 
-  it("rejects a tampered payload", async () => {
-    await checkout();
-    const payload = completedEvent(t.repo.rows[0]!.stripeSessionId, userId);
-    const sig = t.gateway.sign(payload);
-    const res = await webhook(payload.replace("paid", "PAID"), sig);
-    expect(res.statusCode).toBe(400);
-    expect(t.ledger.balances.size).toBe(0);
+  it("cannot confirm someone else's purchase", async () => {
+    const c = (await checkout()).json();
+    const res = await confirm({ purchaseId: c.purchaseId, signature: sig() }, randomUUID());
+    expect(res.statusCode).toBe(404);
   });
 
-  it("ignores events for unknown sessions and user mismatches", async () => {
-    const unknown = await webhook(completedEvent("cs_unknown", userId));
-    expect(unknown.json().ignored).toBe("unknown_session");
-
-    await checkout();
-    const mismatch = await webhook(completedEvent(t.repo.rows[0]!.stripeSessionId, randomUUID()));
-    expect(mismatch.json().ignored).toBe("user_mismatch");
-    expect(t.ledger.balances.size).toBe(0);
+  it("rejects malformed input", async () => {
+    expect((await confirm({ purchaseId: "nope" })).statusCode).toBe(400);
+    const c = (await checkout()).json();
+    expect((await confirm({ purchaseId: c.purchaseId, signature: "0OIl" + "!".repeat(40) })).statusCode).toBe(400);
   });
 
-  it("returns 502 when the ledger is down so Stripe retries, then succeeds on retry", async () => {
-    let down = true;
+  it("ledger outage → 409 and stays pending, then succeeds on retry", async () => {
     const real = t.ledger.credit.bind(t.ledger);
+    let down = true;
     t.ledger.credit = async (b) => {
       if (down) throw new Error("api down");
       return real(b);
     };
-    await checkout();
-    const payload = completedEvent(t.repo.rows[0]!.stripeSessionId, userId);
-    expect((await webhook(payload)).statusCode).toBe(502);
+    const c = (await checkout()).json();
+    const s = sig();
+    t.chain.txs.set(s, transfer(c.reference, c.lamports));
+    expect((await confirm({ purchaseId: c.purchaseId, signature: s })).statusCode).toBe(409);
     expect(t.repo.rows[0]!.status).toBe("pending");
     down = false;
-    expect((await webhook(payload)).statusCode).toBe(200);
-    expect(t.ledger.balances.get(userId)).toBe(1000);
-  });
-
-  it("fake checkout page completes through the signed webhook path", async () => {
-    const url = new URL((await checkout()).json().checkoutUrl);
-    const page = await t.app.inject({ method: "GET", url: url.pathname });
-    expect(page.body).toContain("TEST MODE");
-    const pay = await t.app.inject({
-      method: "POST",
-      url: url.pathname,
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      payload: "action=pay",
-    });
-    expect(pay.statusCode).toBe(302);
-    expect(pay.headers.location).toContain(`${CLIENT}/store?purchase=success`);
-    expect(t.ledger.balances.get(userId)).toBe(1000);
+    expect((await confirm({ purchaseId: c.purchaseId, signature: s })).json().credited).toBe(1000);
   });
 
   it("lists only the caller's purchases", async () => {
@@ -195,16 +196,38 @@ describe("payments", () => {
     await checkout("coins_2500", randomUUID());
     const res = await t.app.inject({ method: "GET", url: "/me/purchases", cookies: { session: await token(userId) } });
     expect(res.json().purchases).toHaveLength(1);
-    expect(res.json().purchases[0].testMode).toBe(true);
+    expect(res.json().purchases[0]).toMatchObject({ testMode: true, cluster: "devnet", status: "pending" });
+  });
+});
+
+describe("checkTransfer", () => {
+  it("accepts an exact payment", () => {
+    const ref = Keypair.generate().publicKey.toBase58();
+    expect(checkTransfer(transfer(ref, 10), { reference: ref, recipient: TREASURY, lamports: 10 })).toEqual({ ok: true });
+  });
+});
+
+describe("simulatedReader", () => {
+  it("only understands sim_<reference>_<lamports>", async () => {
+    const r = simulatedReader(TREASURY, "devnet");
+    const ref = Keypair.generate().publicKey.toBase58();
+    const tx = await r.getTx(`sim_${ref}_50000000`);
+    expect(tx && checkTransfer(tx, { reference: ref, recipient: TREASURY, lamports: 50_000_000 })).toEqual({ ok: true });
+    expect(await r.getTx(sig())).toBeNull();
   });
 });
 
 describe("config", () => {
-  const base = { DATABASE_URL: "postgres://x", JWT_SECRET: "j", INTERNAL_SECRET: "i" };
-  it("refuses a non-test Stripe key", () => {
-    expect(() => loadConfig({ ...base, STRIPE_MODE: "live", STRIPE_SECRET_KEY: "sk_live_abc", STRIPE_WEBHOOK_SECRET: "whsec_x" })).toThrow(/test-mode/);
+  const base = { DATABASE_URL: "postgres://x", JWT_SECRET: "j", INTERNAL_SECRET: "i", SOLANA_TREASURY_PUBKEY: TREASURY };
+  it("defaults to devnet", () => {
+    expect(loadConfig(base)).toMatchObject({ cluster: "devnet", rpcUrl: "https://api.devnet.solana.com" });
   });
-  it("defaults to fake mode", () => {
-    expect(loadConfig(base).stripeMode).toBe("fake");
+  it("refuses mainnet", () => {
+    expect(() => loadConfig({ ...base, SOLANA_CLUSTER: "mainnet-beta" })).toThrow(/never mainnet/);
+    expect(() => loadConfig({ ...base, SOLANA_RPC_URL: "https://api.mainnet-beta.solana.com" })).toThrow(/mainnet/);
+  });
+  it("refuses an invalid treasury and simulate in production", () => {
+    expect(() => loadConfig({ ...base, SOLANA_TREASURY_PUBKEY: "nope" })).toThrow(/valid Solana/);
+    expect(() => loadConfig({ ...base, PAYMENTS_SIMULATE: "1", NODE_ENV: "production" })).toThrow(/test-only/);
   });
 });

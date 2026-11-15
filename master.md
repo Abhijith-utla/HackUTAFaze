@@ -11,7 +11,7 @@ Fans collect digital trading cards of FaZe members and moments. They earn or buy
 1. Sign up → receive 500 starter coins (labelled demo).
 2. Open the store → buy a pack with coins → animated pack opening shows 5 cards with rarities.
 3. Collection page: cards grouped by set, rarity, duplicates count, serial numbers.
-4. Buy more coins with a Stripe **test-mode** card (4242…) → balance updates after the webhook.
+4. Buy more coins with **Phantom wallet on Solana devnet** (devnet SOL, no real value) → server verifies the transaction on-chain → balance updates.
 5. Trade: send an offer to another demo user → they accept → both collections update.
 6. Leaderboard + a card whose "hype" stat rose after a simulated engagement spike.
 7. Admin: publish a new card set, approve one flagged submission, show it live in the store.
@@ -24,7 +24,7 @@ Anything not on this list is a stretch goal (§9).
 - Pack odds are published per pack and pulls use a server-side CSPRNG. Every pull is logged with the odds version used.
 - Balances change only through the append-only `ledger` (no direct balance writes). Balance = sum of ledger entries.
 - Trades are atomic: both sides' cards are locked when an offer is made and swapped in one transaction on accept.
-- Coins are not cashable. No real-money payout. Payments run in Stripe test mode for the demo.
+- Coins are not cashable. No real-money payout. Payments use Phantom + Solana **devnet only** (mainnet refused at boot); the server verifies every payment on-chain before crediting.
 - Demo seeds, simulated engagement and test payments are labelled `demo` in data and in the UI.
 - No secrets in code. Every env var is listed in `.env.example`.
 
@@ -33,7 +33,8 @@ Anything not on this list is a stretch goal (§9).
 ```
 apps/client  (Next.js web, responsive mobile)  ──HTTP/JSON──▶  services/api  (Node/TS, Postgres)
 apps/admin   (Next.js, staff only)             ──HTTP/JSON──▶  services/api
-services/payments  (Stripe checkout + webhook)  ──internal──▶  services/api ledger
+services/payments  (Solana devnet verify)       ──internal──▶  services/api ledger
+                   ◀──RPC── api.devnet.solana.com      (client signs with Phantom)
 services/worker    (queues: moderation, engagement sim, set publishing)
 packages/shared    (TS types + zod schemas generated from docs/api.md, docs/data-model.md)
 ```

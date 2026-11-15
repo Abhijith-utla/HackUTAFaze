@@ -1,5 +1,6 @@
-// Env config. Every var is documented in /.env.example. No secrets in code.
-export type StripeMode = "live" | "fake";
+// Env config. Every var is documented in /.env.example. No secrets: the treasury is a PUBLIC key.
+import { PublicKey } from "@solana/web3.js";
+import { SolanaCluster } from "@faze/shared";
 
 export interface Config {
   port: number;
@@ -7,11 +8,12 @@ export interface Config {
   jwtSecret: string;
   internalSecret: string;
   apiUrl: string;
-  paymentsUrl: string;
   clientUrl: string;
-  stripeMode: StripeMode;
-  stripeSecretKey: string;
-  stripeWebhookSecret: string;
+  cluster: SolanaCluster;
+  rpcUrl: string;
+  treasury: string;
+  /** Test-only: accept simulated signatures instead of reading the chain. Refused in production. */
+  simulate: boolean;
 }
 
 function req(env: NodeJS.ProcessEnv, name: string): string {
@@ -20,15 +22,31 @@ function req(env: NodeJS.ProcessEnv, name: string): string {
   return v;
 }
 
+const DEFAULT_RPC: Record<SolanaCluster, string> = {
+  devnet: "https://api.devnet.solana.com",
+  testnet: "https://api.testnet.solana.com",
+  localnet: "http://127.0.0.1:8899",
+};
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
-  const stripeMode = (env.STRIPE_MODE ?? "fake") as StripeMode;
-  if (stripeMode !== "live" && stripeMode !== "fake") {
-    throw new Error(`payments: STRIPE_MODE must be "live" or "fake", got "${stripeMode}"`);
+  const parsedCluster = SolanaCluster.safeParse(env.SOLANA_CLUSTER ?? "devnet");
+  if (!parsedCluster.success) {
+    throw new Error(`payments: refusing to start — SOLANA_CLUSTER must be devnet, testnet or localnet (never mainnet)`);
   }
-  // "live" here means "talk to the real Stripe API" — still test mode only. Coins are never real money.
-  const stripeSecretKey = stripeMode === "live" ? req(env, "STRIPE_SECRET_KEY") : env.STRIPE_SECRET_KEY ?? "sk_test_fake";
-  if (!stripeSecretKey.startsWith("sk_test_")) {
-    throw new Error("payments: refusing to start — STRIPE_SECRET_KEY must be a test-mode key (sk_test_...)");
+  const cluster = parsedCluster.data;
+  const rpcUrl = env.SOLANA_RPC_URL ?? DEFAULT_RPC[cluster];
+  if (/mainnet/i.test(rpcUrl)) {
+    throw new Error("payments: refusing to start — SOLANA_RPC_URL points at mainnet; test payments only");
+  }
+  const treasury = req(env, "SOLANA_TREASURY_PUBKEY");
+  try {
+    new PublicKey(treasury);
+  } catch {
+    throw new Error("payments: SOLANA_TREASURY_PUBKEY is not a valid Solana public key");
+  }
+  const simulate = env.PAYMENTS_SIMULATE === "1";
+  if (simulate && env.NODE_ENV === "production") {
+    throw new Error("payments: PAYMENTS_SIMULATE is test-only and is refused when NODE_ENV=production");
   }
   return {
     port: Number(env.PAYMENTS_PORT ?? 4100),
@@ -36,10 +54,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     jwtSecret: req(env, "JWT_SECRET"),
     internalSecret: req(env, "INTERNAL_SECRET"),
     apiUrl: env.API_URL ?? "http://localhost:4000",
-    paymentsUrl: env.PAYMENTS_URL ?? "http://localhost:4100",
     clientUrl: env.CLIENT_URL ?? "http://localhost:3000",
-    stripeMode,
-    stripeSecretKey,
-    stripeWebhookSecret: stripeMode === "live" ? req(env, "STRIPE_WEBHOOK_SECRET") : env.STRIPE_WEBHOOK_SECRET ?? "whsec_fake_local",
+    cluster,
+    rpcUrl,
+    treasury,
+    simulate,
   };
 }
