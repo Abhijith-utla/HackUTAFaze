@@ -45,3 +45,6 @@ Keep economy, inventory, purchases, moderation and jobs as ordinary PostgreSQL t
 | `campaigns` | opportunity_id, moment_id, name, pitch, status (`draft`\|`pending_approval`\|`approved`\|`rejected`\|`live`\|`ended`), generator, rights_confirmed, rights_note, pack_price_coins, set_id, pack_id, created_by, reviewed_by, launched_at, ended_at, demo | Control Room |
 | `campaign_assets` | campaign_id, position, name, faze_member, rarity, lore, art_url, base_power, max_supply, duplicate_of, similarity, card_id | Studio; card_id set at launch |
 | `audit_log` | actor_id, action, entity, entity_id, detail (jsonb) — append-only | every Control Room action |
+
+## Marketplace extension
+Migration 004 adds market_listings (owner, listed instance, state), market_offers (listing, bidder, offered UUIDs, state), and notifications (recipient, kind/message, offer, read/creation timestamps). card_instances gains market_listing_id and market_offer_id; at most one direct/listing/offer lock may be non-null. See marketplace.md.

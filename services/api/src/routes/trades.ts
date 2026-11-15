@@ -43,7 +43,7 @@ export async function tradesRoutes(app: FastifyInstance) {
       const to = await c.query("SELECT id FROM users WHERE id=$1", [b.toUserId]);
       if (!to.rowCount) fail("NOT_FOUND", "Recipient not found");
       const inst = await c.query(
-        "SELECT id, owner_id, locked_by_trade_id FROM card_instances WHERE id = ANY($1::uuid[]) ORDER BY id FOR UPDATE",
+        "SELECT id, owner_id, locked_by_trade_id, market_listing_id, market_offer_id FROM card_instances WHERE id = ANY($1::uuid[]) ORDER BY id FOR UPDATE",
         [all],
       );
       const byId = new Map(inst.rows.map((r) => [r.id, r]));
@@ -53,7 +53,7 @@ export async function tradesRoutes(app: FastifyInstance) {
       for (const id of b.requestedInstanceIds) {
         if (byId.get(id)?.owner_id !== b.toUserId) fail("NOT_FOUND", `Recipient does not own card ${id}`);
       }
-      if (inst.rows.some((r) => r.locked_by_trade_id)) fail("CARD_LOCKED", "A card is already in another trade");
+      if (inst.rows.some((r) => r.locked_by_trade_id || r.market_listing_id || r.market_offer_id)) fail("CARD_LOCKED", "A card is already in another trade");
       const t = await c.query(
         `INSERT INTO trades (from_user_id, to_user_id, offered_instance_ids, requested_instance_ids, message, message_status)
          VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,

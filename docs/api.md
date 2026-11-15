@@ -103,3 +103,6 @@ Lives in `services/api/src/routes/control.ts` + `src/control/*`; UI in `apps/adm
 | GET | `/admin/control/audit?limit=` | → `{entries}` (append-only `audit_log`) |
 
 KAM score = sum of 5 explained signals (anniversary 30, member momentum 25, collector demand 20, catalog gap 10, archive weight 15). Moments about lawsuits, gambling, health, harm, controversy, or business deals with no featured member are never recommended. Studio's default writer (`template`) only reuses the archive entry's own sentences; `OLLAMA_URL` (+ `OLLAMA_MODEL`) optionally rewrites lore and falls back to the template on any error.
+
+## Public marketplace extension
+See [marketplace.md](marketplace.md) for public listings, private exchange offers and notifications. Existing direct-trade endpoints remain supported.
