@@ -9,9 +9,9 @@ Fans collect digital trading cards of FaZe members and moments. They earn or buy
 ## 2. Demo flow (what the judges see, in order)
 
 1. Sign up → receive 500 starter coins (labelled demo).
-2. Open the store → buy a pack with coins → animated pack opening shows 5 cards with rarities.
+2. Open the store, buy a pack directly with Phantom on Solana devnet, then reveal its five server-generated cards.
 3. Collection page: cards grouped by set, rarity, duplicates count, serial numbers.
-4. Buy more coins with **Phantom wallet on Solana devnet** (devnet SOL, no real value) → server verifies the transaction on-chain → balance updates.
+4. Show the direct SOL pack checkout, server verification, and Store purchase recovery.
 5. Trade: send an offer to another demo user → they accept → both collections update.
 6. Leaderboard + a card whose "hype" stat rose after a simulated engagement spike.
 7. Admin: publish a new card set, approve one flagged submission, show it live in the store.
@@ -86,3 +86,5 @@ Card crafting (burn 5 duplicates → 1 higher rarity), daily login reward, push 
 | H+14 | Server-verified Solana devnet payment credits coins; trades work; admin can publish a set |
 | H+20 | Full demo flow (§2) passes the integration test on `main` |
 | H+22 | Feature freeze. Bug fixes, demo seed, pitch recording only |
+
+Fan payment update: direct SOL pack checkout replaces the Buy Coins tab; see docs/direct-sol-packs.md. Legacy ledger APIs remain for compatibility.

@@ -70,6 +70,12 @@ describe("payments (Solana devnet)", () => {
     return t.app.inject({ method: "POST", url: "/payments/confirm", cookies: { session: await token(uid) }, payload });
   }
 
+  it("pack receipts cannot be credited as coin purchases or scanned by coin reconciliation", async () => {
+    const p=await t.repo.create({userId,bundleId:'pack:'+randomUUID(),coins:0,lamports:5000000,reference:Keypair.generate().publicKey.toBase58(),recipient:TREASURY,cluster:'devnet'});
+    const result=await confirm({purchaseId:p.id,signature:sig()});expect(result.statusCode).toBe(400);
+    expect(await reconcile(t.repo,t.ledger,t.chain,{maxAgeMs:60000,limit:10})).toBe(0);expect(t.ledger.balances.size).toBe(0);expect(p.txSignature).toBeNull();
+  });
+
   it("lists devnet bundles with the treasury", async () => {
     const res = await t.app.inject({ method: "GET", url: "/payments/bundles" });
     expect(res.json()).toMatchObject({ cluster: "devnet", recipient: TREASURY, testMode: true });

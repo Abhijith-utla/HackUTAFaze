@@ -99,6 +99,7 @@ export const Pack = z.object({
   name: z.string(),
   setId: z.string().uuid(),
   priceCoins: z.number().int().positive(),
+  priceLamports: z.number().int().positive().optional(),
   cardsPerPack: z.number().int().positive(),
   odds: Odds,
   oddsVersion: z.number().int(),

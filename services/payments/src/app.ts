@@ -103,6 +103,7 @@ export function buildApp(deps: AppDeps) {
     const purchase = await deps.repo.get(parsed.data.purchaseId);
     if (!purchase || purchase.userId !== user.sub) throw new HttpError("NOT_FOUND", "purchase not found");
 
+    if (purchase.bundleId.startsWith('pack:')) throw new HttpError('VALIDATION', 'Confirm this pack purchase in the Store');
     const signature = parsed.data.signature;
     if (signature !== undefined && !SIGNATURE_RE.test(signature)) throw new HttpError("VALIDATION", "malformed signature");
     return fulfill(deps.repo, deps.ledger, deps.chain, purchase, signature);
