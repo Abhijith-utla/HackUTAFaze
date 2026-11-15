@@ -53,6 +53,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "collab",
+          "creators",
+          "teamwork"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -81,6 +90,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "clutch",
+          "precision",
+          "teamwork"
+        ],
+        "cpuPool": true
       }
     },
     {
@@ -109,6 +127,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "clutch",
+          "precision",
+          "teamwork"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -137,6 +164,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "comeback",
+          "creators",
+          "resilience"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -165,6 +201,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "reaction",
+          "celebration",
+          "creators"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -193,6 +238,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "collab",
+          "creators",
+          "teamwork"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -221,6 +275,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "comeback",
+          "resilience",
+          "teamwork"
+        ],
+        "cpuPool": true
       }
     },
     {
@@ -249,6 +312,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "precision",
+          "surprise",
+          "clutch"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -277,6 +349,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "comedy",
+          "reaction",
+          "surprise"
+        ],
+        "cpuPool": true
       }
     },
     {
@@ -305,6 +386,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "reaction",
+          "creators",
+          "collab"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -333,6 +423,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "precision",
+          "surprise",
+          "clutch"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -361,6 +460,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "clutch",
+          "precision",
+          "teamwork"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -389,6 +497,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "comeback",
+          "creators",
+          "resilience"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -417,6 +534,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "comedy",
+          "reaction",
+          "surprise"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -445,6 +571,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "precision",
+          "surprise",
+          "clutch"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -473,6 +608,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "reaction",
+          "celebration",
+          "creators"
+        ],
+        "cpuPool": true
       }
     },
     {
@@ -501,6 +645,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "clutch",
+          "precision",
+          "teamwork"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -529,6 +682,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "precision",
+          "surprise",
+          "clutch"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -557,6 +719,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "clutch",
+          "precision",
+          "teamwork"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -585,6 +756,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "collab",
+          "creators",
+          "teamwork"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -613,6 +793,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "comeback",
+          "resilience",
+          "teamwork"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -641,6 +830,14 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "teamwork",
+          "precision"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -669,6 +866,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "comedy",
+          "reaction",
+          "surprise"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -697,6 +903,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "precision",
+          "surprise",
+          "clutch"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -725,6 +940,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "comeback",
+          "creators",
+          "resilience"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -753,6 +977,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "collab",
+          "creators",
+          "teamwork"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -781,6 +1014,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "comeback",
+          "creators",
+          "resilience"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -809,6 +1051,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "collab",
+          "creators",
+          "teamwork"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -837,6 +1088,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "reaction",
+          "celebration",
+          "creators"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -865,6 +1125,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "comeback",
+          "resilience",
+          "teamwork"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -893,6 +1162,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "precision",
+          "surprise",
+          "clutch"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -921,6 +1199,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "collab",
+          "creators",
+          "teamwork"
+        ],
+        "cpuPool": true
       }
     },
     {
@@ -949,6 +1236,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "clutch",
+          "precision",
+          "teamwork"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -977,6 +1273,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "precision",
+          "surprise",
+          "clutch"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -1005,6 +1310,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "collab",
+          "creators",
+          "teamwork"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -1033,6 +1347,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "comedy",
+          "reaction",
+          "surprise"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -1061,6 +1384,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "comedy",
+          "reaction",
+          "surprise"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -1089,6 +1421,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "comeback",
+          "creators",
+          "resilience"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -1117,6 +1458,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "comeback",
+          "creators",
+          "resilience"
+        ],
+        "cpuPool": false
       }
     },
     {
@@ -1145,6 +1495,15 @@
         "source_visual": "AI-generated concept illustration (not an archival still)",
         "edition": "DEMO-001",
         "pullable": true
+      },
+      "gameplay": {
+        "enabled": true,
+        "tags": [
+          "reaction",
+          "celebration",
+          "creators"
+        ],
+        "cpuPool": false
       }
     }
   ],

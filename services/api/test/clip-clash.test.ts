@@ -9,7 +9,7 @@ async function fixture(tags=['clutch']) {
  const users=[await signup(app),await signup(app)];
  const {cardIds}=await makeSetWithPack();
  const asset=(await pool.query("INSERT INTO clip_clash_assets(mime,bytes) VALUES('video/mp4',$1) RETURNING id",[Buffer.from('00000018667479706d703432','hex')])).rows[0].id;
- await pool.query("UPDATE cards SET clip_asset_id=$2,clip_start_ms=0,clip_end_ms=1000,clip_approval_status='approved',rights_reference='test-fixture',moment_tags=$3 WHERE id=ANY($1::uuid[])",[cardIds,asset,tags]);
+ await pool.query("UPDATE cards SET game_enabled=true,clip_asset_id=$2,clip_start_ms=0,clip_end_ms=1000,clip_approval_status='approved',rights_reference='test-fixture',moment_tags=$3 WHERE id=ANY($1::uuid[])",[cardIds,asset,tags]);
  const instances:string[][]=[[],[]];
  for(let seat=0;seat<2;seat++) for(const cardId of cardIds) instances[seat].push((await pool.query('INSERT INTO card_instances(card_id,owner_id,serial) VALUES($1,$2,$3) RETURNING id',[cardId,users[seat].id,seat+1])).rows[0].id);
  return {users,cardIds,instances};
@@ -73,7 +73,7 @@ it('three wins ends early; expiration releases lineup locks',async()=>{
  const f=await fixture(['clutch','comeback','reaction','comedy','collab']),id=await match(f);
  // Give seat 2 different empty-tag cards so seat 1 wins every prompt.
  const other=await makeSetWithPack();const asset=(await pool.query('SELECT clip_asset_id FROM cards WHERE id=$1',[f.cardIds[0]])).rows[0].clip_asset_id;
- await pool.query("UPDATE cards SET clip_asset_id=$2,clip_start_ms=0,clip_end_ms=1000,clip_approval_status='approved',rights_reference='test',moment_tags='{}' WHERE id=ANY($1::uuid[])",[other.cardIds,asset]);
+ await pool.query("UPDATE cards SET game_enabled=true,clip_asset_id=$2,clip_start_ms=0,clip_end_ms=1000,clip_approval_status='approved',rights_reference='test',moment_tags=ARRAY['unmatched'] WHERE id=ANY($1::uuid[])",[other.cardIds,asset]);
  const ids=[];for(const cid of other.cardIds)ids.push((await pool.query('INSERT INTO card_instances(card_id,owner_id,serial) VALUES($1,$2,1) RETURNING id',[cid,f.users[1].id])).rows[0].id);
  await post(f.users[0],id,'lineup',{instanceIds:f.instances[0]});await post(f.users[1],id,'lineup',{instanceIds:ids});
  for(let round=1;round<=3;round++){await post(f.users[0],id,'submit',{cardId:f.cardIds[round-1],round});const r=await post(f.users[1],id,'submit',{cardId:other.cardIds[round-1],round});expect(r.statusCode,r.body).toBe(200);if(round===3){expect(r.json().match.winner_seat).toBe(1);expect(r.json().match.status).toBe('completed');}}
@@ -84,9 +84,9 @@ it('rejects duplicate owned moments, ineligible clips and existing listing reser
  const f=await fixture(),id=await match(f);
  const duplicate=(await pool.query('INSERT INTO card_instances(card_id,owner_id,serial) VALUES($1,$2,3) RETURNING id',[f.cardIds[0],f.users[0].id])).rows[0].id;
  expect((await post(f.users[0],id,'lineup',{instanceIds:[...f.instances[0].slice(0,4),duplicate]})).statusCode).toBe(400);
- await pool.query("UPDATE cards SET clip_approval_status='pending' WHERE id=$1",[f.cardIds[0]]);
+ await pool.query("UPDATE cards SET game_enabled=false WHERE id=$1",[f.cardIds[0]]);
  expect((await post(f.users[0],id,'lineup',{instanceIds:f.instances[0]})).statusCode).toBe(400);
- await pool.query("UPDATE cards SET clip_approval_status='approved' WHERE id=$1",[f.cardIds[0]]);
+ await pool.query("UPDATE cards SET game_enabled=true WHERE id=$1",[f.cardIds[0]]);
  const listed=await app.inject({method:'POST',url:'/marketplace/listings',headers:headers(f.users[0]),payload:{instanceId:f.instances[0][0]}});expect(listed.statusCode).toBe(201);
  expect((await post(f.users[0],id,'lineup',{instanceIds:f.instances[0]})).statusCode).toBe(409);
  await post(f.users[0],id,'cancel',{});
@@ -116,4 +116,31 @@ it('freezes future prompts before play without exposing them in state',async()=>
   const s=(await post(f.users[1],id,'lineup',{instanceIds:f.instances[1]})).json();
   expect(s.match.prompt_pool).toBeUndefined();expect(s.rounds[0].prompt_snapshot.weights.edited).toBeUndefined();
  }finally{for(const p of original)await pool.query('UPDATE clip_clash_prompts SET weights=$2 WHERE id=$1',[p.id,p.weights]);await post(f.users[0],id,'cancel',{});}
+});
+it('plays artwork-only CPU matches without any video or clip approval',async()=>{
+ const f=await fixture(['clutch','precision']);
+ await pool.query("UPDATE cards SET clip_asset_id=NULL,clip_start_ms=NULL,clip_end_ms=NULL,clip_approval_status='pending',rights_reference=NULL WHERE id=ANY($1::uuid[])",[f.cardIds]);
+ const id=await match(f,true);
+ const locked=await post(f.users[0],id,'lineup',{instanceIds:f.instances[0]});expect(locked.statusCode,locked.body).toBe(200);
+ expect(locked.json().lineups.every((l:any)=>l.snapshot.art_url&&l.snapshot.clip_asset_id===null)).toBe(true);
+ const result=await post(f.users[0],id,'submit',{cardId:f.cardIds[0],round:1});expect(result.statusCode,result.body).toBe(200);expect(result.json().rounds[0].status).toBe('resolved');
+ await post(f.users[0],id,'cancel',{});
+});
+it('repairs an already-applied legacy schema without changing played prompts or scores',async()=>{
+ const f=await fixture(),id=await match(f);
+ for(let i=0;i<2;i++)await post(f.users[i],id,'lineup',{instanceIds:f.instances[i]});
+ const db=await pool.connect();
+ try {
+  const {readFile}=await import('node:fs/promises');
+  const sql=await readFile(new URL('../migrations/012_clip_clash_prompt_pool.sql',import.meta.url),'utf8');
+  await db.query('BEGIN');
+  const before=(await db.query('SELECT prompt_id,prompt_snapshot FROM clip_clash_rounds WHERE match_id=$1',[id])).rows[0];
+  await db.query('ALTER TABLE clip_clash_matches DROP COLUMN prompt_pool');
+  await db.query(sql);
+  const repaired=(await db.query('SELECT prompt_pool,current_round FROM clip_clash_matches WHERE id=$1',[id])).rows[0];
+  expect(repaired.prompt_pool).toHaveLength(5);expect(repaired.current_round).toBe(1);
+  expect(repaired.prompt_pool.find((p:any)=>p.id===before.prompt_id).weights).toEqual(before.prompt_snapshot.weights);
+  await db.query(sql);
+  expect((await db.query('SELECT prompt_pool FROM clip_clash_matches WHERE id=$1',[id])).rows[0].prompt_pool).toEqual(repaired.prompt_pool);
+ }finally{await db.query('ROLLBACK');db.release();await post(f.users[0],id,'cancel',{});}
 });

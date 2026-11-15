@@ -7,8 +7,8 @@ import { requireUser, requireAdmin } from '../auth.js';
 import { fail } from '../errors.js';
 import { MomentTags, suitability, greedyCard, matchOutcome } from '../clip-clash-scoring.js';
 const Id=z.object({id:z.string().uuid()});
-const eligible=`c.clip_approval_status='approved' AND c.clip_asset_id IS NOT NULL AND c.rights_reference IS NOT NULL AND c.clip_start_ms IS NOT NULL AND EXISTS(SELECT 1 FROM clip_clash_assets a WHERE a.id=c.clip_asset_id AND a.mime LIKE 'video/%')`;
-const snapshot=(c:any)=>({id:c.id,name:c.name,moment_tags:MomentTags.parse(c.moment_tags),clip_asset_id:c.clip_asset_id,thumbnail_asset_id:c.thumbnail_asset_id,clip_start_ms:c.clip_start_ms,clip_end_ms:c.clip_end_ms,moment_description:c.moment_description});
+const eligible=`c.game_enabled AND cardinality(c.moment_tags)>0 AND length(trim(c.art_url))>0`;
+const snapshot=(c:any)=>({id:c.id,name:c.name,art_url:c.art_url,moment_tags:MomentTags.parse(c.moment_tags),clip_asset_id:c.clip_asset_id,thumbnail_asset_id:c.thumbnail_asset_id,clip_start_ms:c.clip_start_ms,clip_end_ms:c.clip_end_ms,moment_description:c.moment_description});
 async function expire() { await pool.query("UPDATE clip_clash_matches SET status='expired',closed_at=now() WHERE status IN ('waiting','active') AND expires_at<now()"); }
 async function lock(c:pg.PoolClient,id:string,user:string) {
  const m=(await c.query('SELECT * FROM clip_clash_matches WHERE id=$1 FOR UPDATE',[id])).rows[0];
@@ -53,7 +53,7 @@ export async function clipClashRoutes(app:FastifyInstance) {
    await c.query('INSERT INTO clip_clash_players(match_id,seat,user_id) VALUES($1,1,$2)',[m.id,u.sub]);
    if(mode==='cpu') {
     const cards=(await c.query(`SELECT c.* FROM clip_clash_cpu_pool p JOIN cards c ON c.id=p.card_id WHERE ${eligible} ORDER BY c.id LIMIT 5 FOR SHARE OF c`)).rows;
-    if(cards.length!==5) fail('CONFLICT','CPU needs five approved clips in its fixed pool');
+    if(cards.length!==5) fail('CONFLICT','CPU needs five tagged cards in its fixed pool');
     await c.query('INSERT INTO clip_clash_players(match_id,seat,cpu,ready_at) VALUES($1,2,true,now())',[m.id]);
     for(const [i,card] of cards.entries()) await c.query('INSERT INTO clip_clash_lineups(match_id,seat,slot,card_id,snapshot) VALUES($1,2,$2,$3,$4)',[m.id,i+1,card.id,snapshot(card)]);
    }
@@ -84,7 +84,7 @@ export async function clipClashRoutes(app:FastifyInstance) {
    if(instances.some(i=>i.locked_by_trade_id||i.market_listing_id||i.market_offer_id||i.locked_by_game_match_id)) fail('CARD_LOCKED','A selected card is already reserved');
    if(new Set(instances.map(i=>i.card_id)).size!==5) fail('VALIDATION','Each moment may appear only once');
    const cards=(await c.query(`SELECT c.* FROM cards c WHERE c.id=ANY($1::uuid[]) AND ${eligible} ORDER BY c.id FOR SHARE`,[instances.map(i=>i.card_id)])).rows;
-   if(cards.length!==5) fail('VALIDATION','All cards need approved playable clips and rights records');
+   if(cards.length!==5) fail('VALIDATION','All cards need enabled gameplay, artwork and tags');
    for(const [n,i] of instances.entries()) await c.query('INSERT INTO clip_clash_lineups(match_id,seat,slot,card_id,instance_id,snapshot) VALUES($1,$2,$3,$4,$5,$6)',[id,player.seat,n+1,i.card_id,i.id,snapshot(cards.find(x=>x.id===i.card_id))]);
    await c.query('UPDATE card_instances SET locked_by_game_match_id=$1 WHERE id=ANY($2::uuid[])',[id,b.instanceIds]);
    await c.query('UPDATE clip_clash_players SET ready_at=now() WHERE match_id=$1 AND seat=$2',[id,player.seat]);
@@ -129,6 +129,17 @@ export async function clipClashRoutes(app:FastifyInstance) {
   if(['waiting','active'].includes(m.status)) await c.query("UPDATE clip_clash_matches SET status='cancelled',closed_at=now(),updated_at=now() WHERE id=$1",[id]);
   return state(c,id,u.sub);
  }));
+ app.patch('/admin/game/cards/:id/gameplay',async req=>{
+  requireAdmin(req);const id=Id.parse(req.params).id;
+  const b=z.object({enabled:z.boolean(),tags:MomentTags.refine(t=>t.length>0),cpuPool:z.boolean().default(false)}).strict().parse(req.body);
+  return tx(async c=>{
+   const result=await c.query('UPDATE cards SET game_enabled=$2,moment_tags=$3 WHERE id=$1 RETURNING id',[id,b.enabled,b.tags]);
+   if(!result.rowCount)fail('NOT_FOUND','Card not found');
+   await c.query('DELETE FROM clip_clash_cpu_pool WHERE card_id=$1',[id]);
+   if(b.cpuPool&&b.enabled)await c.query('INSERT INTO clip_clash_cpu_pool(card_id) VALUES($1)',[id]);
+   return {ok:true};
+  });
+ });
  // Assets are immutable: match snapshots remain valid even if card metadata changes later.
  app.post('/admin/game/assets',{bodyLimit:29*1024*1024},async req=>{
   requireAdmin(req);const b=z.object({mime:z.enum(['video/mp4','video/webm','image/png','image/jpeg']),base64:z.string().max(28*1024*1024)}).strict().parse(req.body);

@@ -14,14 +14,6 @@ node --import tsx services/api/src/import-card-pack.ts 'C:/path/to/faze_chain_re
 The first command validates without writing. `--apply` imports directly from ZIP memory, replaces the definitions in one transaction, verifies stored image hashes and unchanged ownership, and updates catalog URLs for that database. A pre-import metadata backup is kept in ignored `.data/card-replacement/`. Preserve the original ZIP as a backup; database URLs alone cannot recreate missing image bytes in a fresh database.
 
 The legacy `generate.mjs` regenerates the original geometric SVG placeholders and overwrites this catalog. Do not run it for the Chain Reaction collection. The old SVGs can remain as legacy fixtures; current cards no longer reference them. Every replacement card remains labelled demo.
-## Preparing Clip Clash clips
+## Clip Clash artwork gameplay
 
-Artwork is not a video clip. The existing Chain Reaction illustrations remain pending and are not silently approved or assigned fabricated video URLs. Staff upload a licensed, reviewed MP4/WebM through `POST /admin/game/assets`, then attach its returned UUID with `PUT /admin/game/cards/:id` (see docs/api.md). Provide tags, a real rights reference, interval and approval. Use `cpuPool:true` for at least five approved cards to enable CPU play. Tags are content annotations, not instructions from source files. Upload thumbnails through the same asset endpoint with an image MIME type if needed. Human players still need five different owned approved moments.
-
-Migration 007 was developed for PostgreSQL/Tiger Cloud. Before applying it, verify that your private DATABASE_URL points to the intended development database. The current configured Tiger environment is shared and has not been confirmed as nonproduction, so Clip Clash's migration must not be applied there implicitly. The API's existing startup runs migrations: confirm the target before restarting the new version. After configuring an explicitly approved development target, run from the repository root:
-
-```powershell
-npm.cmd run migrate -w @faze/api
-```
-
-No existing migrations are rewritten. A backup and normal deployment coordination are needed before adopting the schema on a shared environment.
+The catalog gameplay field defines enabled state, curated tags and fixed CPU membership. Migration 008 applies the same setup to the existing 40 cards; fresh databases receive it through the seed. No videos or clip approval are required. See docs/clip-clash-next-steps.md for activation instructions and the fixed CPU deck. Do not run migrations against an unconfirmed shared/production Tiger target.

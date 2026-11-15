@@ -150,7 +150,7 @@ Clip Clash is separate from pack purchases and trades: no coins, payments, burns
 
 | Method | Path | Request / response |
 |---|---|---|
-| GET | `/game/cards` | Available owned approved clips (one row per instance), plus CPU availability |
+| GET | `/game/cards` | Available owned enabled/tagged artwork cards (one row per instance), plus CPU availability |
 | GET | `/game/matches` | Your most recent 30 persisted matches |
 | POST | `/game/matches` | `{mode:"pvp"|"cpu"}` ? `ClashState` |
 | POST | `/game/join` | `{code}` ? `ClashState`; 16 hexadecimal characters, case insensitive |
@@ -162,6 +162,10 @@ Clip Clash is separate from pack purchases and trades: no coins, payments, burns
 | POST | `/admin/game/assets` | Admin only: `{mime,base64}` ? `{assetId}`; immutable MP4/WebM/PNG/JPEG, up to 20MiB |
 | PUT | `/admin/game/cards/:id` | Admin only: `{clipAssetId,thumbnailAssetId?,startMs,endMs,tags,rightsReference,description,game?,event?,featuredMembers?,approval,cpuPool?}` |
 
-`ClashState` is exported from `@faze/shared`. Opponent submissions are omitted until the round resolves; future prompts are private. Lineups are public after confirmation, including CPU lineup before play. Each match freezes five distinct prompts at creation and freezes card/clip metadata on lineup confirmation. Scores are the sum of weights for distinct matching tags, with per-tag explanations. Tags use lowercase letters, digits, underscores/hyphens (40 characters max). Weights are finite nonnegative numbers up to 1000. Rarity and base power have no effect. CPU ties choose the lowest card UUID, and the CPU sees only the current prompt and its unused cards.
+`ClashState` is exported from `@faze/shared`. Opponent submissions are omitted until the round resolves; future prompts are private. Lineups are public after confirmation, including CPU lineup before play. Artwork and tags determine gameplay; videos are optional legacy metadata. Each match freezes five distinct prompts at creation and freezes card/clip metadata on lineup confirmation. Scores are the sum of weights for distinct matching tags, with per-tag explanations. Tags use lowercase letters, digits, underscores/hyphens (40 characters max). Weights are finite nonnegative numbers up to 1000. Rarity and base power have no effect. CPU ties choose the lowest card UUID, and the CPU sees only the current prompt and its unused cards.
 
 First to three wins; after five rounds without three wins, draw even if scores differ. Cancellation is available to either participant. Matches expire after 24 hours; API lifecycle cleanup runs every minute and on game traffic. All terminal updates trigger database lock release. With the API stopped, expiry cleanup resumes on startup/game traffic; persistent locks remain exclusive until cleanup executes.
+
+### Artwork gameplay / migration 008
+
+No video, clip approval or rights-reference fields are required for Clip Clash. Eligible cards have game_enabled=true, nonempty validated moment_tags and artwork. Lineup snapshots include art_url. PATCH /admin/game/cards/:id/gameplay accepts {enabled, tags, cpuPool?}; admin only. Migration 008 and the catalog seed enable the current 40 Chain Reaction cards and configure a fixed five-card CPU deck. Card reveals and rising bars visualize server-resolved suitability; they never calculate winners locally.

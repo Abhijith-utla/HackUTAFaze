@@ -1,3 +1,4 @@
+import { MomentTags } from './clip-clash-scoring.js';
 // Demo seed (everything demo=true). Idempotent: safe to run many times.
 // Uses D's catalog (content/seed/catalog.json, ids preserved) when present; otherwise the built-in sets below.
 import bcrypt from "bcryptjs";
@@ -108,7 +109,7 @@ async function upsertUser(email: string, password: string, name: string, role: "
 
 const Catalog = z.object({
   sets: z.array(CardSet),
-  cards: z.array(Card),
+  cards: z.array(Card.extend({ gameplay: z.object({ enabled: z.boolean(), tags: MomentTags.refine(t => t.length > 0), cpuPool: z.boolean().default(false) }).optional() })),
   packs: z.array(Pack.extend({ active: z.boolean().default(true) })),
   cardStats: z.array(z.object({ cardId: z.string().uuid(), hype: z.number().int().min(0).max(100) })).default([]),
 });
@@ -185,6 +186,12 @@ async function importCatalog(counts: Record<string, number>): Promise<boolean> {
         [k.id, k.setId, k.name, k.fazeMember, k.rarity, url, k.basePower, k.maxSupply],
       );
       counts.cards += r.rowCount ?? 0;
+      const gameplay = k.gameplay;
+      if (gameplay) {
+        const tags = MomentTags.parse(gameplay.tags);
+        await c.query('UPDATE cards SET game_enabled=$2,moment_tags=$3 WHERE id=$1', [k.id, gameplay.enabled === true, tags]);
+        if (gameplay.cpuPool && gameplay.enabled) await c.query('INSERT INTO clip_clash_cpu_pool(card_id) VALUES($1) ON CONFLICT DO NOTHING', [k.id]);
+      }
       if (url === k.artUrl) continue;
       // Existing rows still pointing at seed art (v1.4 absolute http://host/demo-art/..., the raw /demo-art/...
       // path, or an older imported /art/<id>.svg demo row) move to the relative DB-backed URL.
