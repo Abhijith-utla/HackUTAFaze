@@ -26,7 +26,8 @@ export class HttpError extends Error {
   }
 }
 
-const SIGNATURE_RE = /^[1-9A-HJ-NP-Za-km-z_]{32,128}$/;
+// Real Solana signatures are base58 (64-88 chars); "sim_<reference>_<lamports>" is the test-only simulated form.
+const SIGNATURE_RE = /^(?:[1-9A-HJ-NP-Za-km-z]{32,90}|sim_[1-9A-HJ-NP-Za-km-z]{32,44}_\d{1,19})$/;
 
 export function buildApp(deps: AppDeps) {
   const app = Fastify({ logger: deps.logger ?? false });
@@ -117,11 +118,20 @@ export function buildApp(deps: AppDeps) {
 
     let signature = parsed.data.signature;
     if (signature !== undefined && !SIGNATURE_RE.test(signature)) throw new HttpError("VALIDATION", "malformed signature");
-    if (!signature) signature = await deps.chain.findSignature(purchase.reference);
+    const rpc = async <T>(f: () => Promise<T>): Promise<T> => {
+      try {
+        return await f();
+      } catch (err) {
+        app.log.warn(err, "solana rpc error");
+        throw new HttpError("CONFLICT", "Solana RPC unavailable, retry shortly");
+      }
+    };
+    if (!signature) signature = await rpc(() => deps.chain.findSignature(purchase.reference));
     if (!signature) throw new HttpError("CONFLICT", "payment not found on-chain yet, retry shortly");
     if (await deps.repo.signatureUsed(signature)) throw new HttpError("VALIDATION", "this transaction already paid for a purchase");
 
-    const tx = await deps.chain.getTx(signature);
+    const sigToCheck = signature;
+    const tx = await rpc(() => deps.chain.getTx(sigToCheck));
     if (!tx) throw new HttpError("CONFLICT", "transaction not confirmed yet, retry shortly");
     const check = checkTransfer(tx, { reference: purchase.reference, recipient: purchase.recipient, lamports: purchase.lamports });
     if (!check.ok) throw new HttpError("VALIDATION", check.reason);

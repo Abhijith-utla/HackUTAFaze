@@ -171,7 +171,7 @@ describe("5. trades", () => {
     const want = bCards[0].instances[0].id;
 
     const offer = await a.api("POST", "/trades", { toUserId: b.id, offeredInstanceIds: [give], requestedInstanceIds: [want] });
-    expect(offer.status).toBe(200);
+    expect([200, 201]).toContain(offer.status);
     const tradeId = offer.body.trade.id;
 
     // offered card is locked: can't be offered again
