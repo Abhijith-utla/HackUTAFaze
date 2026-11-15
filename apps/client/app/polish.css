@@ -805,9 +805,9 @@ main .grid button.primary:active:not(:disabled) { transform: translateY(1px) sca
 }
 
 /* Header link to the Twitch watch-along page (/watch). */
-header .account .header-watch { color: var(--faze-red, #E4002B); font-family: var(--font-display, inherit); font-size: 12px; letter-spacing: .12em; text-decoration: none; padding: 6px 10px; border: 1px solid color-mix(in srgb, var(--faze-red, #E4002B) 45%, transparent); border-radius: 999px; }
-header .account .header-watch:hover { background: color-mix(in srgb, var(--faze-red, #E4002B) 14%, transparent); }
-header .account .header-watch:focus-visible { outline: 2px solid var(--faze-red, #E4002B); outline-offset: 2px; }
+header .account .header-watch { display: inline-flex; align-items: center; gap: 7px; color: #d9d9dc; font: 600 12px/1 var(--font-mono, monospace); letter-spacing: .1em; text-decoration: none; padding: 8px 12px; border: 1px solid #34343a; border-radius: 6px; background: transparent; box-shadow: none; text-shadow: none; transition: border-color .15s, color .15s, background-color .15s; }
+header .account .header-watch:hover { color: #fff; border-color: #55555c; background: #ffffff0a; }
+header .account .header-watch:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
 /* Minimal chrome: no hero banner, compact header + tabs. */
 header { padding-block: 14px; }
@@ -912,3 +912,4 @@ button.profile-icon:hover, button.profile-icon[aria-expanded="true"] { border-co
 }
 .mono-theme main button.home-cta { border-radius: 999px; height: 52px; padding: 0 28px; font: 700 16px/1 var(--font-sans, system-ui, sans-serif); border: 0; background: var(--faze-red, #e4002b); color: #fff; }
 .mono-theme main button.home-cta:hover { background: #fff; color: #0b0b0d; }
+header .account .header-watch .hw-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--faze-red, #E4002B); }
