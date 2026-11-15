@@ -1,6 +1,6 @@
 name: ci
 on:
-  push: { branches: [main, 'agent-*/**'] }
+  push: { branches: [main, 'agent-*/**', 'lead/**'] }
   pull_request:
 jobs:
   test:
