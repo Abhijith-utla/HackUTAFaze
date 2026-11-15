@@ -142,6 +142,6 @@ describe("Open Contributions API", () => {
     current = transaction(quote.json().payout);
     const replay = await app.inject({ method: "POST", url: `/admin/contributions/${retry.id}/payouts/confirm`, ...as(admin.cookie), payload: { signature: "contribution-payment-one" } });
     expect(replay.statusCode).toBe(400);
-    expect((await app.inject({ method: "GET", url: "/admin/contributions?status=payout_pending", ...as(admin.cookie) })).json().contributions.map((p: { id: string }) => p.id).toContain(retry.id));
+    expect((await app.inject({ method: "GET", url: "/admin/contributions?status=payout_pending", ...as(admin.cookie) })).json().contributions.map((p: { id: string }) => p.id)).toContain(retry.id);
   });
 });
