@@ -46,6 +46,8 @@ function youtubeThumbnail(sourceUrl: string) {
   }
 }
 
+const sourceHost = (url: string) => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return "source"; } };
+
 function ContributionCard({ contribution, busy, onApprove, onReject, onPay }: {
   contribution: Contribution;
   busy: boolean;
@@ -58,40 +60,43 @@ function ContributionCard({ contribution, busy, onApprove, onReject, onPay }: {
   const payable = contribution.status === "approved" || contribution.status === "payout_pending";
   const thumbnail = youtubeThumbnail(contribution.sourceUrl);
   return (
-    <article className={`contribution-card is-${contribution.status}`}>
-      <div className="contribution-head">
-        {thumbnail ? (
-          <a className="contribution-thumb" href={contribution.sourceUrl} target="_blank" rel="noreferrer" aria-label={`Open ${contribution.title} on YouTube`}>
-            <Image src={thumbnail} alt={`${contribution.title} YouTube thumbnail`} width={320} height={180} loading="lazy" />
-          </a>
-        ) : <div className="contribution-thumb is-empty" aria-label="No YouTube video thumbnail available">NO CLIP PREVIEW</div>}
-        <div className="contribution-title">
-          <p className="contribution-by">{contribution.contributorName} · {ago(contribution.createdAt)}{contribution.demo ? " · demo" : ""}</p>
-          <h2>{contribution.title}</h2>
+    <article className={`cc cc-${contribution.status}`}>
+      {thumbnail ? (
+        <a className="cc-media" href={contribution.sourceUrl} target="_blank" rel="noreferrer" aria-label={`Open ${contribution.title} on YouTube`}>
+          <Image src={thumbnail} alt={`${contribution.title} YouTube thumbnail`} width={320} height={180} loading="lazy" />
+        </a>
+      ) : <div className="cc-media is-empty" aria-label="No clip preview available">No preview</div>}
+      <div className="cc-body">
+        <div className="cc-head">
+          <div>
+            <h2>{contribution.title}</h2>
+            <p className="cc-by">{contribution.contributorName} · {ago(contribution.createdAt)}{contribution.demo ? " · demo" : ""}</p>
+          </div>
+          <span className={`cc-status ${contribution.status}`}>{contribution.status.replace("_", " ")}</span>
         </div>
-        <span className={`contribution-status ${contribution.status}`}>{contribution.status.replace("_", " ")}</span>
+        <p className="cc-pitch">{contribution.pitch}</p>
+        <dl className="cc-facts">
+          <div><dt>Member</dt><dd>{contribution.fazeMember}</dd></div>
+          {contribution.sourceUrl && <div><dt>Source</dt><dd><a href={contribution.sourceUrl} target="_blank" rel="noreferrer">{sourceHost(contribution.sourceUrl)} ↗</a></dd></div>}
+          <div><dt>Payout wallet</dt><dd className="cc-wallet" title={contribution.recipientWallet}>{shortWallet(contribution.recipientWallet)}</dd></div>
+        </dl>
+        {contribution.reviewNote && <p className="cc-note">{contribution.reviewNote}</p>}
+        {pending && (
+          <div className="cc-actions">
+            <label className="cc-reward"><span>Reward</span><input aria-label={`Reward for ${contribution.title} in devnet SOL`} value={bountySol} type="number" min="0.001" max="1" step="0.001" onChange={(event) => setBountySol(event.target.value)} disabled={busy} /><em>SOL</em></label>
+            <span className="cc-spacer" />
+            <button className="quiet" disabled={busy} onClick={() => void onReject(contribution)}>Decline</button>
+            <button className="cc-primary" disabled={busy} onClick={() => void onApprove(contribution, Number(bountySol))}>{busy ? "Saving…" : "Approve"}</button>
+          </div>
+        )}
+        {payable && (
+          <div className="cc-actions cc-pay">
+            <div><strong>{sol(contribution.bountyLamports)} SOL</strong><span>{contribution.status === "payout_pending" ? "A quote is pending. Verify it before paying again." : "Approved. Sends one devnet transfer from your Phantom wallet."}{contribution.demo ? " Test SOL only." : ""}</span></div>
+            <button className="cc-primary" disabled={busy} onClick={() => void onPay(contribution)}>{busy ? "Checking…" : contribution.status === "payout_pending" ? "Finish payout" : "Pay reward"}</button>
+          </div>
+        )}
+        {contribution.status === "paid" && <p className="cc-paid" role="status">Verified: {sol(contribution.bountyLamports)} SOL sent to {shortWallet(contribution.recipientWallet)}.</p>}
       </div>
-      <p className="contribution-pitch">{contribution.pitch}</p>
-      <dl className="contribution-meta">
-        <div><dt>Member</dt><dd>{contribution.fazeMember}</dd></div>
-        <div><dt>Recipient</dt><dd className="contribution-wallet">{contribution.recipientWallet}</dd></div>
-        {contribution.sourceUrl && <div className="contribution-source"><dt>Source</dt><dd><a href={contribution.sourceUrl} target="_blank" rel="noreferrer">Open source ↗</a><small>{contribution.sourceUrl}</small></dd></div>}
-      </dl>
-      {contribution.reviewNote && <p className="contribution-note">{contribution.reviewNote}</p>}
-      {pending && (
-        <div className="contribution-actions">
-          <label className="contribution-bounty">Reward · devnet SOL<input aria-label={`Reward for ${contribution.title} in devnet SOL`} value={bountySol} type="number" min="0.001" max="1" step="0.001" onChange={(event) => setBountySol(event.target.value)} disabled={busy} /></label>
-          <button disabled={busy} onClick={() => void onApprove(contribution, Number(bountySol))}>{busy ? "Saving…" : "Approve"}</button>
-          <button className="quiet" disabled={busy} onClick={() => void onReject(contribution)}>Decline</button>
-        </div>
-      )}
-      {payable && (
-        <div className="contribution-actions contribution-pay">
-          <div><strong>{sol(contribution.bountyLamports)} devnet SOL</strong><span>{contribution.status === "payout_pending" ? "A quote is pending. Verify it before paying again." : "Approval unlocks one explicit Phantom transfer."}{contribution.demo ? " Test SOL only." : ""}</span></div>
-          <button disabled={busy} onClick={() => void onPay(contribution)}>{busy ? "Checking…" : contribution.status === "payout_pending" ? "Finish payout" : "Pay reward"}</button>
-        </div>
-      )}
-      {contribution.status === "paid" && <p className="contribution-paid" role="status">Verified: {sol(contribution.bountyLamports)} devnet SOL sent to {shortWallet(contribution.recipientWallet)}.</p>}
     </article>
   );
 }
@@ -169,10 +174,10 @@ export default function ContributionsPage() {
   const pendingCount = queue.filter((contribution) => contribution.status === "pending").length;
   return (
     <div className="contributions">
-      <Heading eyebrow="OPEN CONTRIBUTIONS" title="Good ideas deserve a clean path in.">
+      <Heading eyebrow="OPEN CONTRIBUTIONS" title="Review community pitches">
         <button className="quiet" onClick={() => void contributions.reload()} disabled={!!busy}>Refresh</button>
       </Heading>
-      <p className="contribution-intro">Review community card pitches, then make a single, verifiable devnet reward from your own Phantom wallet. No server wallet. No automatic payout.</p>
+      <p className="contribution-intro">Approve a pitch, then send one verifiable devnet reward from your own Phantom wallet. No server wallet and no automatic payouts.</p>
 
       <div className="contribution-tabs" role="tablist" aria-label="Contribution actions">
         <button id="community-queue-tab" role="tab" aria-controls="community-queue" aria-selected={mode === "queue"} className={mode === "queue" ? "on" : ""} onClick={() => setMode("queue")}>Community queue{pendingCount ? <span>{n(pendingCount)}</span> : null}</button>
@@ -182,7 +187,16 @@ export default function ContributionsPage() {
       {mode === "card" ? <div id="direct-card" role="tabpanel" aria-labelledby="direct-card-tab"><AddCard sets={sets.data?.sets ?? []} busy={busy === "add-card"} onDone={addCard} /></div> : (
         <section id="community-queue" role="tabpanel" aria-labelledby="community-queue-tab" className="contribution-queue" aria-live="polite">
           {!contributions.loading && !queue.length && <div className="cr-empty"><h2>No contributions yet.</h2><p className="cr-muted">New community pitches will appear here for a fast decision.</p></div>}
-          {queue.map((contribution) => <ContributionCard key={contribution.id} contribution={contribution} busy={busy === contribution.id} onApprove={(item, bounty) => act(item.id, () => approve(item, bounty))} onReject={(item) => act(item.id, () => reject(item))} onPay={(item) => act(item.id, () => pay(item))} />)}
+          {([
+            ["Needs review", queue.filter((c) => c.status === "pending")],
+            ["Ready to pay", queue.filter((c) => c.status === "approved" || c.status === "payout_pending")],
+            ["Closed", queue.filter((c) => c.status === "paid" || c.status === "rejected")],
+          ] as [string, Contribution[]][]).filter(([, items]) => items.length).map(([label, items]) => (
+            <div className="cc-group" key={label}>
+              <h3>{label}<span>{items.length}</span></h3>
+              {items.map((contribution) => <ContributionCard key={contribution.id} contribution={contribution} busy={busy === contribution.id} onApprove={(item, bounty) => act(item.id, () => approve(item, bounty))} onReject={(item) => act(item.id, () => reject(item))} onPay={(item) => act(item.id, () => pay(item))} />)}
+            </div>
+          ))}
           {contributions.error && <p className="cr-error" role="alert">{contributions.error}</p>}
         </section>
       )}
