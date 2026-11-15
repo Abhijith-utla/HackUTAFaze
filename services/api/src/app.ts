@@ -14,6 +14,7 @@ import { leaderboardRoutes } from "./routes/leaderboard.js";
 import { artRoutes } from "./routes/art.js";
 import { adminRoutes } from "./routes/admin.js";
 import { controlRoutes } from "./routes/control.js"; // FaZe Control Room (lead, contract v1.6)
+import { insightsRoutes } from "./routes/insights.js"; // Control Room analytics + sponsors (lead, v1.8)
 
 import { marketplaceRoutes } from './routes/marketplace.js';
 
@@ -43,6 +44,7 @@ export async function buildApp() {
   await app.register(leaderboardRoutes);
   await app.register(adminRoutes);
   await app.register(controlRoutes);
+  await app.register(insightsRoutes);
   await artRoutes(app);
   return app;
 }
