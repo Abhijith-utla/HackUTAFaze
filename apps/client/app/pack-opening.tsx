@@ -4,7 +4,7 @@ import type { Card, CardInstance } from '@faze/shared';
 import { art } from '../lib/api';
 import { playCardVoice, stopCardVoice } from '../lib/voice';
 import { packCoverForName } from '../lib/pack-covers';
-import { DecodeText, GlitchGhosts, GlitchOverlay, RARITY_RANK, glitchLevel, trackSpotlight } from './pack-fx';
+import { DecodeText, GlitchOverlay, RARITY_RANK, glitchLevel, trackSpotlight } from './pack-fx';
 import './pack-fx.css';
 
 const colors = { common: '#a9bed1', rare: '#42baff', epic: '#be75ff', legendary: '#ffd270' };
@@ -93,7 +93,7 @@ export default function PackOpening({ cards, packName, onClose }: { cards: CardI
   function next() { stopCardVoice(); if (index === shown.length - 1) setStage('summary'); else { setIndex(index + 1); setFlipped(false); } }
   function reveal() { setFlipped(true); if (level && !glitched.current.has(current.id)) { glitched.current.add(current.id); setGlitch(current.id); } }
   const glitching = stage === 'cards' && level && glitch === current.id ? level : null;
-  return <div className={`pack-cinema cinema-${stage}${glitching ? ` fx-glitching fx-gl-${glitching}` : ''}`} style={{ '--rarity-glow': color } as CSSProperties}>
+  return <div className={`pack-cinema cinema-${stage}${glitching ? ` fx-gl-${glitching}` : ''}`} style={{ '--rarity-glow': color } as CSSProperties}>
     <div ref={panel} tabIndex={-1} className="cinema-dialog" role="dialog" aria-modal="true" aria-labelledby="opening-title">
       <div className="cinema-top"><span>FAZE CLIPDECK / PACK REVEAL</span><button onClick={onClose} aria-label="Close pack reveal">Close ×</button></div>
       <div className="cinema-floor" aria-hidden="true" />
@@ -112,7 +112,6 @@ export default function PackOpening({ cards, packName, onClose }: { cards: CardI
           <span className="cinema-card-back"><b>CLIPDECK</b><span>CLIPDECK / COLLECTOR CARD</span><small>TAP TO REVEAL</small></span>
           <span className="cinema-card-front">{!baked && <span className="cinema-rarity" data-text={current.card.rarity}>{current.card.rarity}</span>}<img src={art(current.card.artUrl)} alt={current.card.name} />{!baked && <span className="cinema-card-label"><small>{current.card.fazeMember}</small><strong data-text={current.card.name}><DecodeText text={current.card.name} play={flipped && current.card.rarity === 'legendary'} /></strong><span>POWER {current.card.basePower} · SERIAL #{current.serial}</span></span>}<span className="card-foil" aria-hidden="true" /></span>
         </button>
-        {glitching && <GlitchGhosts src={art(current.card.artUrl)} />}
       </div>}
       {stage === 'cards' && flipped && !baked && extra(current.card).lore && <p className="cinema-lore">{extra(current.card).lore}</p>}
       {stage === 'cards' && flipped && hasVoice && <p className="cinema-lore cinema-lore-hint">Serial #{current.serial}. Tap the card to hear its legacy.</p>}

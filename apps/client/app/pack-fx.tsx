@@ -8,11 +8,11 @@ export type GlitchLevel = 'epic' | 'legendary';
 export const glitchLevel = (rarity: Rarity): GlitchLevel | null => rarity === 'legendary' || rarity === 'epic' ? rarity : null;
 
 /** Delay until the card face passes 90deg in the flip, then the glitch length. Mirrors --fx-gd / --fx-gt in pack-fx.css. */
-const GLITCH = { epic: { delay: 280, length: 350 }, legendary: { delay: 420, length: 700 } } as const;
+const GLITCH = { epic: { delay: 280, length: 1000 }, legendary: { delay: 420, length: 1500 } } as const;
 
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** Full-screen glitch layers (flash, scanlines, jumping bands). Unmounts itself via onDone; never blocks input. */
+/** Full-screen reveal burst (eased shockwave ring + one light sweep, in the card's rarity colour). Unmounts itself via onDone; never blocks input. */
 export function GlitchOverlay({ level, onDone }: { level: GlitchLevel; onDone: () => void }) {
   const done = useRef(onDone); done.current = onDone;
   useEffect(() => {
@@ -22,18 +22,9 @@ export function GlitchOverlay({ level, onDone }: { level: GlitchLevel; onDone: (
   }, [level]);
   return <div className={`fx-glitch fx-glitch-${level}`} aria-hidden="true">
     <span className="fx-glitch-calm" />
-    <span className="fx-glitch-flash" />
-    <span className="fx-glitch-scan" />
-    <span className="fx-glitch-bands"><i /><i /><i /><i /><i /></span>
+    <span className="fx-glitch-wave" />
+    <span className="fx-glitch-sweep" />
   </div>;
-}
-
-/** Red/cyan copies of the card art, band-clipped and offset, laid exactly over the flipper. */
-export function GlitchGhosts({ src }: { src: string }) {
-  return <span className="fx-ghosts" aria-hidden="true">
-    <span className="fx-ghost fx-ghost-r"><img src={src} alt="" /></span>
-    <span className="fx-ghost fx-ghost-c"><img src={src} alt="" /></span>
-  </span>;
 }
 
 /** Pointer-follow spotlight: writes --mx/--my straight to the element, no React state per frame. */

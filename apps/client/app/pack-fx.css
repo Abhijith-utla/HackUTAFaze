@@ -102,58 +102,22 @@
 .pack-cinema .cinema-lineup article.fx-r-epic{box-shadow:0 0 34px color-mix(in srgb,var(--rarity-glow) 28%,transparent)}
 .pack-cinema .cinema-lineup article.fx-r-legendary{box-shadow:0 0 46px color-mix(in srgb,var(--rarity-glow) 42%,transparent)}
 
-/* ---------- 4. Glitch (epic ~350ms subtle, legendary ~700ms strong) ----------
-   Starts as the face passes 90deg (--fx-gd). Flashes: epic 1, legendary 2 within 700ms (<3/s, WCAG 2.3.1);
-   flash peaks stay at or below .3 opacity, bands are thin and translucent. */
-.fx-gl-epic{--fx-gd:280ms;--fx-gt:350ms;--fx-amp:3px;--fx-split:2px;--fx-band:.18}
-.fx-gl-legendary{--fx-gd:420ms;--fx-gt:700ms;--fx-amp:7px;--fx-split:3px;--fx-band:.3}
+/* ---------- 4. Reveal burst (epic ~0.9s, legendary ~1.3s) ----------
+   Replaces the old red/cyan glitch (hard-stepped bands, scanlines, shake, RGB ghosts). Now: one eased shockwave ring in the
+   card's own rarity colour, plus one soft diagonal light sweep. Both are transform/opacity only and fire once.
+   Starts as the face passes 90deg (--fx-gd). No flashing: opacity never exceeds .6 and changes smoothly. */
+.fx-gl-epic{--fx-gd:280ms;--fx-gt:900ms}
+.fx-gl-legendary{--fx-gd:420ms;--fx-gt:1300ms}
 
 .fx-glitch{position:fixed;inset:0;z-index:60;pointer-events:none;overflow:hidden}
 .fx-glitch>span{position:absolute;inset:0;opacity:0}
-.fx-glitch-flash{background:var(--fx-red);mix-blend-mode:screen}
-.fx-glitch-scan{background:repeating-linear-gradient(0deg,#0000 0 2px,#00000059 2px 3px,#0000 3px 4px);mix-blend-mode:multiply}
-.fx-glitch-bands i{position:absolute;left:-4%;right:-4%;height:7%;background:linear-gradient(90deg,color-mix(in srgb,var(--fx-red) 70%,transparent),color-mix(in srgb,var(--fx-cyan) 60%,transparent));mix-blend-mode:screen;opacity:var(--fx-band)}
-.fx-glitch-bands i:nth-child(1){top:12%}
-.fx-glitch-bands i:nth-child(2){top:31%;height:3%}
-.fx-glitch-bands i:nth-child(3){top:48%;height:9%}
-.fx-glitch-bands i:nth-child(4){top:66%;height:4%}
-.fx-glitch-bands i:nth-child(5){top:83%;height:6%}
+.fx-glitch-wave{background:radial-gradient(circle at 50% 52%,transparent 0 30%,color-mix(in srgb,var(--rarity-glow) 46%,transparent) 36%,color-mix(in srgb,var(--rarity-glow) 14%,transparent) 42%,transparent 52%);transform-origin:50% 52%}
+.fx-glitch-sweep{background:linear-gradient(105deg,transparent 38%,color-mix(in srgb,var(--rarity-glow) 16%,transparent) 46%,#ffffff26 50%,color-mix(in srgb,var(--rarity-glow) 16%,transparent) 54%,transparent 62%);will-change:transform}
 .fx-glitch-calm{display:none;background:radial-gradient(ellipse at 50% 55%,color-mix(in srgb,var(--rarity-glow) 40%,transparent),transparent 65%)}
-
-.fx-glitch-epic .fx-glitch-flash{animation:fx-flash-1 var(--fx-gt) var(--fx-ease) var(--fx-gd) both}
-.fx-glitch-legendary .fx-glitch-flash{animation:fx-flash-2 var(--fx-gt) var(--fx-ease) var(--fx-gd) both}
-.fx-glitch .fx-glitch-scan{animation:fx-scan var(--fx-gt) var(--fx-ease) var(--fx-gd) both}
-.fx-glitch .fx-glitch-bands{animation:fx-bands var(--fx-gt) steps(1,end) var(--fx-gd) both}
-.fx-glitch .fx-glitch-bands i{animation:fx-band-jump calc(var(--fx-gt) / 3) steps(1,end) var(--fx-gd) 3 both}
-.fx-glitch .fx-glitch-bands i:nth-child(2n){animation-direction:reverse}
-@keyframes fx-flash-1{0%{opacity:0}12%{opacity:.22}100%{opacity:0}}
-@keyframes fx-flash-2{0%{opacity:0}8%{opacity:.3}38%{opacity:0}56%{opacity:.14}100%{opacity:0}}
-@keyframes fx-scan{0%{opacity:0}15%{opacity:.8}75%{opacity:.6}100%{opacity:0}}
-@keyframes fx-bands{0%{opacity:1;clip-path:inset(0 0 0 0)}25%{clip-path:inset(10% 0 40% 0)}50%{clip-path:inset(40% 0 8% 0)}75%{clip-path:inset(0 0 55% 0)}100%{opacity:0;clip-path:inset(0)}}
-@keyframes fx-band-jump{0%{transform:translateX(0)}20%{transform:translateX(calc(var(--fx-amp) * -4))}45%{transform:translate(calc(var(--fx-amp) * 3),2px)}70%{transform:translateX(calc(var(--fx-amp) * -1.5))}100%{transform:translateX(0)}}
-
-/* Screen shake: discrete jumps on the dialog (X only, so the scroll container never flickers). */
-.pack-cinema.fx-glitching .cinema-dialog{animation:fx-shake var(--fx-gt) steps(1,end) var(--fx-gd) both}
-@keyframes fx-shake{0%{transform:translateX(0)}10%{transform:translateX(calc(var(--fx-amp) * -1)) skewX(-1deg)}22%{transform:translateX(var(--fx-amp))}36%{transform:translateX(calc(var(--fx-amp) * -.6)) skewX(.6deg)}52%{transform:translateX(calc(var(--fx-amp) * .8))}68%{transform:translateX(calc(var(--fx-amp) * -.4))}84%{transform:translateX(calc(var(--fx-amp) * .2))}100%{transform:none}}
-
-/* RGB split on the card: red/cyan copies of the art, band-clipped, laid over the flipper. */
-.fx-ghosts{grid-area:1/1;z-index:2;width:var(--fx-card-w);height:var(--fx-card-h);border-radius:16px;overflow:hidden;pointer-events:none;position:relative}
-.fx-ghost{position:absolute;inset:0;opacity:0;mix-blend-mode:screen}
-.fx-ghost img{width:100%;height:70%;object-fit:cover;display:block}
-.fx-ghost-r{filter:sepia(1) saturate(8) hue-rotate(-50deg);animation:fx-ghost-r var(--fx-gt) steps(1,end) var(--fx-gd) both}
-.fx-ghost-c{filter:sepia(1) saturate(6) hue-rotate(140deg);animation:fx-ghost-c var(--fx-gt) steps(1,end) var(--fx-gd) both}
-@keyframes fx-ghost-r{0%{opacity:.7;transform:translateX(calc(var(--fx-split) * -2));clip-path:inset(8% 0 62% 0)}25%{transform:translateX(calc(var(--fx-split) * 3));clip-path:inset(40% 0 30% 0)}50%{transform:translateX(calc(var(--fx-split) * -1));clip-path:inset(0 0 0 0);opacity:.45}75%{transform:translateX(var(--fx-split));clip-path:inset(55% 0 5% 0)}100%{opacity:0;transform:none;clip-path:inset(0)}}
-@keyframes fx-ghost-c{0%{opacity:.6;transform:translateX(calc(var(--fx-split) * 2));clip-path:inset(30% 0 40% 0)}25%{transform:translateX(calc(var(--fx-split) * -3));clip-path:inset(5% 0 70% 0)}50%{transform:translateX(var(--fx-split));clip-path:inset(0 0 0 0);opacity:.4}75%{transform:translateX(calc(var(--fx-split) * -1));clip-path:inset(20% 0 50% 0)}100%{opacity:0;transform:none;clip-path:inset(0)}}
-
-/* RGB split on the name and rarity label: attr(data-text) copies jitter in steps. */
-.pack-cinema .cinema-card-label strong{position:relative}
-.pack-cinema.fx-glitching .cinema-card-label strong::before,.pack-cinema.fx-glitching .cinema-card-label strong::after,
-.pack-cinema.fx-glitching .cinema-rarity::before,.pack-cinema.fx-glitching .cinema-rarity::after{content:attr(data-text);position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:0}
-.pack-cinema.fx-glitching .cinema-rarity::before,.pack-cinema.fx-glitching .cinema-rarity::after{padding:inherit}
-.pack-cinema.fx-glitching .cinema-card-label strong::before,.pack-cinema.fx-glitching .cinema-rarity::before{color:var(--fx-red);animation:fx-split-r var(--fx-gt) steps(1,end) var(--fx-gd) both}
-.pack-cinema.fx-glitching .cinema-card-label strong::after,.pack-cinema.fx-glitching .cinema-rarity::after{color:var(--fx-cyan);animation:fx-split-c var(--fx-gt) steps(1,end) var(--fx-gd) both}
-@keyframes fx-split-r{0%{opacity:.9;transform:translate(calc(var(--fx-split) * -1),0)}30%{transform:translate(var(--fx-split),-1px)}60%{transform:translate(calc(var(--fx-split) * -1.3),1px)}100%{opacity:0;transform:none}}
-@keyframes fx-split-c{0%{opacity:.9;transform:translate(var(--fx-split),0)}30%{transform:translate(calc(var(--fx-split) * -1),1px)}60%{transform:translate(calc(var(--fx-split) * 1.3),-1px)}100%{opacity:0;transform:none}}
+.fx-glitch .fx-glitch-wave{animation:fx-wave var(--fx-gt) cubic-bezier(.16,1,.3,1) var(--fx-gd) both}
+.fx-glitch .fx-glitch-sweep{animation:fx-sweep calc(var(--fx-gt) * .9) cubic-bezier(.45,0,.2,1) calc(var(--fx-gd) + 80ms) both}
+@keyframes fx-wave{0%{opacity:0;transform:scale(.25)}18%{opacity:.6}100%{opacity:0;transform:scale(2.6)}}
+@keyframes fx-sweep{0%{opacity:0;transform:translateX(-70%)}25%{opacity:1}75%{opacity:1}100%{opacity:0;transform:translateX(70%)}}
 
 @media(max-width:650px){.pack-cinema{--fx-card-h:360px}}
 
@@ -161,7 +125,7 @@
    style.css already sets animation:none!important on everything. Glitch, shake, ghosts and scanlines
    stay off; the only thing that plays is one calm glow fade (no flicker), and the aria-live text announces it. */
 @media(prefers-reduced-motion:reduce){
-  .fx-glitch-flash,.fx-glitch-scan,.fx-glitch-bands,.fx-ghosts{display:none}
+  .fx-glitch-wave,.fx-glitch-sweep{display:none}
   .pack-cinema .fx-glitch-calm{display:block;animation:fx-calm 1s ease-out both!important}
   .pack-cinema .fx-stage .cinema-card-front::before{display:none}
   .pack-cinema .fx-stage .cinema-flipper.is-flipped{transform:rotateY(180deg)}
@@ -196,3 +160,6 @@
 .pack-cinema .cinema-lineup article.is-baked img{aspect-ratio:5/7;object-fit:cover}
 @media (prefers-reduced-motion:reduce){.pack-cinema .tier-silver .cinema-card-front::before,.pack-cinema .tier-gold .cinema-card-front::before{animation:none}}
 
+
+/* Pack art is transparent: the old hot-pink :hover gradient on .cinema-booster showed through behind it. */
+.pack-cinema .cinema-booster.has-cover,.pack-cinema .cinema-booster.has-cover:hover:not(:disabled){background:none;border:0;box-shadow:none}
