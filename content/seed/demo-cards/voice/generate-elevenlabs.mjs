@@ -8,7 +8,7 @@
 //   node content/seed/demo-cards/voice/generate-elevenlabs.mjs --force      regenerate everything
 //   node content/seed/demo-cards/voice/generate-elevenlabs.mjs --no-design  skip Voice Design, use the best British voice on the account
 //   node content/seed/demo-cards/voice/generate-elevenlabs.mjs --auditions   also write 2 alternate voices to /tmp/voice-auditions
-// Overrides (.env): ELEVEN_LABS_VOICE_ID (use this exact voice), ELEVEN_LABS_MODEL.
+// Overrides (.env): VOICE_ID or ELEVEN_LABS_VOICE_ID (use this exact voice, no Voice Design), ELEVEN_LABS_MODEL.
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -83,7 +83,8 @@ async function designPersona() {
 }
 
 let chosen = null, how = "";
-if (env.ELEVEN_LABS_VOICE_ID) { chosen = { voice_id: env.ELEVEN_LABS_VOICE_ID, name: "(ELEVEN_LABS_VOICE_ID)" }; how = "override"; }
+const VOICE_OVERRIDE = env.VOICE_ID || env.ELEVEN_LABS_VOICE_ID || process.env.VOICE_ID;
+if (VOICE_OVERRIDE) { chosen = voices.find((v) => v.voice_id === VOICE_OVERRIDE) ?? { voice_id: VOICE_OVERRIDE, name: "(your chosen voice)" }; how = "your VOICE_ID from .env"; }
 if (!chosen) { const existing = voices.find((v) => v.name === PERSONA_NAME); if (existing) { chosen = existing; how = "existing persona voice"; } }
 if (!chosen && !args.has("--no-design")) {
   try { chosen = await designPersona(); how = "created with Voice Design from the persona"; }

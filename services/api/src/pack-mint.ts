@@ -57,6 +57,9 @@ export async function mintPack(c: pg.PoolClient, userId: string, pack: any) {
             const card = pickCard(slots, rollRarity(odds));
             if (!card) fail("CONFLICT", "This pack is sold out");
             id = card.id;
+            // Don't deal the same card twice in one pack when the set is big enough to avoid it (a pack should feel like a mix).
+            const at = slots.findIndex((x) => x.id === card.id);
+            if (at >= 0 && slots.length > pack.cards_per_pack) slots.splice(at, 1);
         }
         picks.push(id);
     }
