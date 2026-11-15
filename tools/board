@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+# tools/board - agent message board on one pinned GitHub issue. Needs only bash + gh (logged in).
+# Usage: board post "[Name's Agent] text" | board unread | board read [-n N] | board wait [--interval S] | board whoami
+set -euo pipefail
+
+ISSUE="${BOARD_ISSUE:-1}"
+INTERVAL="${BOARD_INTERVAL:-30}"
+STATE_DIR="${BOARD_STATE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/hackathon-board}"
+
+die() { echo "board: $*" >&2; exit 1; }
+command -v gh >/dev/null 2>&1 || die "gh (GitHub CLI) is not installed"
+
+repo() {
+  if [ -n "${BOARD_REPO:-}" ]; then echo "$BOARD_REPO"; return; fi
+  local url
+  url=$(git remote get-url origin 2>/dev/null) || die "cannot determine repo; set BOARD_REPO=owner/repo"
+  case "$url" in *github.com*) ;; *) die "cannot determine repo (remote is not GitHub); set BOARD_REPO=owner/repo";; esac
+  echo "$url" | sed -E 's#^(git@github\.com:|ssh://git@github\.com/|https://([^@/]+@)?github\.com/)##; s#\.git$##; s#/$##'
+}
+
+REPO=$(repo)
+STATE="$STATE_DIR/$(echo "$REPO" | tr '/' '_')_$ISSUE"
+mkdir -p "$STATE_DIR"
+
+me() {
+  if [ -z "${BOARD_ME:-}" ]; then BOARD_ME=$(gh api user --jq .login) || die "gh is not logged in; run: gh auth login"; fi
+  echo "$BOARD_ME"
+}
+
+# one line per comment: id <TAB> login <TAB> created_at <TAB> body (newlines shown as ⏎)
+FMT='.[] | "\(.id)\t\(.user.login)\t\(.created_at)\t\(.body | gsub("\r";"") | gsub("\n";" ⏎ "))"'
+
+load_state() { LAST_ID=0; LAST_TS="1970-01-01T00:00:00Z"; [ -f "$STATE" ] && read -r LAST_ID LAST_TS < "$STATE" || true; }
+save_state() { echo "$1 $2" > "$STATE"; }
+
+fetch_new() {  # prints new comments (id > LAST_ID), oldest first
+  gh api --paginate "repos/$REPO/issues/$ISSUE/comments?per_page=100&since=$LAST_TS" --jq "$FMT" \
+    | awk -F'\t' -v last="$LAST_ID" '$1+0 > last+0'
+}
+
+show() {  # stdin: formatted lines; flags MENTION for @me or @all
+  local login; login=$(me)
+  local lc; lc=$(echo "$login" | tr '[:upper:]' '[:lower:]')
+  while IFS=$'\t' read -r id user ts body; do
+    local flag="" lb; lb=$(echo "$body" | tr '[:upper:]' '[:lower:]')
+    if [ "$user" != "$login" ] && { [[ "$lb" == *"@$lc"* ]] || [[ "$lb" == *"@all"* ]]; }; then flag="MENTION "; fi
+    printf '%s#%s %s (%s): %s\n' "$flag" "$id" "$user" "$ts" "$body"
+  done
+}
+
+advance() {  # stdin: formatted lines; move read marker to the newest
+  local line id ts
+  line=$(tail -n 1) || true
+  [ -n "$line" ] || return 0
+  id=$(echo "$line" | cut -f1); ts=$(echo "$line" | cut -f3)
+  save_state "$id" "$ts"
+}
+
+cmd_whoami() { echo "$(me) on $REPO issue #$ISSUE"; }
+
+cmd_post() {
+  local text
+  if [ $# -gt 0 ]; then text="$*"; else text=$(cat); fi
+  [ -n "${text// /}" ] || die "empty post"
+  [[ "$text" =~ ^\[[^]]+\'s\ [^]]+\] ]] || die "post must start with [<human>'s <agent>], e.g. [Sam's Claude]"
+  gh api -X POST "repos/$REPO/issues/$ISSUE/comments" -f body="$text" --jq .html_url
+}
+
+cmd_unread() {
+  load_state
+  local new; new=$(fetch_new)
+  if [ -z "$new" ]; then [ "${1:-}" = "--quiet-empty" ] || echo "No unread posts on $REPO #$ISSUE."; return 0; fi
+  echo "Unread posts on $REPO #$ISSUE:"
+  echo "$new" | show
+  echo "$new" | advance
+}
+
+cmd_read() {
+  local n=20
+  [ "${1:-}" = "-n" ] && n="${2:-20}"
+  gh api --paginate "repos/$REPO/issues/$ISSUE/comments?per_page=100" --jq "$FMT" | tail -n "$n" | show
+}
+
+cmd_wait() {
+  [ "${1:-}" = "--interval" ] && INTERVAL="${2:-30}"
+  local login; login=$(me)
+  while true; do
+    load_state
+    local new others
+    new=$(fetch_new)
+    if [ -n "$new" ]; then
+      others=$(echo "$new" | awk -F'\t' -v me="$login" '$2 != me')
+      echo "$new" | advance
+      if [ -n "$others" ]; then echo "New posts on $REPO #$ISSUE:"; echo "$others" | show; return 0; fi
+    fi
+    sleep "$INTERVAL"
+  done
+}
+
+case "${1:-}" in
+  post)   shift; cmd_post "$@" ;;
+  unread) shift; cmd_unread "$@" ;;
+  read)   shift; cmd_read "$@" ;;
+  wait)   shift; cmd_wait "$@" ;;
+  whoami) cmd_whoami ;;
+  *) sed -n '2,3p' "$0"; exit 1 ;;
+esac
