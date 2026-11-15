@@ -5,11 +5,15 @@ import { API } from "../../lib/api";
 type AdminPack = Pack & { active: boolean };
 type View = "sets" | "cards" | "packs" | "moderation" | "engagement";
 async function api(path: string, method = "GET", body?: unknown) {
+  // Never hang the console: a stuck API (e.g. waiting on its database) surfaces as an error after 15 s.
   const r = await fetch(API + path, {
     method,
     credentials: "include",
     headers: body ? { "Content-Type": "application/json" } : undefined,
     body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(15_000),
+  }).catch((e: Error) => {
+    throw Error(e.name === "TimeoutError" ? `The API at ${API} didn't answer within 15 seconds. Check that the API is running and can reach its database, then retry.` : `Can't reach the API at ${API} (${e.message}).`);
   });
   const data = r.status === 204 ? {} : await r.json();
   if (!r.ok) throw Error(data.error?.message ?? `Request failed (${r.status})`);

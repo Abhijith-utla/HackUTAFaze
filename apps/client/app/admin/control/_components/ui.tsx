@@ -16,9 +16,21 @@ const NAV = [
 export function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();
   const [me, setMe] = useState<{ user: { displayName: string; role: string } } | null | "none">(null);
+  const [down, setDown] = useState("");
   useEffect(() => {
-    api("/me").then(setMe).catch(() => setMe("none"));
+    api("/me").then(setMe).catch((e: Error & { status?: number }) => (e.status === 0 ? setDown(e.message) : setMe("none")));
   }, []);
+  if (down)
+    return (
+      <div className="cr-boot" role="alert">
+        <div>
+          <p className="eyebrow">FAZE CONTROL ROOM</p>
+          <h1>API not responding.</h1>
+          <p className="cr-muted">{down}</p>
+          <button onClick={() => location.reload()}>Retry</button>
+        </div>
+      </div>
+    );
   if (me === null) return <div className="cr-boot"><span className="cr-pulse" /> Connecting to the Control Room…</div>;
   if (me === "none" || me.user.role !== "admin")
     return (
