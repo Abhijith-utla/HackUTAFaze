@@ -1,10 +1,5 @@
 import { Connection, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
-
-type Phantom = {
-  isPhantom?: boolean;
-  connect(): Promise<{ publicKey: PublicKey }>;
-  signAndSendTransaction(tx: Transaction): Promise<{ signature: string }>;
-};
+import { WalletError, connectPhantom, requirePhantom, signAndSendDevnet } from "./wallet";
 
 export type ContributionQuote = {
   id: string;
@@ -15,12 +10,6 @@ export type ContributionQuote = {
   cluster: string;
 };
 
-function provider(): Phantom {
-  const phantom = (window as unknown as { phantom?: { solana?: Phantom } }).phantom?.solana;
-  if (!phantom?.isPhantom) throw Error("Install Phantom and switch it to Solana Devnet before sending a reward.");
-  return phantom;
-}
-
 /** Guards a server-issued quote before the browser constructs a wallet transaction. */
 export function validateContributionQuote(quote: ContributionQuote, wallet: string) {
   if (quote.cluster !== "devnet") throw Error("Contribution rewards are available on Solana Devnet only.");
@@ -29,16 +18,15 @@ export function validateContributionQuote(quote: ContributionQuote, wallet: stri
 }
 
 export async function connectContributionWallet(): Promise<string> {
-  const connected = await provider().connect();
-  return connected.publicKey.toBase58();
+  return (await connectPhantom()).toBase58();
 }
 
 export const connectContributionPayer = connectContributionWallet;
 
 /** Opens Phantom for exactly the server-issued devnet transfer. Server confirmation remains authoritative. */
 export async function signContributionPayout(quote: ContributionQuote, onStatus: (message: string) => void): Promise<string> {
-  const phantom = provider();
-  const { publicKey } = await phantom.connect();
+  const phantom = requirePhantom();
+  const publicKey = await connectPhantom();
   validateContributionQuote(quote, publicKey.toBase58());
 
   const connection = new Connection(process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://api.devnet.solana.com", "confirmed");
@@ -54,9 +42,9 @@ export async function signContributionPayout(quote: ContributionQuote, onStatus:
 
   onStatus("Approve the exact devnet reward in Phantom.");
   try {
-    return (await phantom.signAndSendTransaction(transaction)).signature;
+    return await signAndSendDevnet(phantom, connection, transaction);
   } catch (error) {
-    if ((error as { code?: number }).code === 4001) throw Error("Reward cancelled in Phantom. Nothing was paid; you can retry this quote.");
-    throw Error("Reward status is uncertain. Use Finish payout to verify before sending anything else.");
+    if ((error as WalletError).code === 4001) throw Error("Reward cancelled in Phantom. Nothing was paid; you can retry this quote.");
+    throw Error((error as Error).message);
   }
 }

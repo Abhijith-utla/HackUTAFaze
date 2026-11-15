@@ -1,15 +1,7 @@
 import { Connection, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import type { CheckoutResponse, ConfirmResponse } from '@faze/shared';
 import { request, ApiError } from './api';
-type Phantom = {
-    isPhantom?: boolean;
-    connect(): Promise<{
-        publicKey: PublicKey;
-    }>;
-    signAndSendTransaction(tx: Transaction): Promise<{
-        signature: string;
-    }>;
-};
+import { WalletError, connectPhantom, requirePhantom, signAndSendDevnet } from './wallet';
 export type PackPurchase = {
     purchaseId: string;
     packId: string;
@@ -44,23 +36,9 @@ export function clearPackCheckout(userId: string, packId: string, purchaseId: st
 }
 catch { /* A damaged local hint cannot affect server fulfillment. */ } }
 export async function buyPack(packId: string, userId: string, onStatus: (status: string) => void) {
-    const w = window as unknown as {
-        phantom?: {
-            solana?: Phantom;
-        };
-        solana?: Phantom;
-    };
-    const phantom = w.phantom?.solana?.isPhantom ? w.phantom.solana : w.solana?.isPhantom ? w.solana : undefined;
-    if (!phantom)
-        throw Error('Phantom not found. Install the Phantom extension, unlock it, switch it to Solana Devnet (Settings > Developer Settings > Testnet Mode), then reload.');
+    const phantom = requirePhantom();
     onStatus('Connecting to Phantom…');
-    let publicKey: PublicKey;
-    try {
-        ({ publicKey } = await phantom.connect());
-    }
-    catch (e) {
-        throw Error((e as { code?: number }).code === 4001 ? 'Wallet connection was declined in Phantom. Approve the connect prompt to buy a pack.' : 'Could not connect to Phantom. Unlock it and try again.');
-    }
+    const publicKey: PublicKey = await connectPhantom();
     const storageKey = `faze.pack.${userId}.${packId}`;
     let saved: SavedPackCheckout | null = null;
     try {
@@ -114,20 +92,15 @@ export async function buyPack(packId: string, userId: string, onStatus: (status:
         saved.attempted = true;
         save();
         try {
-            saved.signature = (await phantom.signAndSendTransaction(tx)).signature;
+            saved.signature = await signAndSendDevnet(phantom, connection, tx);
             save();
         }
         catch (e) {
-            if ((e as {
-                code?: number;
-            }).code === 4001) {
-                saved.attempted = false;
-                save();
-                throw Error('Payment cancelled in Phantom. No pack was opened.');
-            }
-            saved.attempted = false;
-            save();
-            throw Error(`Phantom could not send the payment: ${(e as { message?: string }).message || 'unknown error'}. Make sure Phantom is on Solana Devnet and try again; nothing was sent.`);
+            // Only allow a fresh send when we are sure nothing was broadcast; an uncertain failure keeps `attempted` so the next
+            // Buy checks the chain first (see the attempted && !signature branch above).
+            if (!(e as WalletError).uncertain) { saved.attempted = false; save(); }
+            if ((e as WalletError).code === 4001) throw Error('Payment cancelled in Phantom. No pack was opened.');
+            throw Error((e as Error).message);
         }
     }
     onStatus('Waiting for finalized payment. Your pack will open after server verification.');
