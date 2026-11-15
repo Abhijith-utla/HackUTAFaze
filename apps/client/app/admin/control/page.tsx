@@ -19,29 +19,21 @@ function greeting(d = new Date()) {
 }
 
 /** Tiny inline sparkline, no axes: shape only. */
-function Spark({ points, color = "#ee2441", height = 44 }: { points: number[]; color?: string; height?: number }) {
+function Spark({ points, color = "#e4002b", height = 44 }: { points: number[]; color?: string; height?: number }) {
   const W = 220, H = height, max = Math.max(1, ...points);
   if (points.length < 2) return <svg className="hm-spark" viewBox={`0 0 ${W} ${H}`} aria-hidden="true" />;
   const xy = points.map((v, i) => [(i / (points.length - 1)) * W, H - 3 - (v / max) * (H - 8)]);
   const d = xy.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
   return (
     <svg className="hm-spark" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
-      <path d={`${d} L${W},${H} L0,${H} Z`} fill={color} opacity="0.12" />
-      <path d={d} fill="none" stroke={color} strokeWidth="2" vectorEffect="non-scaling-stroke" />
+            <path d={d} fill="none" stroke={color} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
     </svg>
   );
 }
 
-/** Score ring for KAM's top recommendation. */
-function Ring({ score }: { score: number }) {
-  const r = 34, c = 2 * Math.PI * r, pct = Math.max(0, Math.min(100, score)) / 100;
-  return (
-    <svg className="hm-ring" viewBox="0 0 84 84" role="img" aria-label={`KAM score ${Math.round(score)} out of 100`}>
-      <circle cx="42" cy="42" r={r} fill="none" stroke="#26262e" strokeWidth="6" />
-      <circle cx="42" cy="42" r={r} fill="none" stroke="#ee2441" strokeWidth="6" strokeLinecap="round" strokeDasharray={`${c * pct} ${c}`} transform="rotate(-90 42 42)" />
-      <text x="42" y="47" textAnchor="middle">{Math.round(score)}</text>
-    </svg>
-  );
+/** KAM's score for the top recommendation: a plain number out of 100. */
+function Score({ score }: { score: number }) {
+  return <p className="hm-score" aria-label={`KAM score ${Math.round(score)} out of 100`}><b>{Math.round(score)}</b><span>/ 100</span></p>;
 }
 
 export default function Home() {
@@ -110,7 +102,7 @@ export default function Home() {
           {next ? (
             <>
               <div className="hm-next-body">
-                <Ring score={next.score} />
+                <Score score={next.score} />
                 <div>
                   <h2>{next.moment.title}</h2>
                   <p className="hm-why">{([...next.signals].sort((a, b) => b.points - a.points)[0]?.detail ?? "").split("; FaZe Clan: A Timeline")[0]}</p>
@@ -139,7 +131,7 @@ export default function Home() {
             <>
               <h2>{live.name}</h2>
               <div className="hm-big"><b>{metrics.data?.launched ? n(metrics.data.pulls) : "…"}</b><span>packs opened</span></div>
-              <Spark points={(metrics.data?.pullsByMinute ?? []).map((p) => p.n)} color="#22c55e" />
+              <Spark points={(metrics.data?.pullsByMinute ?? []).map((p) => p.n)} color="#e4002b" />
               <p className="hm-why">{metrics.data?.launched ? `${n(metrics.data.collectors)} collectors · ${compact(metrics.data.coinsSpent)} coins` : " "}</p>
               <div className="hm-actions"><Link href={`/admin/control/campaigns/${live.id}`} className="hm-btn">Open drop</Link></div>
             </>

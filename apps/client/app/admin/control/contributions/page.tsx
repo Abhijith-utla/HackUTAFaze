@@ -99,7 +99,7 @@ function ContributionCard({ contribution, busy, onApprove, onReject, onPay }: {
 function AddCard({ sets, busy, onDone }: { sets: CardSet[]; busy: boolean; onDone: (event: FormEvent<HTMLFormElement>) => void }) {
   return (
     <section className="contribution-create">
-      <div><p className="eyebrow">DIRECT ENTRY</p><h2>Add a card.</h2><p className="cr-muted">For an already-cleared moment. Community pitches stay in the queue until they are reviewed.</p></div>
+      <div><p className="eyebrow">Direct entry</p><h2>Add a card.</h2><p className="cr-muted">For an already-cleared moment. Community pitches stay in the queue until they are reviewed.</p></div>
       <form className="contribution-form" onSubmit={onDone}>
         <label>Set<select name="setId" required defaultValue={sets[0]?.id ?? ""} disabled={!sets.length}>{sets.length ? sets.map((set) => <option key={set.id} value={set.id}>{set.name} · {set.status}</option>) : <option>No card sets available</option>}</select></label>
         <label>Card name<input name="name" required maxLength={80} placeholder="The moment, in a few words" /></label>

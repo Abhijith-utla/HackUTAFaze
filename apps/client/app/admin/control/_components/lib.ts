@@ -76,6 +76,6 @@ export type Campaign = {
 };
 export type Asset = { id: string; position: number; name: string; fazeMember: string; rarity: "common" | "rare" | "epic" | "legendary"; lore: string; artUrl: string; basePower: number; maxSupply: number | null; duplicateOf: string | null; duplicateName: string | null; similarity: number | null; cardId: string | null };
 
-export const SIGNAL_COLORS: Record<string, string> = { anniversary: "#ee2441", momentum: "#f59e0b", demand: "#3b82f6", gap: "#a855f7", archive: "#22c55e" };
-export const RARITY_COLORS: Record<string, string> = { common: "#8b8b96", rare: "#3b82f6", epic: "#a855f7", legendary: "#f59e0b" };
+export const SIGNAL_COLORS: Record<string, string> = { anniversary: "#e4002b", momentum: "#c9a24a", demand: "#6d8fbf", gap: "#9a83b8", archive: "#6fa583" };
+export const RARITY_COLORS: Record<string, string> = { common: "#8b8b96", rare: "#6d8fbf", epic: "#9a83b8", legendary: "#c9a24a" };
 export const STATUS_LABEL: Record<Campaign["status"], string> = { draft: "Draft", pending_approval: "Awaiting approval", approved: "Approved", rejected: "Changes requested", live: "Live", ended: "Ended" };

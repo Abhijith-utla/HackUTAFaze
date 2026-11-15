@@ -94,7 +94,7 @@ export function Heading({ eyebrow, title, children }: { eyebrow: string; title: 
   return (
     <div className="page-heading">
       <div>
-        <p className="eyebrow">{eyebrow}</p>
+        <p className="eyebrow">{eyebrow.charAt(0) + eyebrow.slice(1).toLowerCase()}</p>
         <h1>{title}</h1>
       </div>
       {children && <div className="cr-actions">{children}</div>}
@@ -133,7 +133,7 @@ export function Rarity({ r }: { r: string }) {
 }
 
 /** Area chart for a time series. */
-export function AreaChart({ points, height = 140, color = "#ee2441", label }: { points: { t: string; n: number }[]; height?: number; color?: string; label: string }) {
+export function AreaChart({ points, height = 140, color = "#e4002b", label }: { points: { t: string; n: number }[]; height?: number; color?: string; label: string }) {
   const W = 600, H = height, peak = Math.max(0, ...points.map((p) => p.n)), max = Math.max(1, peak);
   const x = (i: number) => (points.length < 2 ? W / 2 : (i / (points.length - 1)) * W);
   const y = (v: number) => H - 8 - (v / max) * (H - 24);
@@ -158,7 +158,7 @@ export function AreaChart({ points, height = 140, color = "#ee2441", label }: { 
 }
 
 /** Vertical stacked bars: [{t, a, b}]. */
-export function StackBars({ rows, a, b, colors = ["#ee2441", "#22c55e"], height = 140 }: { rows: Record<string, any>[]; a: string; b: string; colors?: [string, string]; height?: number }) {
+export function StackBars({ rows, a, b, colors = ["#e4002b", "#8a8a8a"], height = 140 }: { rows: Record<string, any>[]; a: string; b: string; colors?: [string, string]; height?: number }) {
   const max = Math.max(1, ...rows.map((r) => (r[a] ?? 0) + (r[b] ?? 0)));
   return (
     <div className="cr-bars" style={{ height }}>
@@ -179,7 +179,7 @@ export function HBars({ rows }: { rows: { label: string; value: number; color?: 
       {rows.map((r) => (
         <div key={r.label} className="cr-hbar">
           <span>{r.label}</span>
-          <div><i style={{ width: `${(r.value / max) * 100}%`, background: r.color ?? "#ee2441" }} /></div>
+          <div><i style={{ width: `${(r.value / max) * 100}%`, background: r.color ?? "#e4002b" }} /></div>
           <b>{r.value.toLocaleString("en-US")}</b>
         </div>
       ))}

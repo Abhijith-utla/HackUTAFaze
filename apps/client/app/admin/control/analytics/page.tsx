@@ -36,7 +36,7 @@ export default function AnalyticsPage() {
         <Panel title="Pack opens, last 24 hours" note="per hour · from pulls">
           {data && <AreaChart label="pulls" points={data.series.pullsByHour} />}
         </Panel>
-        <Panel title="Coin economy, 14 days" note={<><i className="cr-key" style={{ background: "#ee2441" }} />spent on packs <i className="cr-key" style={{ background: "#22c55e" }} />bought with devnet SOL</>}>
+        <Panel title="Coin economy, 14 days" note={<><i className="cr-key" style={{ background: "#e4002b" }} />spent on packs <i className="cr-key" style={{ background: "#d8d8d8" }} />bought with devnet SOL</>}>
           {data && <StackBars rows={data.series.coinsByDay} a="spent" b="purchased" />}
         </Panel>
       </div>

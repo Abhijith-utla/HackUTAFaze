@@ -340,3 +340,91 @@ button.cr-small { min-height: 34px; padding: 6px 12px; align-self: flex-start; }
   .admin-root .contribution-thumb { flex-basis: 104px; width: 104px; }
   .admin-root .contribution-thumb.is-empty { font-size: 8px; letter-spacing: .5px; }
 }
+
+/* ---- refinement: flat, quiet surfaces; red only where it marks the current thing or the primary action ---- */
+.admin-root { --cr-surface: #151515; --cr-surface-2: #1b1b1b; --cr-line: #2c2c2c; --cr-red: #e4002b; --cr-link: #f2f2f2; }
+.admin-root .cr-main::before { content: none; }
+.admin-root .cr-header { border-bottom: 1px solid var(--cr-line); background: #111; }
+.admin-root .brand, .admin-root .brand span, .admin-root .brand .vault-brand-name { font-size: 13px; color: #fff; letter-spacing: .12em; }
+.admin-root .cr-tabs { padding: 0; gap: 4px; border: 0; border-radius: 0; background: transparent; }
+.admin-root .cr-tab { min-height: 44px; padding: 0 16px; border-radius: 0; color: #a8a8a8; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; border-bottom: 2px solid transparent; background: transparent; }
+.admin-root .cr-tab:hover { color: #fff; background: transparent; border-bottom-color: #4a4a4a; }
+.admin-root .cr-tab.on { color: #fff; background: transparent; border-bottom-color: var(--cr-red); }
+.admin-root .badge, .admin-root .badge.live { color: #cfcfcf; border-color: #3a3a3a; background: transparent; border-radius: 2px; }
+.admin-root button { border-radius: 3px; }
+.admin-root button:hover { filter: none; background: #f0002f; }
+.admin-root button.quiet:hover { background: #222; }
+.admin-root button:focus-visible, .admin-root input:focus-visible, .admin-root select:focus-visible, .admin-root textarea:focus-visible { outline-color: #fff; }
+
+/* the live indicator is a plain dot, not a pulsing glow */
+.admin-root .cr-pulse, .admin-root .hm-pulse i { animation: none; box-shadow: none; background: #8a8a8a; width: 6px; height: 6px; }
+.admin-root .hm-pulse, .admin-root .hm-clear { color: #bdbdbd; }
+.admin-root .cr-live { color: #a8a8a8; }
+
+/* analytics home: flat cards, sentence-case labels instead of spaced-out kickers */
+.admin-root .hm { gap: 40px; }
+.admin-root .hm-headline { letter-spacing: -.03em; }
+.admin-root .hm-card, .admin-root .hm-next, .admin-root .hm-live.on { background: var(--cr-surface); border: 1px solid var(--cr-line); border-radius: 4px; }
+.admin-root .hm-label { color: #b0b0b0; font-size: 13px; letter-spacing: 0; text-transform: none; font-weight: 700; }
+.admin-root .hm-stat span, .admin-root .cr-kpi span, .admin-root .cr-table th, .admin-root .cr-stat, .admin-root .contribution-meta dt { letter-spacing: .04em; }
+.admin-root .hm-link, .admin-root .cr-open, .admin-root .cr-kpi em a, .admin-root .contribution-meta a { color: var(--cr-link); text-decoration: underline; text-decoration-color: #5a5a5a; text-underline-offset: 3px; }
+.admin-root .hm-link:hover, .admin-root .cr-open:hover, .admin-root .contribution-meta a:hover { text-decoration-color: var(--cr-red); }
+.admin-root code, .admin-root .cr-code { color: #d0d0d0; }
+.admin-root .hm-btn { border-radius: 3px; background: #f2f2f2; }
+.admin-root .hm-score { display: flex; align-items: baseline; gap: 4px; padding-top: 2px; font-family: var(--font-mono, ui-monospace, Menlo, monospace); }
+.admin-root .hm-score b { font-size: 44px; line-height: 1; font-weight: 700; letter-spacing: -.03em; }
+.admin-root .hm-score span { color: var(--muted); font-size: 13px; }
+.admin-root .hm-next-body { grid-template-columns: 96px minmax(0, 1fr); }
+.admin-root .hm-three { border-color: var(--cr-line); }
+.admin-root .hm-needs a { border-radius: 4px; }
+.admin-root .hm-needs a:hover { border-color: #4a4a4a; background: var(--cr-surface-2); }
+.admin-root .hm-needs b { color: #fff; }
+
+/* panels, KPIs and charts */
+.admin-root .cr-kpi, .admin-root .cr-kpi.accent { background: var(--cr-surface); border: 1px solid var(--cr-line); border-radius: 4px; }
+.admin-root .cr-kpi.accent::after { content: none; }
+.admin-root .cr-panel, .admin-root .cr-opp, .admin-root .cr-sponsor, .admin-root .cr-draft, .admin-root .contribution-card, .admin-root .contribution-create, .admin-root .cr-signin { background: var(--cr-surface); border-color: var(--cr-line); border-radius: 4px; box-shadow: none; }
+.admin-root .cr-opp.open { border-color: #5a5a5a; box-shadow: none; }
+.admin-root .cr-draft.r-legendary { box-shadow: none; }
+.admin-root .cr-table-wrap { border-radius: 4px; border-color: var(--cr-line); }
+.admin-root .cr-table th { background: var(--cr-surface-2); }
+.admin-root .cr-funnel li { border-radius: 4px; }
+.admin-root .cr-funnel-bar { background: rgba(228, 0, 43, .22); }
+.admin-root .cr-hbar div, .admin-root .cr-score { background: #232323; }
+.admin-root .cr-health li { border-radius: 4px; }
+.admin-root .cr-health li.ok::before { background: #7fbf94; }
+.admin-root .cr-health li.warn::before { background: #d9a441; }
+
+/* status labels keep their words and a muted hue, in square tags rather than glowing pills */
+.admin-root .cr-status, .admin-root .contribution-status { border-radius: 2px; background: transparent; }
+.admin-root .cr-status.s-live, .admin-root .contribution-status.paid { color: #9fd3b0; border-color: #2f5a3d; background: transparent; }
+.admin-root .cr-status.s-approved, .admin-root .contribution-status.approved, .admin-root .contribution-status.payout_pending { color: #a9c1e6; border-color: #34496b; }
+.admin-root .cr-status.s-pending_approval, .admin-root .contribution-status.pending { color: #dcbf84; border-color: #5e4a22; }
+.admin-root .cr-status.s-rejected, .admin-root .contribution-status.rejected { color: #e0a3ab; border-color: #5e2a31; }
+.admin-root .contribution-paid, .admin-root .cr-toast { color: #cfe6d6; }
+.admin-root .cr-toast { background: #171717; border-color: #3a3a3a; border-radius: 4px; box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
+.admin-root .cr-toast.err { background: #1d1214; border-color: #5e2a31; color: #f0c6cb; }
+.admin-root .cr-error { color: #e8a0a8; } .admin-root .cr-warn, .admin-root .cr-dup { color: #dcbf84; }
+
+/* Open Contributions: selection is an underline, not a left stripe */
+.admin-root .contribution-tabs { background: transparent; border: 0; border-bottom: 1px solid var(--cr-line); border-radius: 0; padding: 0; gap: 4px; }
+.admin-root .contribution-tabs button { border-radius: 0; border-bottom: 2px solid transparent; }
+.admin-root .contribution-tabs button:hover { background: transparent; border-bottom-color: #4a4a4a; }
+.admin-root .contribution-tabs button.on { background: transparent; box-shadow: none; border-bottom-color: var(--cr-red); }
+.admin-root .contribution-tabs span { border-radius: 2px; }
+.admin-root .contribution-card.is-pending, .admin-root .contribution-card.is-paid { border-color: var(--cr-line); }
+.admin-root .contribution-note { border-left-width: 1px; }
+.admin-root blockquote { border-left-width: 1px; background: var(--cr-surface-2); }
+
+/* command palette */
+.admin-root .cmd { border-radius: 6px; background: #161616; }
+.admin-root .cmd li button { border-radius: 3px; }
+.admin-root .cmd li button.on { background: #262626; box-shadow: none; }
+.admin-root .cmd-backdrop { backdrop-filter: none; }
+
+/* page heading: a quiet breadcrumb, not a spaced-out kicker; form fields sit close together */
+.admin-root .page-heading .eyebrow, .admin-root .contributions .eyebrow { font-size: 12px; letter-spacing: 0; text-transform: none; color: #a0a0a0; font-weight: 500; }
+.admin-root .page-heading h1, .admin-root .contributions h1 { letter-spacing: -.02em; }
+.admin-root .cr-panel form { display: grid; gap: 14px; max-width: none; }
+.admin-root .cr-panel form label { margin: 0; gap: 6px; }
+.admin-root .cr-panel form button { justify-self: start; }

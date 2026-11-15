@@ -48,15 +48,15 @@ export default function RevenuePage() {
       </div>
       <div className="cr-grid2">
         <Panel title="Devnet SOL per day, 14 days" note="verified purchases">
-          {r && <AreaChart label="sol" color="#22c55e" points={r.solByDay.map((d) => ({ t: d.t, n: d.sol }))} />}
+          {r && <AreaChart label="sol" color="#e6e6e6" points={r.solByDay.map((d) => ({ t: d.t, n: d.sol }))} />}
         </Panel>
         <Panel title="Coin economy" note="fans only">
           {r && (
             <HBars rows={[
               { label: "Signup bonus", value: r.economy.issuedBy.signupBonus, color: "#8b8b96" },
-              { label: "Bought (devnet)", value: r.economy.issuedBy.purchased, color: "#22c55e" },
-              { label: "Granted (demo)", value: r.economy.issuedBy.adminGrant, color: "#a855f7" },
-              { label: "Spent on packs", value: r.economy.sunk, color: "#ee2441" },
+              { label: "Bought (devnet)", value: r.economy.issuedBy.purchased, color: "#d8d8d8" },
+              { label: "Granted (demo)", value: r.economy.issuedBy.adminGrant, color: "#5f5f68" },
+              { label: "Spent on packs", value: r.economy.sunk, color: "#e4002b" },
             ]} />
           )}
           {r && r.byBundle.length > 0 && <p className="cr-muted cr-small">Bundles: {r.byBundle.map((b) => `${b.bundle} ×${b.purchases} (${n(b.sol, 2)} SOL)`).join(" · ")}</p>}
