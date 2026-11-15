@@ -17,6 +17,7 @@ import { controlRoutes } from "./routes/control.js"; // FaZe Control Room (lead,
 import { insightsRoutes } from "./routes/insights.js"; // Control Room analytics + sponsors (lead, v1.8)
 
 import { marketplaceRoutes } from './routes/marketplace.js';
+import { battlesRoutes } from "./routes/battles.js"; // Battles demo slice (A, contract v1.9 draft)
 
 export async function buildApp() {
   const app = Fastify({ logger: process.env.VITEST ? false : { level: "info" } });
@@ -45,6 +46,7 @@ export async function buildApp() {
   await app.register(adminRoutes);
   await app.register(controlRoutes);
   await app.register(insightsRoutes);
+  await app.register(battlesRoutes);
   await artRoutes(app);
   return app;
 }
