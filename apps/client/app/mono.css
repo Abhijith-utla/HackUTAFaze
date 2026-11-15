@@ -115,7 +115,13 @@
   box-shadow: none;
   transform: none;
   clip-path: none;
+  /* Pack cover art is 800x1120 (5:7). next/image `fill` needs a positioned parent, or it sizes against a far ancestor and spills over the neighbouring packs. */
+  position: relative;
+  overflow: hidden;
+  height: auto;
+  aspect-ratio: 5 / 7;
 }
+.mono-theme main .pack-art img { object-fit: contain; }
 .mono-theme main .pack-art::before, .mono-theme main .pack-art::after { content: none; }
 .mono-theme main .pack-art span { font: 700 30px/1 var(--font-mono); letter-spacing: -.06em; color: white; transform: none; }
 .mono-theme main .pack-art b { font: 400 64px/1 var(--font-mono); color: #b2b2b2; }
