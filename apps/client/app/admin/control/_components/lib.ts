@@ -7,14 +7,16 @@ import { API } from "../../../../lib/api";
 export { API };
 
 export async function api<T = any>(path: string, method = "GET", body?: unknown): Promise<T> {
+  const timeoutMs = path.includes("/simulate") || path.includes("/launch") ? 60_000
+    : path.startsWith("/admin/control/scout") && method === "POST" ? 45_000 : 15_000;
   const r = await fetch(API + path, {
     method,
     credentials: "include",
     headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
     body: body !== undefined ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(path.includes("/simulate") || path.includes("/launch") ? 60_000 : 15_000),
+    signal: AbortSignal.timeout(timeoutMs),
   }).catch((e: Error) => {
-    throw Object.assign(new Error(e.name === "TimeoutError" ? `The API at ${API} didn't answer within 15 seconds. Check that the API is running and can reach its database, then retry.` : `Can't reach the API at ${API} (${e.message}).`), { status: 0 });
+    throw Object.assign(new Error(e.name === "TimeoutError" ? `The API at ${API} didn't answer within ${timeoutMs / 1000} seconds. Check that the API is running and can reach its database, then retry.` : `Can't reach the API at ${API} (${e.message}).`), { status: 0 });
   });
   const data = r.status === 204 ? {} : await r.json().catch(() => ({}));
   if (!r.ok) throw Object.assign(new Error(data.error?.message ?? `Request failed (${r.status})`), { status: r.status });
