@@ -48,3 +48,6 @@ Keep economy, inventory, purchases, moderation and jobs as ordinary PostgreSQL t
 
 ## Marketplace extension
 Migration 004 adds market_listings (owner, listed instance, state), market_offers (listing, bidder, offered UUIDs, state), and notifications (recipient, kind/message, offer, read/creation timestamps). card_instances gains market_listing_id and market_offer_id; at most one direct/listing/offer lock may be non-null. See marketplace.md.
+
+## Direct SOL pack orders
+Migration 005 adds purchases.pack_snapshot (jsonb quote/config/payer/idempotency key) and pack_pull_id (nullable FK pulls). Direct pack receipts use coins=0 and the existing global tx_signature uniqueness. Signature verification persists before atomic card/pull fulfillment; retries return the same pull without coin ledger writes.
