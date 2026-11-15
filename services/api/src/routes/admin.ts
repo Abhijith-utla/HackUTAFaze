@@ -1,6 +1,7 @@
 import { ModerationDecisionBody, ModerationStatus, Odds, Rarity, SetStatus, SpikeBody, type Pack } from "@faze/shared";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { relativeArtUrl } from "../art-store.js";
 import { requireAdmin } from "../auth.js";
 import { pool, tx } from "../db.js";
 import { fail } from "../errors.js";
@@ -20,7 +21,8 @@ const CardCreate = z.object({
   name: z.string().min(1).max(80),
   fazeMember: z.string().min(1).max(60),
   rarity: Rarity,
-  artUrl: z.string().max(2000).default(""),
+  // v1.5: stored relative; absolute URLs to this API's own art routes are reduced to their path.
+  artUrl: z.string().max(2000).default("").transform(relativeArtUrl),
   basePower: z.number().int().min(0).default(0),
   maxSupply: z.number().int().positive().nullable().optional(),
 });
