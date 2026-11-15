@@ -74,10 +74,11 @@ export default function Contribute({ displayName }: Props) {
 
       <div className="contribute-layout">
         <form className="contribute-form panel" onSubmit={submit}>
-          <label>Moment title<input name="title" required minLength={3} maxLength={100} placeholder="The clip everyone remembers" /></label>
-          <label>FaZe member<input name="fazeMember" required minLength={2} maxLength={80} placeholder="FaZe Rain" /></label>
-          <label>Why this moment matters<textarea name="pitch" required minLength={10} maxLength={2000} rows={5} placeholder="Tell us what happened and why fans still talk about it." /></label>
-          <label>Clip or source link<input name="sourceUrl" type="url" required maxLength={2000} placeholder="https://youtube.com/..." /><small>Link to the original clip, post, or moment.</small></label>
+          <p className="contribute-prefill">Sample moment details are prefilled. Edit them to pitch your own moment.</p>
+          <label>Moment title<input name="title" required minLength={3} maxLength={100} defaultValue="The 360° FaZe trickshot" /></label>
+          <label>FaZe member<input name="fazeMember" required minLength={2} maxLength={80} defaultValue="FaZe Rain" /></label>
+          <label>Why this moment matters<textarea name="pitch" required minLength={10} maxLength={2000} rows={5} defaultValue="One clean shot, a wild reaction, and the kind of clip that made fans rewind it again and again. This moment captures the early FaZe trickshot era and the style that built a community." /></label>
+          <label>Clip or source link<input name="sourceUrl" type="url" required maxLength={2000} defaultValue="https://www.youtube.com/@FaZeClan" /><small>Link to the original clip, post, or moment.</small></label>
 
           <div className="contribute-wallet">
             <div><span className="eyebrow">REWARD DESTINATION</span><strong>{wallet ? shortWallet(wallet) : "Phantom not connected"}</strong><small>{wallet ? "This wallet will receive any approved devnet reward." : "Connect the wallet you control."}</small></div>
