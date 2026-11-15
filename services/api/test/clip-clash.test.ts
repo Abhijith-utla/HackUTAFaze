@@ -1,6 +1,6 @@
 import {beforeAll,afterAll,it,expect} from 'vitest';
 import {makeApp,signup,makeSetWithPack,pool} from './helpers.js';
-import {suitability,greedyCard,matchOutcome} from '../src/clip-clash-scoring.js';
+import {suitability,greedyCard,matchOutcome,decideRound} from '../src/clip-clash-scoring.js';
 let app:Awaited<ReturnType<typeof makeApp>>;
 beforeAll(async()=>{app=await makeApp();});
 afterAll(async()=>{await app.close();await pool.end();});
@@ -28,7 +28,19 @@ it('scores only unique tags and validated prompt weights; greedy CPU and termina
  expect(()=>suitability([],{clutch:-1})).toThrow();
  expect(greedyCard([{card_id:'a',snapshot:{moment_tags:['clutch']}},{card_id:'b',snapshot:{moment_tags:['reaction']}}],{reaction:5}).card_id).toBe('b');
  expect(matchOutcome([3,1],3)).toEqual({complete:true,winner:1,draw:false});
- expect(matchOutcome([2,1],5)).toEqual({complete:true,winner:null,draw:true});
+ // Best of five: first to 3 clinches; after round 5 the higher score wins; only equal scores draw.
+ expect(matchOutcome([2,1],5)).toEqual({complete:true,winner:1,draw:false});
+ expect(matchOutcome([1,2],5)).toEqual({complete:true,winner:2,draw:false});
+ expect(matchOutcome([2,2],5)).toEqual({complete:true,winner:null,draw:true});
+ expect(matchOutcome([1,1],4)).toEqual({complete:false,winner:null,draw:false});
+ expect(matchOutcome([0,3],3)).toEqual({complete:true,winner:2,draw:false});
+});
+it('rounds: better tag match wins; equal tag scores go to the stronger card; equal on both is no point',()=>{
+ expect(decideRound({score:8,power:20},{score:5,power:95})).toEqual({winner:1,tiebreak:false});
+ expect(decideRound({score:3,power:20},{score:7,power:20})).toEqual({winner:2,tiebreak:false});
+ expect(decideRound({score:8,power:45},{score:8,power:95})).toEqual({winner:2,tiebreak:true});
+ expect(decideRound({score:8,power:95},{score:8,power:45})).toEqual({winner:1,tiebreak:true});
+ expect(decideRound({score:8,power:70},{score:8,power:70})).toEqual({winner:null,tiebreak:false});
 });
 it('keeps old cards pending, validates migration weights and interval bounds',async()=>{
  const {cardIds}=await makeSetWithPack();expect((await pool.query('SELECT clip_approval_status FROM cards WHERE id=$1',[cardIds[0]])).rows[0].clip_approval_status).toBe('pending');

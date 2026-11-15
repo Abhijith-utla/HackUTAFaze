@@ -99,13 +99,21 @@ const LORE = {
   1040: "A blank white room, no distractions, and a challenge that makes every small reaction louder.",
 };
 
+// Card Clash tags (the game's existing tag vocabulary) so the finished faces are playable. A card wins a round by how well its tags match the prompt.
+const GAME_TAGS = {
+  2001: ["precision", "clutch", "surprise"], 2002: ["precision", "surprise", "clutch"], 2003: ["celebration", "teamwork", "creators"],
+  2004: ["creators", "collab", "teamwork"], 2005: ["comedy", "reaction", "creators"], 2006: ["comedy", "reaction", "collab"],
+  2007: ["resilience", "precision", "surprise"], 2008: ["clutch", "precision", "teamwork"], 2009: ["clutch", "teamwork", "celebration"],
+  2010: ["clutch", "teamwork", "celebration"], 2011: ["clutch", "teamwork", "celebration"], 2012: ["comeback", "resilience", "creators"],
+  2013: ["comeback", "resilience", "celebration"],
+};
 mkdirSync(path.join(here, "art"), { recursive: true });
 const out = { demo: true, sets: { stream: { id: SET.stream, name: "Stream Moments", description: "Limited cards you can collect live from a stream when chat goes wild. Demo collectibles." } }, special: [], lore: Object.fromEntries(Object.entries(LORE).map(([k, v]) => [id(Number(k)), v])) };
 for (const c of CARDS) {
   const slug = c.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const dest = path.join(here, "art", `${slug}.webp`);
   const info = await sharp(path.join(SRC, c.file)).webp({ quality: 84, effort: 5 }).toFile(dest);
-  out.special.push({ id: id(c.n), setId: SET[c.set], name: c.name, tier: c.tier, rarity: c.rarity, date: c.date, lore: c.lore, voiceScript: c.voice, art: `art/${slug}.webp`, width: info.width, height: info.height, bytes: info.size });
+  out.special.push({ id: id(c.n), tags: GAME_TAGS[c.n], setId: SET[c.set], name: c.name, tier: c.tier, rarity: c.rarity, date: c.date, lore: c.lore, voiceScript: c.voice, art: `art/${slug}.webp`, width: info.width, height: info.height, bytes: info.size });
 }
 out.announcer = { "hype-alert": "[excited] Chat is going absolutely mental! A limited card just dropped. Grab it now!" };
 // Narration for the catalog Epic cards too, so every good pull (epic and up) gets the full treatment.

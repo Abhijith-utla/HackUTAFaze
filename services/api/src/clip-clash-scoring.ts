@@ -12,5 +12,17 @@ export function greedyCard<T extends {card_id:string;snapshot:{moment_tags:strin
 }
 export function matchOutcome(scores: number[], round: number) {
  const winner=scores.findIndex(s=>s>=3);
- return winner>=0 ? { complete:true,winner:winner+1,draw:false } : {complete:round>=5,winner:null,draw:round>=5};
+ if(winner>=0) return { complete:true,winner:winner+1,draw:false };      // first to 3 clinches the best of five
+ if(round<5) return { complete:false,winner:null,draw:false };
+ // All five rounds played and nobody clinched: the higher score wins. Only equal scores are a draw.
+ return scores[0]===scores[1] ? { complete:true,winner:null,draw:true } : { complete:true,winner:scores[0]>scores[1]?1:2,draw:false };
+}
+/**
+ * Who wins a round. The card that matches the prompt better (higher tag score) wins. If two cards match equally well, the stronger
+ * card (higher base power: rarer cards are stronger) wins, so collecting better cards matters. Equal on both: no winner, no point.
+ */
+export function decideRound(a: {score:number;power:number}, b: {score:number;power:number}): { winner: 1|2|null; tiebreak: boolean } {
+ if(a.score!==b.score) return { winner:a.score>b.score?1:2, tiebreak:false };
+ if(a.power!==b.power) return { winner:a.power>b.power?1:2, tiebreak:true };
+ return { winner:null, tiebreak:false };
 }

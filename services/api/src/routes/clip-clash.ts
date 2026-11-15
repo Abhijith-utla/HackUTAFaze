@@ -5,10 +5,10 @@ import { z } from 'zod';
 import { pool, tx } from '../db.js';
 import { requireUser, requireAdmin } from '../auth.js';
 import { fail } from '../errors.js';
-import { MomentTags, suitability, greedyCard, matchOutcome } from '../clip-clash-scoring.js';
+import { MomentTags, suitability, greedyCard, matchOutcome, decideRound } from '../clip-clash-scoring.js';
 const Id=z.object({id:z.string().uuid()});
 const eligible=`c.game_enabled AND cardinality(c.moment_tags)>0 AND length(trim(c.art_url))>0`;
-const snapshot=(c:any)=>({id:c.id,name:c.name,art_url:c.art_url,moment_tags:MomentTags.parse(c.moment_tags),clip_asset_id:c.clip_asset_id,thumbnail_asset_id:c.thumbnail_asset_id,clip_start_ms:c.clip_start_ms,clip_end_ms:c.clip_end_ms,moment_description:c.moment_description});
+const snapshot=(c:any)=>({id:c.id,name:c.name,art_url:c.art_url,base_power:c.base_power,moment_tags:MomentTags.parse(c.moment_tags),clip_asset_id:c.clip_asset_id,thumbnail_asset_id:c.thumbnail_asset_id,clip_start_ms:c.clip_start_ms,clip_end_ms:c.clip_end_ms,moment_description:c.moment_description});
 async function expire() { await pool.query("UPDATE clip_clash_matches SET status='expired',closed_at=now() WHERE status IN ('waiting','active') AND expires_at<now()"); }
 async function lock(c:pg.PoolClient,id:string,user:string) {
  const m=(await c.query('SELECT * FROM clip_clash_matches WHERE id=$1 FOR UPDATE',[id])).rows[0];
@@ -113,8 +113,11 @@ export async function clipClashRoutes(app:FastifyInstance) {
    if(submitted.length===2) {
     const results=submitted.map(s=>suitability(lineup.find(l=>l.seat===s.seat&&l.card_id===s.card_id).snapshot.moment_tags,round.prompt_snapshot.weights));
     for(const [n,s] of submitted.entries()) await c.query('UPDATE clip_clash_submissions SET score=$4,explanation=$5 WHERE match_id=$1 AND round=$2 AND seat=$3',[id,b.round,s.seat,results[n].score,JSON.stringify(results[n].matches)]);
-    const winner=results[0].score===results[1].score?null:results[0].score>results[1].score?1:2;
-    await c.query("UPDATE clip_clash_rounds SET status='resolved',winner_seat=$3,resolved_at=now() WHERE match_id=$1 AND number=$2",[id,b.round,winner]);
+    // Equal tag scores are decided by card power (see decideRound); the round records that it was a tie-break and the powers compared.
+    const powers=(await c.query('SELECT id,base_power FROM cards WHERE id=ANY($1::uuid[])',[submitted.map(x=>x.card_id)])).rows,powerOf=(cardId:string)=>Number(powers.find(x=>x.id===cardId)?.base_power??0);
+    const decided=decideRound({score:results[0].score,power:powerOf(submitted[0].card_id)},{score:results[1].score,power:powerOf(submitted[1].card_id)}),winner=decided.winner;
+    const note=decided.tiebreak?{tiebreak:'power',powers:[powerOf(submitted[0].card_id),powerOf(submitted[1].card_id)]}:{};
+    await c.query("UPDATE clip_clash_rounds SET status='resolved',winner_seat=$3,resolved_at=now(),prompt_snapshot=prompt_snapshot||$4::jsonb WHERE match_id=$1 AND number=$2",[id,b.round,winner,JSON.stringify(note)]);
     if(winner) await c.query('UPDATE clip_clash_players SET score=score+1 WHERE match_id=$1 AND seat=$2',[id,winner]);
     const scores=(await c.query('SELECT score FROM clip_clash_players WHERE match_id=$1 ORDER BY seat',[id])).rows.map(p=>p.score);
     const outcome=matchOutcome(scores,b.round);
