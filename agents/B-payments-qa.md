@@ -19,3 +19,6 @@ Consumes: A's internal ledger credit endpoint, the contract.
 ## Coordinate
 - Needs `/internal/ledger/credit` from @toosh-legacy (stub it locally until it lands).
 - Needs the Phantom connect + pay button from @Jaideepo7 (helper in `docs/phantom-checkout.md`).
+
+## Current payment and database requirements
+Payments use Phantom + Solana devnet per docs/api.md. Persist purchases in the shared Tiger Cloud by Tiger Data database; coordinate migrations with A. Integration tests use an isolated Tiger Cloud test database. In-memory standalone mode is a labelled local demo only, not durable fulfillment.
