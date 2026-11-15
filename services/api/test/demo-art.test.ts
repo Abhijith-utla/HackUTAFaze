@@ -9,7 +9,7 @@ const dir = await mkdtemp(path.join(tmpdir(), "demo-art-"));
 process.env.DEMO_ART_DIR = dir;
 const { makeApp, pool } = await import("./helpers.js");
 
-const ID = "d0000000-0000-4000-8000-000000001001";
+const ID = "eeeeeeee-0000-4000-8000-00000000beef"; // not in content/seed: proves DEMO_ART_DIR is honoured
 let app: FastifyInstance;
 beforeAll(async () => {
   await writeFile(path.join(dir, `${ID}.svg`), '<svg xmlns="http://www.w3.org/2000/svg"/>');

@@ -1,8 +1,10 @@
 // Demo seed (everything demo=true). Idempotent: safe to run many times.
-// Imports D's deterministic catalog when available, retaining the fallback for isolated API development.
+// Uses D's catalog (content/seed/catalog.json, ids preserved) when present; otherwise the built-in sets below.
 import bcrypt from "bcryptjs";
 import { readFile } from "node:fs/promises";
 import { Card, CardSet, Pack } from "@faze/shared";
+import { z } from "zod";
+import { config } from "./config.js";
 import { pool, tx } from "./db.js";
 import { postEntry } from "./ledger.js";
 import { migrate } from "./migrate.js";
@@ -101,24 +103,71 @@ async function upsertUser(email: string, password: string, name: string, role: "
   });
 }
 
-async function importContentCatalog(): Promise<boolean> {
+const Catalog = z.object({
+  sets: z.array(CardSet),
+  cards: z.array(Card),
+  packs: z.array(Pack.extend({ active: z.boolean().default(true) })),
+  cardStats: z.array(z.object({ cardId: z.string().uuid(), hype: z.number().int().min(0).max(100) })).default([]),
+});
+
+/** Relative art paths (e.g. /demo-art/<id>.svg) become absolute API URLs so every client can use them. */
+const absArt = (u: string) => (u.startsWith("/") ? `${config.publicUrl}${u}` : u);
+
+async function importCatalog(counts: Record<string, number>): Promise<boolean> {
   let raw: string;
-  try { raw = await readFile(new URL("../../../content/seed/catalog.json", import.meta.url), "utf8"); }
-  catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return false; throw error; }
-  const catalog = JSON.parse(raw);
-  const sets = CardSet.array().parse(catalog.sets);
-  const cards = Card.array().parse(catalog.cards);
-  const packs = Pack.array().parse(catalog.packs);
-  await tx(async c => {
-    for (const set of sets) await c.query(
-      "INSERT INTO card_sets(id,name,description,status,demo,published_at) VALUES($1,$2,$3,$4,true,$5) ON CONFLICT(id) DO NOTHING",
-      [set.id,set.name,set.description,set.status,set.publishedAt]);
-    for (const card of cards) {
-      await c.query("INSERT INTO cards(id,set_id,name,faze_member,rarity,art_url,base_power,max_supply,demo) VALUES($1,$2,$3,$4,$5,$6,$7,$8,true) ON CONFLICT(id) DO NOTHING", [card.id,card.setId,card.name,card.fazeMember,card.rarity,card.artUrl,card.basePower,card.maxSupply]);
-      await c.query("INSERT INTO card_stats(card_id,hype) VALUES($1,0) ON CONFLICT DO NOTHING", [card.id]);
+  try {
+    raw = await readFile(config.catalogPath, "utf8");
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === "ENOENT") return false;
+    throw e;
+  }
+  const cat = Catalog.parse(JSON.parse(raw));
+  const setIds = new Set(cat.sets.map((s) => s.id));
+  for (const c of cat.cards) if (!setIds.has(c.setId)) throw new Error(`catalog: card ${c.id} has unknown setId`);
+  for (const p of cat.packs) {
+    if (!setIds.has(p.setId)) throw new Error(`catalog: pack ${p.id} has unknown setId`);
+    const sum = Object.values(p.odds).reduce((n, v) => n + (v ?? 0), 0);
+    if (Math.abs(sum - 100) > 1e-9) throw new Error(`catalog: pack ${p.id} odds sum to ${sum}, not 100`);
+  }
+  await tx(async (c) => {
+    // Older built-in seed rows with the same set name but a different id would show twice in the store.
+    const old = await c.query(
+      "UPDATE card_sets SET status='retired' WHERE demo AND name = ANY($1) AND NOT (id = ANY($2::uuid[])) AND status <> 'retired' RETURNING id",
+      [cat.sets.map((s) => s.name), [...setIds]],
+    );
+    if (old.rowCount) {
+      await c.query("UPDATE packs SET active=false WHERE set_id = ANY($1::uuid[])", [old.rows.map((r) => r.id)]);
+      console.log(`retired ${old.rowCount} older built-in demo set(s) replaced by the catalog`);
     }
-    for (const pack of packs) await c.query("INSERT INTO packs(id,set_id,name,price_coins,cards_per_pack,odds,odds_version,active) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(id) DO NOTHING", [pack.id,pack.setId,pack.name,pack.priceCoins,pack.cardsPerPack,pack.odds,pack.oddsVersion, catalog.packs.find((p: {id:string}) => p.id===pack.id).active ?? true]);
+    for (const s of cat.sets) {
+      const r = await c.query(
+        "INSERT INTO card_sets (id, name, description, status, demo, published_at) VALUES ($1,$2,$3,$4,true,$5) ON CONFLICT (id) DO NOTHING",
+        [s.id, s.name, s.description, s.status, s.publishedAt],
+      );
+      counts.sets += r.rowCount ?? 0;
+    }
+    for (const k of cat.cards) {
+      const r = await c.query(
+        `INSERT INTO cards (id, set_id, name, faze_member, rarity, art_url, base_power, max_supply, demo)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true) ON CONFLICT (id) DO NOTHING`,
+        [k.id, k.setId, k.name, k.fazeMember, k.rarity, absArt(k.artUrl), k.basePower, k.maxSupply],
+      );
+      counts.cards += r.rowCount ?? 0;
+    }
+    const hype = new Map(cat.cardStats.map((x) => [x.cardId, x.hype]));
+    for (const k of cat.cards) {
+      await c.query("INSERT INTO card_stats (card_id, hype) VALUES ($1,$2) ON CONFLICT DO NOTHING", [k.id, hype.get(k.id) ?? 0]);
+    }
+    for (const p of cat.packs) {
+      const r = await c.query(
+        `INSERT INTO packs (id, set_id, name, price_coins, cards_per_pack, odds, odds_version, active)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING`,
+        [p.id, p.setId, p.name, p.priceCoins, p.cardsPerPack, p.odds, p.oddsVersion, p.active],
+      );
+      counts.packs += r.rowCount ?? 0;
+    }
   });
+  console.log(`catalog: ${config.catalogPath} (${cat.sets.length} sets, ${cat.cards.length} cards, ${cat.packs.length} packs)`);
   return true;
 }
 
@@ -131,12 +180,8 @@ async function main() {
     if (await upsertUser(`fan${i}@demo.faze`, "demo-fan-pass", `DemoFan${i}`, "fan")) counts.users++;
   }
 
-  if (await importContentCatalog()) {
-    console.log("Imported demo content catalog and seeded demo users");
-    return;
-  }
-
-  for (const s of SETS) {
+  const fromCatalog = await importCatalog(counts);
+  for (const s of fromCatalog ? [] : SETS) {
     await tx(async (c) => {
       let setId: string;
       const found = await c.query("SELECT id FROM card_sets WHERE name=$1", [s.name]);
@@ -174,10 +219,9 @@ async function main() {
     });
   }
 
-  const total = SETS.reduce((n, s) => n + s.cards.length, 0);
   console.log(
-    `seed done (demo): +${counts.users} users, +${counts.sets} sets, +${counts.cards} cards, +${counts.packs} packs ` +
-      `(catalog: 5 users, ${SETS.length} sets, ${total} cards). Logins: admin@demo.faze / demo-admin-pass, fan1-4@demo.faze / demo-fan-pass`,
+    `seed done (demo, ${fromCatalog ? "content/seed catalog" : "built-in sets"}): +${counts.users} users, +${counts.sets} sets, ` +
+      `+${counts.cards} cards, +${counts.packs} packs. Logins: admin@demo.faze / demo-admin-pass, fan1-4@demo.faze / demo-fan-pass`,
   );
 }
 

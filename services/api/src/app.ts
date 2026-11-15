@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import { readFile } from "node:fs/promises";
+import path from "node:path";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import { config } from "./config.js";
@@ -23,7 +24,7 @@ export async function buildApp() {
   app.get<{ Params: { file: string } }>("/demo-art/:file", async (req, reply) => {
     if (!/^[a-f0-9-]{36}\.svg$/i.test(req.params.file)) return reply.code(404).send({ error: { code: "NOT_FOUND", message: "Art not found" } });
     try {
-      const art = await readFile(new URL("../../../content/seed/art/" + req.params.file, import.meta.url));
+      const art = await readFile(path.join(config.demoArtDir, req.params.file));
       return reply.type("image/svg+xml").header("X-Content-Type-Options", "nosniff").header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox").send(art);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
