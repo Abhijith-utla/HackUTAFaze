@@ -177,7 +177,7 @@
 
 /* ---------- battle: your cards left, theirs right, everything on one screen ---------- */
 .cg-battle {
-  --cw: clamp(70px, calc(((100dvh - 250px) / 3 - 38px) / 1.4), 160px);
+  --cw: clamp(54px, calc((100dvh - 440px) / 4.2), 84px);
   --side: calc(var(--cw) * 2 + 38px);
   /* wider than the page column, keeping a gutter on both sides */
   margin-inline: calc((100% - min(1640px, 100vw - 64px)) / 2);
@@ -197,12 +197,16 @@
 .cg-battle .cg-prompt ul { justify-content: center; }
 .cg-col-title { margin: 0; font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #e3dfe1; text-align: center; }
 .cg-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, var(--cw)); gap: 8px 10px; justify-content: center; }
-.cg-grid li { display: grid; align-content: start; min-width: 0; }
+.cg-grid li { position: relative; display: grid; align-content: start; min-width: 0; }
+.cg-col-me .cg-grid li:hover, .cg-col-me .cg-grid li:focus-within { z-index: 8; }
 .cg-battle .cg-hcard { width: var(--cw); padding-top: 0; gap: 2px; }
-.cg-battle .cg-hcard:hover:not(:disabled) { transform: translateY(-3px); }
-.cg-battle .cg-hcard.is-on { transform: translateY(-3px) scale(1.04); z-index: 1; }
-.cg-battle .cg-hname { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cg-battle .cg-htags { font-size: 9.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cg-battle .cg-hcard { transform-origin: 0 50%; transition: transform .16s ease, box-shadow .16s; }
+.cg-battle .cg-hcard.is-on { transform: scale(1.12); }
+/* small by default; hover or focus a card to blow it up and read it (it grows toward the middle of the table) */
+.cg-battle .cg-hcard:hover, .cg-battle .cg-hcard:focus-visible { transform: scale(2.5); filter: drop-shadow(0 14px 22px #000c); }
+.cg-battle .cg-hcard:hover .cg-hname, .cg-battle .cg-hcard:focus-visible .cg-hname { white-space: normal; }
+.cg-battle .cg-hname { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cg-battle .cg-htags { font-size: 8.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cg-battle .cg-back { width: var(--cw); }
 .cg-back.is-played { background: #0000002e; border: 2px dashed #ffffff2a; box-shadow: none; }
 .cg-col-count { margin: 0; font-size: 12px; color: var(--cg-muted); }
