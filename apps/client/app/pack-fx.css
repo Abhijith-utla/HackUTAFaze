@@ -163,3 +163,12 @@
 
 /* Pack art is transparent: the old hot-pink :hover gradient on .cinema-booster showed through behind it. */
 .pack-cinema .cinema-booster.has-cover,.pack-cinema .cinema-booster.has-cover:hover:not(:disabled){background:none;border:0;box-shadow:none}
+/* FaZe speech bubble: pops out of the revealed card and says why the moment matters */
+.pack-cinema .cinema-card-stage { position: relative; }
+.faze-bubble { position: absolute; z-index: 6; left: 50%; top: 3%; transform: translateX(-50%) scale(.6); transform-origin: 50% 100%; width: max-content; max-width: min(300px, 86vw); display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-radius: 16px; background: #fff; color: #111; border: 2px solid #e4002b; box-shadow: 0 10px 30px #000a, 0 0 22px #e4002b66; font-size: 14px; line-height: 1.3; font-weight: 600; opacity: 0; animation: faze-bubble-pop .5s .45s cubic-bezier(.2, 1.5, .4, 1) forwards, faze-bubble-out .5s 7s ease forwards; pointer-events: none; }
+.faze-bubble p { margin: 0; }
+.faze-bubble::after { content: ""; position: absolute; left: 50%; bottom: -9px; width: 14px; height: 14px; background: #fff; border-right: 2px solid #e4002b; border-bottom: 2px solid #e4002b; transform: translateX(-50%) rotate(45deg); }
+.faze-bubble-tag { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #e4002b; color: #fff; font: 900 15px/1 system-ui, sans-serif; }
+@keyframes faze-bubble-pop { to { opacity: 1; transform: translateX(-50%) scale(1); } }
+@keyframes faze-bubble-out { from { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .faze-bubble { animation-duration: .01s; animation-delay: 0s; } }

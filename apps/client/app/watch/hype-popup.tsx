@@ -2,7 +2,6 @@
 // The popup card that appears when chat spikes: collect it with demo coins, straight from the stream.
 import { useEffect, useState } from 'react';
 import { ApiError, request, thumb } from '../../lib/api';
-import { playCardVoice, playGoodPull, stopCardVoice } from '../../lib/voice';
 
 export type Offer = { card: { id: string; name: string; artUrl: string; rarity: string; hasVoice?: boolean }; priceCoins: number; owned: boolean; balance: number };
 type Phase = 'idle' | 'buying' | 'done' | 'error';
@@ -21,8 +20,6 @@ export default function HypePopup({ offer, channel, score, demo, signedIn, onClo
   const [balance, setBalance] = useState<number | null>(null);
   const [retryKey] = useState(key); // one key per popup: a retry after a dropped connection can never charge twice
 
-  // The announcer calls it out as the popup appears. Browsers may block audio before any interaction: that is fine, it just stays silent.
-  useEffect(() => { playCardVoice('hype-alert').catch(() => {}); return () => stopCardVoice(); }, []);
   useEffect(() => { // fade away if ignored
     if (phase !== 'idle') return;
     const t = setTimeout(onClose, 45_000);
@@ -34,7 +31,6 @@ export default function HypePopup({ offer, channel, score, demo, signedIn, onClo
     try {
       const r = await request<{ instance: { serial: number }; balance: number }>('/moments/hype/claim', { channel, hypeScore: Math.round(score * 10) / 10, idempotencyKey: retryKey });
       setSerial(r.instance.serial); setBalance(r.balance); setPhase('done'); onCollected(r.balance);
-      playGoodPull(offer.card.hasVoice ? offer.card.id : null, 'gold'); // party, then the card's story, automatically
     } catch (e) {
       setMsg(e instanceof ApiError ? e.message : 'Something went wrong. You were not charged.'); setPhase('error');
     }

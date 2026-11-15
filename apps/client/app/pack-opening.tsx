@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent }  from 'react';
 import type { Card, CardInstance } from '@faze/shared';
 import { art } from '../lib/api';
-import { playGoodPull, stopCardVoice } from '../lib/voice';
+import { FazeBubble, shortLore } from './faze-bubble';
 import { packCoverForName } from '../lib/pack-covers';
 import { DecodeText, GlitchOverlay, RARITY_RANK, glitchLevel, trackSpotlight } from './pack-fx';
 import './pack-fx.css';
@@ -24,7 +24,6 @@ export default function PackOpening({ cards, packName, onClose }: { cards: CardI
   // Display order only (rarest last, for suspense); still exactly the cards the server returned.
   // Packs that end on finished card faces (silver, then gold) are shown in the server's slot order; other packs keep rarest-last.
   const shown = useMemo(() => cards.length > 1 && extra(cards[cards.length - 1].card).faceBaked ? cards : [...cards].sort((a, b) => RARITY_RANK[a.card.rarity] - RARITY_RANK[b.card.rarity]), [cards]);
-  useEffect(() => () => stopCardVoice(), []);
   const glitched = useRef(new Set<string>());
   const [glitch, setGlitch] = useState<string | null>(null);
   function removeSeal() {
@@ -80,15 +79,12 @@ export default function PackOpening({ cards, packName, onClose }: { cards: CardI
   if (!current) return null;
   const tier = tierOf(current.card);
   const baked = !!extra(current.card).faceBaked;
-  const hasVoice = !!extra(current.card).hasVoice;
   const color = tier ? TIER_COLOR[tier] : colors[current.card.rarity];
   const seamPoints = Array.from({ length: 51 }, (_, n) =>     n * 5 + ',' + ([8, 4, 10, 6, 12, 5, 9][n % 7])).join(' ');
   const level = glitchLevel(current.card.rarity);
-  function next() { stopCardVoice(); if (index === shown.length - 1) setStage('summary'); else { setIndex(index + 1); setFlipped(false); } }
+  function next() { if (index === shown.length - 1) setStage('summary'); else { setIndex(index + 1); setFlipped(false); } }
   function reveal() {
     setFlipped(true);
-    // A good pull (silver/gold faces, epic and up) gets a party sound, then its story plays by itself: no button.
-    if (tier || level) playGoodPull(hasVoice ? current.card.id : null, tier === 'gold' || current.card.rarity === 'legendary' ? 'gold' : 'silver');
     if (level && !glitched.current.has(current.id)) { glitched.current.add(current.id); setGlitch(current.id); } }
   const glitching = stage === 'cards' && level && glitch === current.id ? level : null;
   return <div className={`pack-cinema cinema-${stage}${glitching ? ` fx-gl-${glitching}` : ''}`} style={{ '--rarity-glow': color } as CSSProperties}>
@@ -106,6 +102,7 @@ export default function PackOpening({ cards, packName, onClose }: { cards: CardI
       {stage === 'cards' && <div className={`cinema-card-stage fx-stage fx-r-${current.card.rarity}${tier ? ` tier-${tier}` : ''}${baked ? ' is-baked' : ''}${index === 0 ? ' fx-first' : ''}${flipped ? ' fx-revealed' : ''}`} key={current.id}>
         <span className="fx-deck" aria-hidden="true">{shown.slice(index + 1, index + 5).map((item, n) => <span key={item.id} style={{ '--i': n } as CSSProperties} />)}</span>
         {flipped && <div className="rarity-rays" aria-hidden="true" />}
+        {flipped && (tier || level) && shortLore(extra(current.card).lore) && <FazeBubble key={current.id} text={shortLore(extra(current.card).lore)} />}
         <button className={`cinema-flipper ${flipped ? 'is-flipped' : ''}`} onClick={() => flipped ? next() : reveal()} onPointerMove={trackSpotlight} aria-label={!flipped ? 'Reveal card' : `${current.card.name}, ${tier ?? current.card.rarity}. Continue.`}>
           <span className="cinema-card-back"><b>CLIPDECK</b><span>CLIPDECK / COLLECTOR CARD</span><small>TAP TO REVEAL</small></span>
           <span className="cinema-card-front">{!baked && <span className="cinema-rarity" data-text={current.card.rarity}>{current.card.rarity}</span>}<img src={art(current.card.artUrl)} alt={current.card.name} />{!baked && <span className="cinema-card-label"><small>{current.card.fazeMember}</small><strong data-text={current.card.name}><DecodeText text={current.card.name} play={flipped && current.card.rarity === 'legendary'} /></strong><span>POWER {current.card.basePower} · SERIAL #{current.serial}</span></span>}<span className="card-foil" aria-hidden="true" /></span>

@@ -18,13 +18,8 @@ function Pips({ pips }: { pips: PipState[] }) {
   return <ol className="cg-pips" aria-label="Rounds">{pips.map((p, i) => <li key={i} className={`cg-pip is-${p}`} aria-label={`Round ${i + 1}: ${PIP_LABEL[p]}`}>{p === 'win' ? '✓' : p === 'loss' ? '✕' : p === 'draw' ? '–' : i + 1}</li>)}</ol>;
 }
 
-function Scoreboard({ state, opponent }: { state: ClashState; opponent: Opponent }) {
-  const v = derive(state);
-  return <div className="cg-score" role="group" aria-label="Score">
-    <div className="cg-side is-me"><small>YOU</small><b aria-label={`You: ${v.myScore} points`}>{v.myScore}</b></div>
-    <div className="cg-mid"><small>BEST OF 5 · FIRST TO 3</small><Pips pips={v.pips} /></div>
-    <div className="cg-side is-opp"><small>{opponent.flag} {opponent.handle}<em> · {opponent.city}</em></small><b aria-label={`Opponent: ${v.oppScore} points`}>{v.oppScore}</b></div>
-  </div>;
+function Score({ who, name, sub, points }: { who: 'me' | 'opp'; name: string; sub?: string; points: number }) {
+  return <div className={`cg-side is-${who}`}><small>{name}{sub && <em> · {sub}</em>}</small><b aria-label={`${who === 'me' ? 'You' : 'Opponent'}: ${points} points`}>{points}</b></div>;
 }
 
 function Prompt({ title, description, weights, round }: { title: string; description: string; weights: Record<string, number>; round: number }) {
@@ -91,12 +86,8 @@ export default function Battle({ state, opponent, selected, onSelect, onPlay, bu
   const canPlay = v.status === 'active' && !!v.current && reveal === null && !v.current.submissions.some((s) => s.seat === v.me);
 
   return <div ref={table} className="cg-table cg-battle" data-phase={showFinal ? 'final' : revealed ? 'reveal' : 'play'}>
-    <div className="cg-top">
-      <Scoreboard state={state} opponent={opponent} />
-      {promptRound && !showFinal && <Prompt title={promptRound.title} description={promptRound.description} weights={promptRound.weights} round={promptRound.number} />}
-    </div>
-
     <aside className="cg-col cg-col-me" aria-label="Your team">
+      <Score who="me" name="YOU" points={v.myScore} />
       <p className="cg-col-title">YOUR TEAM</p>
       <ul className="cg-grid">{v.myLineup.map((c) => {
         const used = c.id in v.myUsed, on = selected === c.id;
@@ -110,6 +101,9 @@ export default function Battle({ state, opponent, selected, onSelect, onPlay, bu
     </aside>
 
     <section className="cg-center" aria-live="polite">
+      <div className="cg-mid"><small>BEST OF 5 · FIRST TO 3</small><Pips pips={v.pips} /></div>
+      {promptRound && !showFinal && <Prompt title={promptRound.title} description={promptRound.description} weights={promptRound.weights} round={promptRound.number} />}
+      <div className="cg-stage">
       {showFinal ? <Final state={state} opponent={opponent} onAgain={onAgain} />
         : revealed ? <Reveal r={revealed} last={v.status === 'completed' && reveal === state.rounds.length} onContinue={onContinue} opponent={opponent} />
         : <div className="cg-play">
@@ -119,10 +113,12 @@ export default function Battle({ state, opponent, selected, onSelect, onPlay, bu
               <button type="button" className="cg-link" onClick={onLeave}>Forfeit match</button>
             </div>
           </div>}
+      </div>
     </section>
 
     <aside className="cg-col cg-col-opp" aria-label={`${opponent.handle}'s hand`}>
-      <p className="cg-col-title"><span aria-hidden="true">{opponent.flag}</span> {opponent.handle}<em>{opponent.city} · demo: computer</em></p>
+      <Score who="opp" name={`${opponent.flag} ${opponent.handle}`} sub={`${opponent.city} · demo: computer`} points={v.oppScore} />
+      <p className="cg-col-title">THEIR TEAM</p>
       <ul className="cg-grid">{v.oppLineup.map((c) => <li key={c.id}>{c.id in v.oppUsed ? <span className="cg-back is-played" aria-hidden="true" /> : <Back />}</li>)}</ul>
       <p className="cg-col-count">{v.oppLineup.filter((c) => !(c.id in v.oppUsed)).length} cards left</p>
     </aside>
