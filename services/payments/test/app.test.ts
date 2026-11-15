@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { Keypair } from "@solana/web3.js";
 import { SignJWT } from "jose";
 import { buildApp } from "../src/app.js";
+import { reconcile } from "../src/fulfill.js";
 import { loadConfig } from "../src/config.js";
 import { memoryLedger } from "../src/ledger.js";
 import { memoryRepo } from "../src/repo.js";
@@ -161,6 +162,52 @@ describe("payments (Solana devnet)", () => {
     const res = await confirm({ purchaseId: b.purchaseId, signature: s });
     expect(res.statusCode).toBe(400);
     expect(t.ledger.balances.get(userId)).toBe(1000);
+  });
+
+  it("one tx carrying TWO references, confirmed concurrently, credits only one purchase", async () => {
+    // Found by @tanejakeshav's review (PR #3): signatureUsed() was a check-then-act race.
+    const a = (await checkout()).json();
+    const b = (await checkout()).json();
+    const s = sig();
+    const tx = transfer(a.reference, a.lamports);
+    tx.accountKeys.push(b.reference);
+    tx.preBalances.push(0);
+    tx.postBalances.push(0);
+    t.chain.txs.set(s, tx);
+    const [ra, rb] = await Promise.all([
+      confirm({ purchaseId: a.purchaseId, signature: s }),
+      confirm({ purchaseId: b.purchaseId, signature: s }),
+    ]);
+    expect([ra.statusCode, rb.statusCode].sort()).toEqual([200, 400]);
+    expect(t.ledger.balances.get(userId)).toBe(1000);
+  });
+
+  it("a reserved signature survives an RPC outage: retry credits without re-reading the chain", async () => {
+    const real = t.ledger.credit.bind(t.ledger);
+    let down = true;
+    t.ledger.credit = async (b) => {
+      if (down) throw new Error("api down");
+      return real(b);
+    };
+    const c = (await checkout()).json();
+    const s = sig();
+    t.chain.txs.set(s, transfer(c.reference, c.lamports));
+    expect((await confirm({ purchaseId: c.purchaseId, signature: s })).statusCode).toBe(409);
+    t.chain.txs.clear(); // RPC "forgets" / is down
+    down = false;
+    const res = await confirm({ purchaseId: c.purchaseId });
+    expect(res.json()).toMatchObject({ status: "paid", credited: 1000 });
+  });
+
+  it("reconcile() credits a paid purchase whose buyer never called confirm", async () => {
+    const c = (await checkout()).json();
+    const s = sig();
+    t.chain.txs.set(s, transfer(c.reference, c.lamports));
+    t.chain.byRef.set(c.reference, s);
+    const done = await reconcile(t.repo, t.ledger, t.chain, { maxAgeMs: 60_000, limit: 10 });
+    expect(done).toBe(1);
+    expect(t.ledger.balances.get(userId)).toBe(1000);
+    expect(await reconcile(t.repo, t.ledger, t.chain, { maxAgeMs: 60_000, limit: 10 })).toBe(0);
   });
 
   it("cannot confirm someone else's purchase", async () => {

@@ -8,7 +8,8 @@ import { CheckoutBody, ConfirmBody, ERROR_STATUS, SESSION_COOKIE, SessionClaims,
 import { BUNDLES, findBundle } from "./bundles.js";
 import { toApi, type PurchaseRepo } from "./repo.js";
 import type { LedgerClient } from "./ledger.js";
-import { checkTransfer, newReference, solanaPayUrl, type ChainReader } from "./solana.js";
+import { newReference, solanaPayUrl, type ChainReader } from "./solana.js";
+import { fulfill, PaymentError } from "./fulfill.js";
 
 export interface AppDeps {
   repo: PurchaseRepo;
@@ -37,7 +38,7 @@ export function buildApp(deps: AppDeps) {
   app.register(cors, { origin: deps.clientUrl, credentials: true });
 
   app.setErrorHandler((err, _req, reply) => {
-    if (err instanceof HttpError) {
+    if (err instanceof HttpError || err instanceof PaymentError) {
       return reply.status(ERROR_STATUS[err.code]).send({ error: { code: err.code, message: err.message } });
     }
     if ((err as { statusCode?: number }).statusCode === 400) {
@@ -101,50 +102,9 @@ export function buildApp(deps: AppDeps) {
     const purchase = await deps.repo.get(parsed.data.purchaseId);
     if (!purchase || purchase.userId !== user.sub) throw new HttpError("NOT_FOUND", "purchase not found");
 
-    const credit = () =>
-      deps.ledger.credit({
-        userId: purchase.userId,
-        amount: purchase.coins,
-        reason: "purchase",
-        refId: purchase.id,
-        idempotencyKey: `purchase:${purchase.id}`,
-      });
-
-    if (purchase.status === "paid") {
-      // Idempotent: return the current balance without crediting again.
-      const { balance } = await credit();
-      return { status: "paid" as const, credited: 0, balance };
-    }
-
-    let signature = parsed.data.signature;
+    const signature = parsed.data.signature;
     if (signature !== undefined && !SIGNATURE_RE.test(signature)) throw new HttpError("VALIDATION", "malformed signature");
-    const rpc = async <T>(f: () => Promise<T>): Promise<T> => {
-      try {
-        return await f();
-      } catch (err) {
-        app.log.warn(err, "solana rpc error");
-        throw new HttpError("CONFLICT", "Solana RPC unavailable, retry shortly");
-      }
-    };
-    if (!signature) signature = await rpc(() => deps.chain.findSignature(purchase.reference));
-    if (!signature) throw new HttpError("CONFLICT", "payment not found on-chain yet, retry shortly");
-    if (await deps.repo.signatureUsed(signature)) throw new HttpError("VALIDATION", "this transaction already paid for a purchase");
-
-    const sigToCheck = signature;
-    const tx = await rpc(() => deps.chain.getTx(sigToCheck));
-    if (!tx) throw new HttpError("CONFLICT", "transaction not confirmed yet, retry shortly");
-    const check = checkTransfer(tx, { reference: purchase.reference, recipient: purchase.recipient, lamports: purchase.lamports });
-    if (!check.ok) throw new HttpError("VALIDATION", check.reason);
-
-    let balance: number;
-    try {
-      ({ balance } = await credit());
-    } catch (err) {
-      app.log.error(err, "ledger credit failed");
-      throw new HttpError("CONFLICT", "coins service unavailable, retry shortly");
-    }
-    const first = await deps.repo.markPaid(purchase.id, signature);
-    return { status: "paid" as const, credited: first ? purchase.coins : 0, balance };
+    return fulfill(deps.repo, deps.ledger, deps.chain, purchase, signature);
   });
 
   app.get("/me/purchases", async (req) => {
