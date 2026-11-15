@@ -1,6 +1,7 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { art, thumb } from '../../lib/api';
+import { playCardVoice, stopCardVoice } from '../../lib/voice';
 import type { BinderCardInfo, BinderInstance } from './types';
 
 /** One card in the grid. A card you don't own is a blurred, desaturated teaser (colour and shape visible, details hidden). */
@@ -17,6 +18,9 @@ export function CardTile({ card, badge, missing, onClick, children }: { card: Bi
 /** Card detail: lore, era, edition (your serials), power. Closes with Escape or a click outside. */
 export default function CardDetail({ card, instances, onClose }: { card: BinderCardInfo; instances: BinderInstance[]; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [speaking, setSpeaking] = useState(false);
+  useEffect(() => () => stopCardVoice(), []);
+  const toggleVoice = () => { if (speaking) { stopCardVoice(); return; } setSpeaking(true); playCardVoice(card.id, () => setSpeaking(false)).catch(() => setSpeaking(false)); };
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
     ref.current?.focus();
@@ -39,7 +43,7 @@ export default function CardDetail({ card, instances, onClose }: { card: BinderC
             <div><dt className="bd-label">Power</dt><dd>{card.basePower}</dd></div>
           </dl>
           {locked.length > 0 && <p className="bd-muted">Tradable again after {new Date(locked[0].tradableAfter!).toLocaleDateString()}.</p>}
-          <div className="bd-row"><button type="button" onClick={onClose}>Close</button></div>
+          <div className="bd-row">{card.hasVoice && <button type="button" onClick={toggleVoice}>{speaking ? '■ Stop' : '▶ Hear its legacy'}</button>}<button type="button" onClick={onClose}>Close</button></div>
         </div>
       </div>
     </div>

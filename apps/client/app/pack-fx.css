@@ -176,3 +176,23 @@
 .pack-cinema .has-cover .seal-foil{background:var(--pack-cover) 0 0/var(--bw) auto no-repeat}
 .pack-cinema .has-cover .seal-foil>span,.pack-cinema .has-cover :is(.booster-seal,.booster-logo,.booster-vault,.booster-count){display:none}
 .pack-cinema .has-cover .booster-tear{color:#fff;text-shadow:0 1px 6px #000c;z-index:4}
+
+/* ---- Finished card faces (silver / gold editions) and narration ---- */
+.pack-cinema .is-baked .cinema-flipper{height:calc(min(290px,68vw) * 1.4)}
+.pack-cinema .is-baked .cinema-card-front>img{height:100%;width:100%;object-fit:cover}
+@keyframes tier-sweep{0%{transform:translateX(-38%)}100%{transform:translateX(38%)}}
+.pack-cinema .tier-silver.fx-revealed .cinema-card-front::before{content:'';position:absolute;inset:-50%;z-index:1;pointer-events:none;mix-blend-mode:screen;background:linear-gradient(115deg,transparent 36%,#ffffff40 45%,#d6ebff99 50%,#ffffff40 55%,transparent 64%);animation:tier-sweep 2.8s ease-in-out .9s infinite alternate}
+.pack-cinema .tier-gold.fx-r-epic.fx-revealed .cinema-card-front::before{content:'';position:absolute;inset:-50%;z-index:1;pointer-events:none;mix-blend-mode:screen;background:linear-gradient(115deg,transparent 36%,#ffe9a040 45%,#ffd27099 50%,#ffe9a040 55%,transparent 64%);animation:tier-sweep 2.8s ease-in-out .9s infinite alternate}
+/* Glow goes on the face as a box-shadow: a CSS filter on the flipper would flatten its 3D flip and show the back mirrored. */
+.pack-cinema .tier-silver.fx-revealed .cinema-card-front{box-shadow:0 0 30px #dfe7f088}
+.pack-cinema .tier-gold.fx-revealed .cinema-card-front{box-shadow:0 0 36px #ffd270aa}
+.pack-cinema .cinema-lore{max-width:min(520px,88vw);margin:6px auto 0;text-align:center;color:#d8dde6;font-size:15px;line-height:1.5}
+.pack-cinema .cinema-lore-hint{color:#9aa4b2;font-size:13px}
+.pack-cinema .lineup-lore{font-size:11px;line-height:1.4;color:#c7cdd8;margin:4px 0}
+.pack-cinema .voice-btn{border:1px solid var(--rarity-glow);background:#0b0d13cc;color:#fff;border-radius:999px;padding:8px 14px;font-size:13px;cursor:pointer}
+.pack-cinema .voice-btn:hover{background:#1a1d27}
+.pack-cinema .cinema-lineup article.tier-silver{box-shadow:0 0 34px #dfe7f055}
+.pack-cinema .cinema-lineup article.tier-gold{box-shadow:0 0 46px #ffd27077}
+.pack-cinema .cinema-lineup article.is-baked img{aspect-ratio:5/7;object-fit:cover}
+@media (prefers-reduced-motion:reduce){.pack-cinema .tier-silver .cinema-card-front::before,.pack-cinema .tier-gold .cinema-card-front::before{animation:none}}
+
