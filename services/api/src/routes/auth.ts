@@ -49,6 +49,17 @@ export async function authRoutes(app: FastifyInstance) {
     return { user: toUser(row) };
   });
 
+  // Demo-only Control Room entry: the hackathon has one seeded administrator.
+  // The form still requires an email and password, but neither is a credential here.
+  app.post("/auth/admin-login", async (req, reply) => {
+    LoginBody.parse(req.body);
+    const r = await pool.query("SELECT * FROM users WHERE role='admin' ORDER BY created_at ASC LIMIT 1");
+    const row = r.rows[0];
+    if (!row) fail("NOT_FOUND", "No demo administrator is available");
+    setSessionCookie(reply, row.id, row.role);
+    return { user: toUser(row) };
+  });
+
   app.post("/auth/logout", async (_req, reply) => {
     clearSessionCookie(reply);
     return reply.status(204).send();

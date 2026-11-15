@@ -9,6 +9,7 @@ Errors: `{ "error": { "code": "STRING_CODE", "message": "human text" } }`. Codes
 |---|---|---|
 | POST | `/auth/signup` | `{email, password, displayName}` → `{user}` (+500 demo coins) |
 | POST | `/auth/login` | `{email, password}` → `{user}` |
+| POST | `/auth/admin-login` | `{email, password}` → `{user}` as the single seeded demo admin. The values must be syntactically valid/non-empty but are not verified; this is a temporary hackathon-only Control Room bypass. |
 | POST | `/auth/logout` | → `204` |
 | GET | `/me` | → `{user, balance}` |
 | GET | `/users?q=<prefix>` | → `{users: [{id, displayName}]}` — approved display names only, max 10 (v1.2, trade picker) |

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { FastifyInstance } from "fastify";
 import { randomUUID } from "node:crypto";
-import { cookieFrom, makeApp, pool, signup } from "./helpers.js";
+import { cookieFrom, makeAdmin, makeApp, pool, signup } from "./helpers.js";
 import { config } from "../src/config.js";
 
 let app: FastifyInstance;
@@ -53,6 +53,20 @@ describe("auth + /me", () => {
     expect(cookieFrom(ok)).toMatch(/^session=/);
     const out = await app.inject({ method: "POST", url: "/auth/logout" });
     expect(out.statusCode).toBe(204);
+  });
+
+  it("admin demo login accepts arbitrary credentials and issues an admin session", async () => {
+    await makeAdmin();
+    const login = await app.inject({
+      method: "POST",
+      url: "/auth/admin-login",
+      payload: { email: "anything@example.test", password: "anything" },
+    });
+    expect(login.statusCode).toBe(200);
+    expect(login.json().user.role).toBe("admin");
+    const me = await app.inject({ method: "GET", url: "/me", headers: { cookie: cookieFrom(login) } });
+    expect(me.statusCode).toBe(200);
+    expect(me.json().user.role).toBe("admin");
   });
 
   it("/me without cookie → 401", async () => {

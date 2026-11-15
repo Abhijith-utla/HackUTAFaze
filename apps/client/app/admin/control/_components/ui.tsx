@@ -74,7 +74,7 @@ function SignIn({ onDone }: { onDone: (me: { user: { displayName: string; role: 
           setBusy(true);
           setErr("");
           try {
-            const r = await api<{ user: { displayName: string; role: string } }>("/auth/login", "POST", d);
+            const r = await api<{ user: { displayName: string; role: string } }>("/auth/admin-login", "POST", d);
             if (r.user.role !== "admin") setErr("This account isn't an administrator.");
             else onDone(r);
           } catch (x) {
