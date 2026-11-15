@@ -40,6 +40,7 @@ export function decodeArt(body: unknown): { bytes: Buffer; ext: Ext } {
   return { bytes, ext };
 }
 
+const DEMO_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.svg$/;
 const FILE_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(png|jpg|webp)$/;
 
 export async function artRoutes(app: FastifyInstance) {
@@ -50,6 +51,24 @@ export async function artRoutes(app: FastifyInstance) {
     const file = `${randomUUID()}.${ext}`;
     await writeFile(path.join(config.artDir, file), bytes, { flag: "wx" });
     return reply.status(201).send({ artUrl: `${config.publicUrl}/art/${file}` });
+  });
+
+  // D's committed demo art (content/seed/art/<uuid>.svg). Repo files only, never uploads, so SVG is OK here;
+  // CSP sandbox + nosniff stop any script if someone opens the file directly.
+  app.get<{ Params: { file: string } }>("/demo-art/:file", async (req, reply) => {
+    if (!DEMO_RE.test(req.params.file)) fail("NOT_FOUND", "Image not found");
+    let bytes: Buffer;
+    try {
+      bytes = await readFile(path.join(config.demoArtDir, req.params.file));
+    } catch {
+      return fail("NOT_FOUND", "Image not found");
+    }
+    return reply
+      .type("image/svg+xml")
+      .header("X-Content-Type-Options", "nosniff")
+      .header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
+      .header("Cache-Control", "public, max-age=3600")
+      .send(bytes);
   });
 
   app.get<{ Params: { file: string } }>("/art/:file", async (req, reply) => {

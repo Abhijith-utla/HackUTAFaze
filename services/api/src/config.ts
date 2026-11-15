@@ -29,4 +29,7 @@ export const config = {
   publicUrl: (process.env.API_URL || `http://localhost:${process.env.PORT || 4000}`).replace(/\/$/, ""),
   /** Where uploaded card art is stored (v1.3). */
   artDir: process.env.ART_DIR || path.join(here, "..", "uploads"),
+  /** D's committed demo content (read-only). */
+  catalogPath: process.env.SEED_CATALOG || path.join(here, "..", "..", "..", "content", "seed", "catalog.json"),
+  demoArtDir: process.env.DEMO_ART_DIR || path.join(here, "..", "..", "..", "content", "seed", "art"),
 };
