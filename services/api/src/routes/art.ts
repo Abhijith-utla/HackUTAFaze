@@ -1,4 +1,4 @@
-﻿import { randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { FastifyInstance } from "fastify";
@@ -38,8 +38,8 @@ export async function artRoutes(app: FastifyInstance, uploadDir = config.uploadD
     await mkdir(uploadDir, { recursive: true });
     const filename = `${randomUUID()}.${extension}`;
     await writeFile(path.join(uploadDir, filename), bytes, { flag: "wx" });
-    const origin = (process.env.PUBLIC_API_URL || process.env.API_URL || 'http://localhost:4000').replace(/\/$/, '');
-    return reply.code(201).send({ artUrl: legacy ? origin + '/art/' + filename : '/uploaded-art/' + filename });
+    // v1.4: every artUrl is absolute.
+    return reply.code(201).send({ artUrl: `${config.publicUrl}/${legacy ? "art" : "uploaded-art"}/${filename}` });
   });
   app.post("/submissions/fan-art", { bodyLimit: MAX_BASE64 + 2048 }, async (req, reply) => {
     const user = requireUser(req);

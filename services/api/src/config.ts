@@ -28,7 +28,7 @@ export const config = {
     .filter(Boolean),
   secureCookies: process.env.NODE_ENV === "production",
   /** Public base URL of this API, used to build absolute art URLs. */
-  publicUrl: (process.env.API_URL || `http://localhost:${process.env.PORT || 4000}`).replace(/\/$/, ""),
+  publicUrl: (process.env.PUBLIC_API_URL || process.env.API_URL || `http://localhost:${process.env.PORT || 4000}`).replace(/\/$/, ""),
   /** Where uploaded card art is stored (v1.3). */
   artDir: process.env.ART_DIR || path.join(here, "..", "uploads"),
   /** D's committed demo content (read-only). */

@@ -1,4 +1,4 @@
-﻿import { afterAll, beforeAll, expect, it } from "vitest";
+import { afterAll, beforeAll, expect, it } from "vitest";
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import { mkdtemp, rm } from "node:fs/promises";
@@ -32,8 +32,8 @@ it("checks magic bytes, MIME, strict base64, and 2MB decoded size", async () => 
 it("stores original bytes under an opaque filename and serves safe MIME", async () => {
   const res = await app.inject({ method: "POST", url: "/admin/art", headers: admin, payload: body });
   expect(res.statusCode).toBe(201);
-  expect(res.json().artUrl).toMatch(/^\/uploaded-art\/[a-f0-9-]{36}\.png$/);
-  const get = await app.inject(res.json().artUrl);
+  expect(res.json().artUrl).toMatch(/^https?:\/\/[^/]+\/uploaded-art\/[a-f0-9-]{36}\.png$/);
+  const get = await app.inject(new URL(res.json().artUrl).pathname);
   expect(get.statusCode).toBe(200);
   expect(get.headers["content-type"]).toBe("image/png");
   expect(get.headers["x-content-type-options"]).toBe("nosniff");
