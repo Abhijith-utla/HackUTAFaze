@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { Keypair } from "@solana/web3.js";
 import { SignJWT } from "jose";
+import { reconcile } from "../src/fulfill.js";
 import { buildApp } from "../src/app.js";
 import { loadConfig } from "../src/config.js";
 import { memoryLedger } from "../src/ledger.js";
@@ -161,6 +162,36 @@ describe("payments (Solana devnet)", () => {
     const res = await confirm({ purchaseId: b.purchaseId, signature: s });
     expect(res.statusCode).toBe(400);
     expect(t.ledger.balances.get(userId)).toBe(1000);
+  });
+
+  it("concurrent cross-purchase signature reuse credits only one purchase", async () => {
+    const a = (await checkout()).json(); const b = (await checkout()).json(); const signature = sig();
+    const tx = transfer(a.reference, a.lamports);
+    tx.accountKeys.push(b.reference); tx.preBalances.push(0); tx.postBalances.push(0);
+    t.chain.txs.set(signature, tx);
+    const results = await Promise.all([confirm({ purchaseId: a.purchaseId, signature }), confirm({ purchaseId: b.purchaseId, signature })]);
+    expect(results.map(r => r.statusCode).sort()).toEqual([200, 400]);
+    expect(t.ledger.balances.get(userId)).toBe(1000);
+  });
+
+  it("reconciles reserved signatures after ledger outage without needing RPC", async () => {
+    const c = (await checkout()).json(); const signature = sig();
+    t.chain.txs.set(signature, transfer(c.reference, c.lamports));
+    const credit = t.ledger.credit.bind(t.ledger);
+    t.ledger.credit = async () => { throw new Error('offline'); };
+    expect((await confirm({ purchaseId: c.purchaseId, signature })).statusCode).toBe(409);
+    expect(t.repo.rows[0]!.txSignature).toBe(signature);
+    t.chain.txs.clear(); t.ledger.credit = credit;
+    await reconcile(t.repo, t.ledger, t.chain);
+    expect(t.repo.rows[0]!.status).toBe('paid');
+    expect(t.ledger.balances.get(userId)).toBe(1000);
+  });
+
+  it("discovers and fulfills reference payments without the browser", async () => {
+    const c = (await checkout()).json(); const signature = sig();
+    t.chain.txs.set(signature, transfer(c.reference, c.lamports)); t.chain.byRef.set(c.reference, signature);
+    await reconcile(t.repo, t.ledger, t.chain);
+    expect(t.repo.rows[0]!.status).toBe('paid');
   });
 
   it("cannot confirm someone else's purchase", async () => {

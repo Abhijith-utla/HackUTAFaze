@@ -24,6 +24,9 @@ export type NewPurchase = Pick<PurchaseRow, "userId" | "bundleId" | "coins" | "l
 export interface PurchaseRepo {
   create(p: NewPurchase): Promise<PurchaseRow>;
   get(id: string): Promise<PurchaseRow | undefined>;
+  /** Atomically reserve a verified signature before any ledger side effect. */
+  reserveSignature(id: string, signature: string): Promise<boolean>;
+  pending(): Promise<PurchaseRow[]>;
   /** True if this signature already paid for some purchase. */
   signatureUsed(signature: string): Promise<boolean>;
   /** Marks a pending purchase paid. Returns false if it was already paid. */
@@ -98,6 +101,19 @@ export function pgRepo(pool: pg.Pool): PurchaseRepo {
       const { rows } = await pool.query<DbRow>(`SELECT ${COLS} FROM purchases WHERE id = $1`, [id]);
       return rows[0] ? fromDb(rows[0]) : undefined;
     },
+    async reserveSignature(id, signature) {
+      try {
+        const r = await pool.query("UPDATE purchases SET tx_signature=$2 WHERE id=$1 AND status='pending' AND (tx_signature IS NULL OR tx_signature=$2) RETURNING id", [id, signature]);
+        return !!r.rowCount;
+      } catch (error) {
+        if ((error as { code?: string }).code === '23505') return false;
+        throw error;
+      }
+    },
+    async pending() {
+      const r = await pool.query<DbRow>(`SELECT ${COLS} FROM purchases WHERE status='pending' ORDER BY created_at`);
+      return r.rows.map(fromDb);
+    },
     async signatureUsed(signature) {
       const { rowCount } = await pool.query(`SELECT 1 FROM purchases WHERE tx_signature = $1`, [signature]);
       return (rowCount ?? 0) > 0;
@@ -137,13 +153,21 @@ export function memoryRepo(): PurchaseRepo & { rows: PurchaseRow[] } {
     async get(id) {
       return rows.find((r) => r.id === id);
     },
+    async reserveSignature(id, signature) {
+      const row = rows.find(r => r.id === id);
+      if (!row || row.status !== 'pending' || (row.txSignature && row.txSignature !== signature)) return false;
+      if (rows.some(r => r.id !== id && r.txSignature === signature)) return false;
+      row.txSignature = signature;
+      return true;
+    },
+    async pending(limit = 100) { return rows.filter(r => r.status === 'pending'); },
     async signatureUsed(signature) {
       return rows.some((r) => r.txSignature === signature);
     },
     async markPaid(id, signature) {
       const r = rows.find((x) => x.id === id);
       if (!r || r.status === "paid") return false;
-      if (rows.some((x) => x.txSignature === signature)) return false;
+      if (rows.some((x) => x.id !== id && x.txSignature === signature)) return false;
       r.status = "paid";
       r.txSignature = signature;
       r.paidAt = new Date().toISOString();

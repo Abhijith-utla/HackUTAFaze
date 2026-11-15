@@ -15,3 +15,15 @@ Demo setup:
 3. Fund the buyer wallet with devnet SOL: `solana airdrop 2 <address> --url devnet` or https://faucet.solana.com.
 
 Checks on confirm: tx exists at `confirmed`, no error, contains this purchase's `reference`, treasury balance rose by ≥ `lamports`, signature not used by another purchase. Mainnet cluster/RPC URLs are refused at boot.
+
+## Durable fulfillment and Tiger Cloud
+
+Use the Tiger Cloud service's private PostgreSQL connection URL in DATABASE_URL, including its TLS settings (sslmode=require or stricter). The PostgreSQL driver and pooled connections support Tiger Cloud; never place credentials in client configuration. No real Tiger Cloud service or wallet credentials are included in this repository.
+
+After chain verification, the service atomically reserves the unique tx_signature on the pending purchase before crediting the ledger. A pending row with a signature is a verified, retryable fulfillment. Concurrent reservations cannot use the same signature for another purchase. Ledger credits retain purchase:<purchaseId> idempotency keys. Marking paid happens after credit succeeds; a restart between those steps safely retries the same credit.
+
+The server reconciles pending purchases every 15 seconds, discovering transfers by reference and completing reserved credits even after the browser closes or RPC becomes unavailable. Single-service scans do not overlap; multiple instances remain safe through signature uniqueness and ledger idempotency. The test-only standalone repository is not durable and must not be used for actual fulfillment.
+
+Run `npm run typecheck --workspace @faze/payments` and `npm test --workspace @faze/payments`. The suite includes concurrent signature reuse and reconciliation regression coverage.
+
+Manual devnet smoke test: configure a real devnet RPC, treasury public key and Tiger Cloud service; leave PAYMENTS_SIMULATE unset and PAYMENTS_STANDALONE=0. Start API/payments and the client. Sign in, connect a funded devnet Phantom wallet, buy a bundle, verify purchase history/balance, and retry confirmation to verify no additional coins. Repeat with browser closed after submission and check reconciliation. This manual chain/Tiger Cloud check requires external credentials and was not performed by the implementation agent.
