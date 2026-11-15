@@ -48,3 +48,9 @@ Keep economy, inventory, purchases, moderation and jobs as ordinary PostgreSQL t
 
 ## Marketplace extension
 Migration 004 adds market_listings (owner, listed instance, state), market_offers (listing, bidder, offered UUIDs, state), and notifications (recipient, kind/message, offer, read/creation timestamps). card_instances gains market_listing_id and market_offer_id; at most one direct/listing/offer lock may be non-null. See marketplace.md.
+
+## Sponsors (lead, v1.8 — `006_sponsors.sql`)
+| Table | Key columns | Writer |
+|---|---|---|
+| `sponsors` | name (unique), category (energy_drink…other), notes, status (`active`\|`paused`), demo | Control Room |
+| `sponsor_activations` | sponsor_id, campaign_id (unique pair), fee_usd (demo), deliverables, status (`active`\|`ended`), ended_at | Control Room |

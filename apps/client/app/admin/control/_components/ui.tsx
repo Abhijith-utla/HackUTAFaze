@@ -47,7 +47,7 @@ function Nav() {
             const on = n.view ? path === base && view === n.view : base === "/admin/control" ? path === base : path.startsWith(base);
             return (
               <Link key={n.href} href={n.href} className={`cr-nav${on ? " on" : ""}`} aria-current={on ? "page" : undefined}>
-                <span className="cr-code">{n.code}</span>
+                <span className="cr-code" aria-hidden="true">{n.code}</span>
                 {n.label}
               </Link>
             );
@@ -184,7 +184,7 @@ export function Rarity({ r }: { r: string }) {
 
 /** Area chart for a time series. */
 export function AreaChart({ points, height = 140, color = "#ee2441", label }: { points: { t: string; n: number }[]; height?: number; color?: string; label: string }) {
-  const W = 600, H = height, max = Math.max(1, ...points.map((p) => p.n));
+  const W = 600, H = height, peak = Math.max(0, ...points.map((p) => p.n)), max = Math.max(1, peak);
   const x = (i: number) => (points.length < 2 ? W / 2 : (i / (points.length - 1)) * W);
   const y = (v: number) => H - 8 - (v / max) * (H - 24);
   const line = points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.n).toFixed(1)}`).join(" ");
@@ -202,7 +202,7 @@ export function AreaChart({ points, height = 140, color = "#ee2441", label }: { 
         {points.length > 0 && <path d={`${line} L${x(points.length - 1)},${H} L${x(0)},${H} Z`} fill={`url(#g-${label})`} />}
         {points.length > 0 && <path d={line} fill="none" stroke={color} strokeWidth="2.5" vectorEffect="non-scaling-stroke" />}
       </svg>
-      <figcaption><span>{points[0]?.t ? new Date(points[0].t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span><span>peak {max}</span><span>now</span></figcaption>
+      <figcaption><span>{points[0]?.t ? new Date(points[0].t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span><span>peak {Number.isInteger(peak) ? peak : peak.toFixed(2)}</span><span>now</span></figcaption>
     </figure>
   );
 }

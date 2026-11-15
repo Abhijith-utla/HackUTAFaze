@@ -47,9 +47,11 @@ export default function FansPage() {
             {steps.map((s, i) => (
               <li key={s.label}>
                 <div className="cr-funnel-bar" style={{ width: `${f && f.funnel.signedUp ? Math.max(2, (s.v / f.funnel.signedUp) * 100) : 0}%` }} />
-                <span>{s.label}</span>
+                <div className="cr-funnel-text">
+                  <span>{s.label}</span>
+                  <em>{i === 0 ? "100% of collectors" : pct(s.v, f!.funnel.signedUp)}{i > 0 && steps[i - 1].v ? ` · ${pct(s.v, steps[i - 1].v)} of previous step` : ""}</em>
+                </div>
                 <b>{n(s.v)}</b>
-                <em>{i === 0 ? "100%" : pct(s.v, f!.funnel.signedUp)}{i > 0 && steps[i - 1].v ? ` · ${pct(s.v, steps[i - 1].v)} of previous` : ""}</em>
               </li>
             ))}
           </ol>
