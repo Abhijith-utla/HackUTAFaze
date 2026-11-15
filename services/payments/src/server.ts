@@ -1,10 +1,18 @@
-import { reconcile } from "./fulfill.js";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { config as loadEnv } from "dotenv";
 import pg from "pg";
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
 import { httpLedger, memoryLedger } from "./ledger.js";
 import { memoryRepo, pgRepo } from "./repo.js";
 import { rpcReader, simulatedReader } from "./solana.js";
+import { reconcile } from "./fulfill.js";
+
+// services/payments/.env first, then the repo-root .env (first value wins; real env beats both).
+const here = path.dirname(fileURLToPath(import.meta.url));
+loadEnv({ path: path.join(here, "..", ".env"), quiet: true } as never);
+loadEnv({ path: path.join(here, "..", "..", "..", ".env"), quiet: true } as never);
 
 const cfg = loadConfig();
 
@@ -21,16 +29,23 @@ const deps = {
   logger: true,
 };
 const app = buildApp(deps);
+
+// Catch up purchases paid on-chain whose buyer never confirmed: last 30 min, 10 per 30 s tick.
 let busy = false;
 const timer = setInterval(async () => {
   if (busy) return;
   busy = true;
-  try { await reconcile(deps.repo, deps.ledger, deps.chain); }
-  catch (error) { app.log.error(error, "reconciliation failed"); }
-  finally { busy = false; }
-}, 15000);
+  try {
+    const n = await reconcile(deps.repo, deps.ledger, deps.chain, { maxAgeMs: 30 * 60_000, limit: 10 });
+    if (n) app.log.info(`reconciled ${n} purchase(s)`);
+  } catch (err) {
+    app.log.error(err, "reconcile failed");
+  } finally {
+    busy = false;
+  }
+}, 30_000);
 timer.unref();
-app.addHook("onClose", async () => { clearInterval(timer); });
+app.addHook("onClose", async () => clearInterval(timer));
 
 app
   .listen({ port: cfg.port, host: "0.0.0.0" })

@@ -5,11 +5,11 @@ import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import { jwtVerify } from "jose";
 import { CheckoutBody, ConfirmBody, ERROR_STATUS, SESSION_COOKIE, SessionClaims, type ErrorCode } from "@faze/shared";
-import { fulfill, PaymentError } from "./fulfill.js";
 import { BUNDLES, findBundle } from "./bundles.js";
 import { toApi, type PurchaseRepo } from "./repo.js";
 import type { LedgerClient } from "./ledger.js";
-import { checkTransfer, newReference, solanaPayUrl, type ChainReader } from "./solana.js";
+import { newReference, solanaPayUrl, type ChainReader } from "./solana.js";
+import { fulfill, PaymentError } from "./fulfill.js";
 
 export interface AppDeps {
   repo: PurchaseRepo;
@@ -27,9 +27,8 @@ export class HttpError extends Error {
   }
 }
 
-const SIGNATURE_RE = /^[1-9A-HJ-NP-Za-km-z]{64,88}$/;
-// Only the explicit simulated reader recognizes this format; real RPC never does.
-const SIMULATED_SIGNATURE_RE = /^sim_[1-9A-HJ-NP-Za-km-z]{32,44}_[0-9]+$/;
+// Real Solana signatures are base58 (64-88 chars); "sim_<reference>_<lamports>" is the test-only simulated form.
+const SIGNATURE_RE = /^(?:[1-9A-HJ-NP-Za-km-z]{32,90}|sim_[1-9A-HJ-NP-Za-km-z]{32,44}_\d{1,19})$/;
 
 export function buildApp(deps: AppDeps) {
   const app = Fastify({ logger: deps.logger ?? false });
@@ -103,8 +102,9 @@ export function buildApp(deps: AppDeps) {
     const purchase = await deps.repo.get(parsed.data.purchaseId);
     if (!purchase || purchase.userId !== user.sub) throw new HttpError("NOT_FOUND", "purchase not found");
 
-    if (parsed.data.signature !== undefined && !(SIGNATURE_RE.test(parsed.data.signature) || SIMULATED_SIGNATURE_RE.test(parsed.data.signature))) throw new HttpError("VALIDATION", "malformed signature");
-    return fulfill(deps.repo, deps.ledger, deps.chain, purchase, parsed.data.signature);
+    const signature = parsed.data.signature;
+    if (signature !== undefined && !SIGNATURE_RE.test(signature)) throw new HttpError("VALIDATION", "malformed signature");
+    return fulfill(deps.repo, deps.ledger, deps.chain, purchase, signature);
   });
 
   app.get("/me/purchases", async (req) => {

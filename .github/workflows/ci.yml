@@ -1,6 +1,6 @@
 name: ci
 on:
-  push: { branches: [main] }
+  push: { branches: [main, 'agent-*/**'] }
   pull_request:
 jobs:
   test:
@@ -26,3 +26,4 @@ jobs:
       - run: npm ci || npm install
       - run: npm run typecheck
       - run: npm test
+      - run: npm run test:integration

@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 if (!process.env.TEST_DATABASE_URL) throw new Error('Set TEST_DATABASE_URL to an isolated Tiger Cloud test database. No production fallback.');
-process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
+// API selects TEST_DATABASE_URL in test mode; keep application database distinct.
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET ||= 'integration-test-jwt';
 process.env.INTERNAL_SECRET ||= 'integration-test-internal';

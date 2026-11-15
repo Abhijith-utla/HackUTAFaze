@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# tools/dev — run the whole stack locally with prefixed logs. Ctrl-C stops everything.
+# Needs Postgres (docker compose up -d db) and a root .env (cp .env.example .env).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+[ -f .env ] || { echo "dev: no .env — run: cp .env.example .env  (then fill JWT_SECRET, INTERNAL_SECRET, SOLANA_TREASURY_PUBKEY)"; exit 1; }
+pids=()
+run() { local name=$1; shift; ( "$@" 2>&1 | sed -u "s/^/[$name] /" ) & pids+=($!); }
+trap 'kill ${pids[*]} 2>/dev/null; wait' INT TERM EXIT
+run api      npm run dev -w @faze/api
+run payments npm run dev -w @faze/payments
+[ -f apps/client/package.json ] && run client npm run dev -w @faze/client
+[ -f apps/admin/package.json ]  && run admin  npm run dev -w @faze/admin
+[ -f services/worker/package.json ] && run worker npm run dev -w @faze/worker
+wait
