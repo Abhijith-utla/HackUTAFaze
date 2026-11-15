@@ -221,41 +221,110 @@ async function seedContributions() {
   const ideas = [
     {
       email: "fan1@demo.faze",
-      title: "The return trickshot",
-      pitch: "A high-energy card for the clip that brought the original trickshot audience back into the conversation.",
-      member: "FaZe Rain",
-      source: "https://www.youtube.com/@FaZeClan",
+      title: "FaZe Replays: Exquisite",
+      pitch: "A classic trickshotting montage with the clean edits and final-shot payoff that made early FaZe clips endlessly rewatchable.",
+      member: "FaZe Replays",
+      source: "https://www.youtube.com/watch?v=XmnAAc9OJrQ",
       wallet: encodeKey(Buffer.alloc(32, 31)),
       status: "pending",
       bounty: 0,
     },
     {
       email: "fan2@demo.faze",
-      title: "Five years of house streams",
-      pitch: "A collector card built around the fan-favorite late-night squad stream format and its community rituals.",
-      member: "FaZe Rug",
-      source: "https://www.youtube.com/@rug",
+      title: "FaZe House LA tour",
+      pitch: "A look inside the shared house era, where the creators, rooms, and daily chaos became part of FaZe history.",
+      member: "FaZe Clan",
+      source: "https://www.youtube.com/watch?v=u-_z-9t8Nhw",
       wallet: encodeKey(Buffer.alloc(32, 32)),
       status: "pending",
       bounty: 0,
     },
     {
       email: "fan3@demo.faze",
-      title: "The championship point call",
-      pitch: "An approved community pitch for a decisive esports comms moment, with a small test reward ready for admin confirmation.",
-      member: "FaZe Jev",
-      source: "https://www.youtube.com/@FaZeClan",
+      title: "FaZe Rain: FINALE",
+      pitch: "A landmark BO2 and MW2 free-for-all montage that captures the high-skill editing style of classic FaZe.",
+      member: "FaZe Rain",
+      source: "https://www.youtube.com/watch?v=zdx58Vfkx3A",
       wallet: encodeKey(Buffer.alloc(32, 33)),
       status: "approved",
       bounty: 50_000_000,
     },
+    {
+      email: "fan1@demo.faze",
+      title: "FaZe Carl: CLOSER",
+      pitch: "A Black Ops 3 trickshot montage with the pacing and final-shot payoff fans still associate with classic FaZe edits.",
+      member: "FaZe Carl",
+      source: "https://www.youtube.com/watch?v=q8jUrTKGnc0",
+      wallet: encodeKey(Buffer.alloc(32, 34)),
+      status: "pending",
+      bounty: 0,
+    },
+    {
+      email: "fan2@demo.faze",
+      title: "FaZe Gaming House tour",
+      pitch: "A nostalgic look at the shared house era and the personalities that made the FaZe home feel like part of the team.",
+      member: "FaZe Clan",
+      source: "https://www.youtube.com/watch?v=LhNal8Nx9Cs",
+      wallet: encodeKey(Buffer.alloc(32, 35)),
+      status: "pending",
+      bounty: 0,
+    },
+    {
+      email: "fan4@demo.faze",
+      title: "FaZe Rain: FINALE — community cut",
+      pitch: "A second fan pitch for the iconic FINALE montage, focused on the ending sequence and the way it closes out an era.",
+      member: "FaZe Rain",
+      source: "https://www.youtube.com/watch?v=zdx58Vfkx3A",
+      wallet: encodeKey(Buffer.alloc(32, 36)),
+      status: "pending",
+      bounty: 0,
+    },
+    {
+      email: "fan3@demo.faze",
+      title: "The FaZe house becomes a home",
+      pitch: "A nostalgic card pitch for the official house tour and the shared space that made the early creator era feel close-knit.",
+      member: "FaZe Clan",
+      source: "https://www.youtube.com/watch?v=LhNal8Nx9Cs",
+      wallet: encodeKey(Buffer.alloc(32, 37)),
+      status: "pending",
+      bounty: 0,
+    },
+    {
+      email: "fan4@demo.faze",
+      title: "CLOSER — final shot",
+      pitch: "A clip-first card idea centered on the finishing shot from FaZe Carl’s Black Ops 3 montage.",
+      member: "FaZe Carl",
+      source: "https://www.youtube.com/watch?v=q8jUrTKGnc0&t=1m",
+      wallet: encodeKey(Buffer.alloc(32, 38)),
+      status: "pending",
+      bounty: 0,
+    },
   ] as const;
   let added = 0;
+  const legacyTitles: Record<string, string> = {
+    "The return trickshot": "FaZe Replays: Exquisite",
+    "Five years of house streams": "FaZe House LA tour",
+    "The championship point call": "FaZe Rain: FINALE",
+    "The last montage before Advanced Warfare": "FaZe Rain: FINALE — community cut",
+  };
   for (const idea of ideas) {
     const user = await pool.query("SELECT id, display_name FROM users WHERE email=$1", [idea.email]);
     if (!user.rowCount) continue;
-    const exists = await pool.query("SELECT 1 FROM contribution_proposals WHERE demo AND title=$1", [idea.title]);
-    if (exists.rowCount) continue;
+    const legacyTitle = Object.keys(legacyTitles).find((title) => legacyTitles[title] === idea.title);
+    if (legacyTitle) {
+      await pool.query(
+        "UPDATE contribution_proposals SET title=$2, pitch=$3, faze_member=$4, source_url=$5 WHERE demo AND title=$1 AND payout_reference IS NULL",
+        [legacyTitle, idea.title, idea.pitch, idea.member, idea.source],
+      );
+    }
+    const exists = await pool.query("SELECT id FROM contribution_proposals WHERE demo AND title=$1", [idea.title]);
+    if (exists.rowCount) {
+      await pool.query(
+        "UPDATE contribution_proposals SET pitch=$2, faze_member=$3, source_url=$4 WHERE id=$1 AND demo AND payout_reference IS NULL",
+        [exists.rows[0].id, idea.pitch, idea.member, idea.source],
+      );
+      continue;
+    }
     await pool.query(
       `INSERT INTO contribution_proposals
        (creator_user_id, contributor_name, title, pitch, faze_member, source_url, recipient_wallet, bounty_lamports, status, review_note, reviewed_by, reviewed_at, demo)
@@ -274,6 +343,12 @@ async function main() {
   if (await upsertUser("admin@demo.faze", "demo-admin-pass", "FaZe Admin (demo)", "admin")) counts.users++;
   for (let i = 1; i <= 4; i++) {
     if (await upsertUser(`fan${i}@demo.faze`, "demo-fan-pass", `DemoFan${i}`, "fan")) counts.users++;
+  }
+
+  if (process.argv.includes("--contributions-only")) {
+    const contributions = await seedContributions();
+    console.log(`contribution demo seed done: +${contributions} pitches`);
+    return;
   }
 
   const fromCatalog = await importCatalog(counts);

@@ -26,8 +26,10 @@ export default function Contribute({ displayName }: Props) {
     setError("");
     setNotice("");
     try {
-      setWallet(await connectContributionWallet());
-      setNotice("Phantom wallet connected as the reward destination.");
+      const address = await connectContributionWallet();
+      const result = await request<{ linkedDemoContributions: number }>("/contributions/demo-wallet", { wallet: address });
+      setWallet(address);
+      setNotice(`Phantom connected. ${result.linkedDemoContributions} demo submissions now point to your fan account and wallet.`);
     } catch (cause) {
       setError((cause as Error).message);
     } finally {
@@ -78,7 +80,7 @@ export default function Contribute({ displayName }: Props) {
           <label>Moment title<input name="title" required minLength={3} maxLength={100} defaultValue="The 360° FaZe trickshot" /></label>
           <label>FaZe member<input name="fazeMember" required minLength={2} maxLength={80} defaultValue="FaZe Rain" /></label>
           <label>Why this moment matters<textarea name="pitch" required minLength={10} maxLength={2000} rows={5} defaultValue="One clean shot, a wild reaction, and the kind of clip that made fans rewind it again and again. This moment captures the early FaZe trickshot era and the style that built a community." /></label>
-          <label>Clip or source link<input name="sourceUrl" type="url" required maxLength={2000} defaultValue="https://www.youtube.com/@FaZeClan" /><small>Link to the original clip, post, or moment.</small></label>
+          <label>Clip or source link<input name="sourceUrl" type="url" required maxLength={2000} defaultValue="https://www.youtube.com/watch?v=XmnAAc9OJrQ" /><small>Link to the original clip, post, or moment.</small></label>
 
           <div className="contribute-wallet">
             <div><span className="eyebrow">REWARD DESTINATION</span><strong>{wallet ? shortWallet(wallet) : "Phantom not connected"}</strong><small>{wallet ? "This wallet will receive any approved devnet reward." : "Connect the wallet you control."}</small></div>

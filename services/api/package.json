@@ -8,6 +8,7 @@
     "start": "tsx src/server.ts",
     "migrate": "tsx src/migrate.ts",
     "seed": "tsx src/seed.ts",
+    "seed:contributions": "tsx src/seed.ts --contributions-only",
     "typecheck": "tsc -p .",
     "test": "vitest run"
   },

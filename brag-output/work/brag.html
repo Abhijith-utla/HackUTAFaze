@@ -1,0 +1,576 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>FaZe Cards — brag</title>
+<style>html,body{margin:0;background:#000}canvas{display:block}</style>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script type="module">
+// Every frame is a pure function of t (seconds). 150 BPM, 1 beat = 0.4 s = 12 frames @ 30 fps.
+const W = 1920, H = 1080, FPS = 30, BPM = 150, BEAT = 60 / BPM, DUR = 19.2;
+const POSTER_T = 18.6;
+const CUTS = [2.4, 5.6, 8.8, 12.8, 16.0];
+// App tokens (apps/client globals.css)
+const C = { bg: "#0b0b0d", panel: "#16161a", line: "#2a2a31", text: "#f2f2f4", mute: "#9a9aa6", red: "#e10600", input: "#0f0f12" };
+const RAR = { common: "#777777", rare: "#3b82f6", epic: "#a855f7", legendary: "#f59e0b" };
+const FONT = 'system-ui, -apple-system, "Helvetica Neue", sans-serif';
+const DISPLAY = (px) => `italic 900 ${px}px ${FONT}`;
+
+const cv = document.getElementById("c");
+const ctx = cv.getContext("2d");
+
+// ---------- deterministic helpers ----------
+function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const prog = (t, a, d) => clamp((t - a) / d);
+const eOut = (k) => 1 - Math.pow(1 - k, 3);
+const eInOut = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+const eBack = (k) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+// ---------- assets: real seed art from content/seed/art ----------
+const ART = {};
+const CARDS = {
+  rug5:   { id: "1005", name: "Rug / OG Era 5", member: "FaZe Rug", rarity: "common" },
+  apex2:  { id: "1002", name: "Apex / OG Era 2", member: "FaZe Apex", rarity: "rare" },
+  apex7:  { id: "1007", name: "Apex / OG Era 7", member: "FaZe Apex", rarity: "epic" },
+  apexC2: { id: "1016", name: "Apex / Creators 2", member: "FaZe Apex", rarity: "rare" },
+  adapt4: { id: "1004", name: "Adapt / OG Era 4", member: "FaZe Adapt", rarity: "legendary" },
+  rain8:  { id: "1008", name: "Rain / OG Era 8", member: "FaZe Rain", rarity: "legendary" },
+  apex12: { id: "1012", name: "Apex / OG Era 12", member: "FaZe Apex", rarity: "legendary" },
+};
+async function loadAssets() {
+  await Promise.all(Object.values(CARDS).map(async (c) => {
+    const img = new Image();
+    img.src = `d0000000-0000-4000-8000-00000000${c.id}.svg`;
+    await img.decode();
+    ART[c.id] = img;
+  }));
+  await document.fonts.ready;
+}
+
+// grain + scanlines, generated once (seeded)
+const grain = document.createElement("canvas"); grain.width = grain.height = 256;
+{ const g = grain.getContext("2d"), d = g.createImageData(256, 256), r = rng(7); for (let i = 0; i < d.data.length; i += 4) { const v = r() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } g.putImageData(d, 0, 0); }
+const scan = document.createElement("canvas"); scan.width = 4; scan.height = 4;
+{ const g = scan.getContext("2d"); g.fillStyle = "rgba(0,0,0,0.55)"; g.fillRect(0, 0, 4, 1); }
+const streaks = (() => { const r = rng(42); return Array.from({ length: 26 }, () => ({ x: r() * 2600, y: r() * 1400 - 160, len: 160 + r() * 520, w: 2 + r() * 7, sp: 260 + r() * 900, a: 0.05 + r() * 0.16 })); })();
+
+// ---------- global background ----------
+function background(t, energy = 1) {
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  // diagonal red speed streaks (FaZe slash energy)
+  ctx.save(); ctx.translate(W / 2, H / 2); ctx.rotate(-0.38); ctx.translate(-W / 2, -H / 2);
+  for (const s of streaks) {
+    const x = ((s.x + t * s.sp * energy) % 2800) - 400;
+    ctx.fillStyle = `rgba(225,6,0,${s.a * energy})`;
+    ctx.fillRect(x, s.y, s.len, s.w);
+  }
+  ctx.restore();
+  // beat pulse glow
+  const bp = Math.exp(-((t % BEAT) / BEAT) * 4) * (t >= 2.4 && t < 18.4 ? 1 : 0.35);
+  const g = ctx.createRadialGradient(W * 0.5, H * 0.55, 50, W * 0.5, H * 0.55, 1100);
+  g.addColorStop(0, `rgba(225,6,0,${0.10 + 0.08 * bp})`); g.addColorStop(1, "rgba(225,6,0,0)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+function finish(t, frameIndex) {
+  // scanlines + grain + vignette
+  ctx.save(); ctx.globalAlpha = 0.18; ctx.fillStyle = ctx.createPattern(scan, "repeat"); ctx.fillRect(0, 0, W, H); ctx.restore();
+  ctx.save(); ctx.globalAlpha = 0.045; ctx.globalCompositeOperation = "overlay";
+  const ox = (frameIndex * 97) % 256, oy = (frameIndex * 61) % 256;
+  ctx.translate(-ox, -oy); ctx.fillStyle = ctx.createPattern(grain, "repeat"); ctx.fillRect(0, 0, W + 256, H + 256); ctx.restore();
+  const v = ctx.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, H * 1.05);
+  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.6)");
+  ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+}
+
+// ---------- text ----------
+function display(lines, x, y, size, t, t0, opts = {}) {
+  // lines: [{text, red?}] ; each line slams in from the left, staggered
+  const lh = opts.lh ?? size * 1.0, stagger = opts.stagger ?? 0.08;
+  lines.forEach((ln, i) => {
+    const k = prog(t, t0 + i * stagger, 0.22);
+    if (k <= 0) return;
+    const e = eOut(k);
+    ctx.save();
+    ctx.globalAlpha = clamp(k * 2.5);
+    ctx.font = DISPLAY(size);
+    ctx.textBaseline = "alphabetic";
+    const dx = (1 - e) * -90;
+    if (ln.red) {
+      // red block highlight behind the word, FaZe style
+      const w = ctx.measureText(ln.text).width;
+      ctx.fillStyle = C.red;
+      ctx.beginPath();
+      const bx = x + dx - 18, by = y + i * lh - size * 0.86, bw = (w + 40) * e, bh = size * 1.0;
+      ctx.moveTo(bx + 22, by); ctx.lineTo(bx + bw + 22, by); ctx.lineTo(bx + bw, by + bh); ctx.lineTo(bx, by + bh); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#fff";
+    } else ctx.fillStyle = "#fff";
+    ctx.fillText(ln.text, x + dx, y + i * lh);
+    ctx.restore();
+  });
+}
+function txt(s, x, y, font, color, align = "left") { ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align; ctx.fillText(s, x, y); ctx.textAlign = "left"; }
+function badge(s, x, y, size, color = C.mute) {
+  ctx.font = `600 ${size}px ${FONT}`; const w = ctx.measureText(s).width;
+  rr(x, y - size * 1.05, w + size * 0.9, size * 1.45, size * 0.45); ctx.strokeStyle = color; ctx.lineWidth = Math.max(1.5, size / 11); ctx.stroke();
+  ctx.fillStyle = color; ctx.fillText(s, x + size * 0.45, y); return w + size * 0.9;
+}
+function button(label, x, y, w, h, size, press = 0, color = C.red, textColor = "#fff") {
+  ctx.save(); const s = 1 - 0.06 * press; ctx.translate(x + w / 2, y + h / 2); ctx.scale(s, s);
+  rr(-w / 2, -h / 2, w, h, h * 0.2); ctx.fillStyle = color; ctx.fill();
+  txt(label, 0, size * 0.36, `700 ${size}px ${FONT}`, textColor, "center"); ctx.restore();
+}
+function cursor(x, y, press = 0) {
+  ctx.save(); ctx.translate(x, y); const s = 1.5 * (1 - 0.12 * press); ctx.scale(s, s);
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 26); ctx.lineTo(7, 20); ctx.lineTo(12, 31); ctx.lineTo(16, 29); ctx.lineTo(11, 18); ctx.lineTo(20, 18); ctx.closePath();
+  ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#000"; ctx.stroke(); ctx.restore();
+  if (press > 0) { ctx.save(); ctx.globalAlpha = press * 0.6; ctx.strokeStyle = "#fff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, 26 + (1 - press) * 30, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
+}
+const pressAt = (t, tc) => (t >= tc && t < tc + 0.25 ? 1 - (t - tc) / 0.25 : 0);
+
+// ---------- CardTile (apps/client/src/components/CardTile.tsx) ----------
+function cardH(w) { const s = w / 192, p = 16 * s, boxW = w - 2 * p; return p + boxW * 4 / 3 + 10 * s + 22 * s + 20 * s + 22 * s + p; }
+function cardTile(card, x, y, w, opts = {}) {
+  const s = w / 192, p = 16 * s, boxW = w - 2 * p, boxH = boxW * 4 / 3, h = cardH(w);
+  const col = RAR[card.rarity];
+  ctx.save();
+  if (card.rarity === "legendary") { ctx.shadowColor = `rgba(245,158,11,${0.55 + 0.35 * (opts.glow ?? 0)})`; ctx.shadowBlur = 26 * s * (1 + (opts.glow ?? 0)); }
+  rr(x, y, w, h, 12 * s); ctx.fillStyle = C.panel; ctx.fill();
+  ctx.shadowBlur = 0; ctx.lineWidth = Math.max(2, 1.6 * s); ctx.strokeStyle = col; ctx.stroke();
+  ctx.restore();
+  // art: width 100%, overflow hidden in a 3/4 box
+  ctx.save(); rr(x + p, y + p, boxW, boxH, 8 * s); ctx.fillStyle = C.input; ctx.fill(); ctx.clip();
+  const img = ART[card.id]; if (img) ctx.drawImage(img, x + p, y + p, boxW, boxW * 840 / 600);
+  ctx.restore();
+  let ty = y + p + boxH + 10 * s + 17 * s;
+  txt(card.name, x + p, ty, `700 ${16 * s}px ${FONT}`, C.text);
+  ty += 22 * s;
+  txt(`${card.member} · ${card.rarity}${opts.serial ? ` · #${opts.serial}` : ""}`, x + p, ty, `400 ${14.4 * s}px ${FONT}`, C.mute);
+  ty += 24 * s;
+  badge("demo", x + p, ty, 11.2 * s);
+  return h;
+}
+function cardBack(x, y, w) {
+  const h = cardH(w), s = w / 192;
+  rr(x, y, w, h, 12 * s);
+  const g = ctx.createLinearGradient(x, y, x + w, y + h); g.addColorStop(0, "#ff2a1f"); g.addColorStop(1, "#6e0300");
+  ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#ff5a50"; ctx.stroke();
+  ctx.save(); ctx.translate(x + w / 2, y + h / 2); ctx.rotate(-0.5);
+  txt("FAZE CARDS", 0, 10 * s, `italic 900 ${22 * s}px ${FONT}`, "rgba(255,255,255,0.9)", "center"); ctx.restore();
+}
+function flipCard(card, x, y, w, k, opts) {
+  // k: 0 = back, 1 = face. Simulated rotateY via scaleX.
+  const h = cardH(w); ctx.save(); ctx.translate(x + w / 2, y + h / 2);
+  const sx = Math.abs(Math.cos(k * Math.PI)); ctx.scale(Math.max(0.001, sx), 1 + 0.04 * Math.sin(k * Math.PI)); ctx.translate(-(x + w / 2), -(y + h / 2));
+  if (k < 0.5) cardBack(x, y, w); else cardTile(card, x, y, w, opts);
+  ctx.restore();
+}
+
+// ---------- scene 1: hook ----------
+function pack(cx, cy, w, h, t, rip) {
+  ctx.save(); ctx.translate(cx, cy);
+  const body = (top) => {
+    const g = ctx.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2);
+    g.addColorStop(0, "#ff3b30"); g.addColorStop(0.45, "#e10600"); g.addColorStop(1, "#5c0200");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    const zz = 14, n = 14;
+    if (top) { ctx.moveTo(-w / 2, -h / 2); for (let i = 0; i <= n; i++) ctx.lineTo(-w / 2 + (w * i) / n, -h / 2 + (i % 2 ? zz : 0)); ctx.lineTo(w / 2, -h / 2 + h * 0.18); ctx.lineTo(-w / 2, -h / 2 + h * 0.18); }
+    else { ctx.moveTo(-w / 2, -h / 2 + h * 0.18); ctx.lineTo(w / 2, -h / 2 + h * 0.18); ctx.lineTo(w / 2, h / 2); for (let i = n; i >= 0; i--) ctx.lineTo(-w / 2 + (w * i) / n, h / 2 - (i % 2 ? zz : 0)); }
+    ctx.closePath(); ctx.fill();
+  };
+  // bottom (main) body
+  body(false);
+  // sheen sweep
+  ctx.save(); ctx.beginPath(); ctx.rect(-w / 2, -h / 2 + h * 0.18, w, h * 0.82); ctx.clip();
+  const sx = lerp(-w, w, ((t * 0.7) % 1.4) / 1.4);
+  const sg = ctx.createLinearGradient(sx - 120, 0, sx + 120, 0); sg.addColorStop(0, "rgba(255,255,255,0)"); sg.addColorStop(0.5, "rgba(255,255,255,0.28)"); sg.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = sg; ctx.rotate(0.3); ctx.fillRect(-w, -h, w * 2, h * 2); ctx.restore();
+  // print
+  txt("FAZE CARDS", 0, -h * 0.18, `800 ${w * 0.085}px ${FONT}`, "#fff", "center");
+  ctx.save(); ctx.font = `800 ${w * 0.085}px ${FONT}`; ctx.restore();
+  txt("OG ERA", 0, h * 0.06, DISPLAY(w * 0.22), "#fff", "center");
+  txt("DEMO PACK · 5 CARDS", 0, h * 0.16, `700 ${w * 0.05}px ${FONT}`, "rgba(255,255,255,0.85)", "center");
+  ctx.fillStyle = "rgba(0,0,0,0.25)"; ctx.fillRect(-w / 2, h * 0.3, w, h * 0.06);
+  txt("2% LEGENDARY ODDS", 0, h * 0.345, `800 ${w * 0.045}px ${FONT}`, "#fff", "center");
+  // top strip (rips off)
+  ctx.save();
+  if (rip > 0) { const e = eOut(rip); ctx.translate(e * 260, -e * 420); ctx.rotate(e * 0.9); ctx.globalAlpha = 1 - rip; }
+  body(true);
+  ctx.restore();
+  if (rip > 0) {
+    const g = ctx.createRadialGradient(0, -h / 2 + h * 0.18, 0, 0, -h / 2 + h * 0.18, w * (0.6 + rip));
+    g.addColorStop(0, `rgba(255,240,200,${1 - rip * 0.5})`); g.addColorStop(1, "rgba(255,200,120,0)");
+    ctx.fillStyle = g; ctx.fillRect(-w * 2, -h, w * 4, h * 2);
+  }
+  ctx.restore();
+}
+function scene1(t) {
+  background(t, 0.6 + t * 0.4);
+  const beats = [0, 0.4, 0.8, 1.2, 1.6];
+  let last = 0; for (const b of beats) if (t >= b) last = b;
+  const thump = Math.exp(-(t - last) * 12);
+  const build = prog(t, 0.6, 1.4);
+  const r = rng(Math.floor(t * 30) + 3);
+  const shake = build * 9;
+  const rip = prog(t, 2.0, 0.35);
+  const s = 1 + 0.07 * thump + 0.04 * build;
+  ctx.save(); ctx.translate(1300 + (r() - 0.5) * shake, 540 + (r() - 0.5) * shake); ctx.rotate(-0.05 + (r() - 0.5) * 0.02 * build); ctx.scale(s, s);
+  ctx.shadowColor = `rgba(225,6,0,${0.5 + build * 0.5})`; ctx.shadowBlur = 60 + 80 * build;
+  pack(0, 0, 440, 640, t, rip);
+  ctx.restore();
+  if (t < 2.0) display([{ text: "OPEN" }, { text: "THE" }, { text: "PACK.", red: true }], 150, 420, 190, t, 0.05, { lh: 190, stagger: 0.38 });
+  // rip flash
+  if (t >= 2.0) { const k = prog(t, 2.0, 0.4); ctx.fillStyle = `rgba(255,255,255,${Math.pow(1 - k, 2.2) * 0.95})`; ctx.fillRect(0, 0, W, H); ctx.fillStyle = `rgba(225,6,0,${Math.sin(k * Math.PI) * 0.5})`; ctx.fillRect(0, 0, W, H); }
+}
+
+// ---------- scene 2: reveal ----------
+const PULL = [["rug5", 12], ["apex2", 31], ["apex7", 4], ["apexC2", 58], ["adapt4", 7]];
+function scene2(t) {
+  background(t);
+  const w = 300, gap = 36, x0 = (W - (5 * w + 4 * gap)) / 2, y0 = 150;
+  PULL.forEach(([key, serial], i) => {
+    const drop = eBack(prog(t, 2.4 + i * 0.04, 0.3));
+    const y = lerp(y0 - 700, y0, drop);
+    const beat = 2.8 + i * 0.4; // flip midpoint lands on the beat
+    const k = eInOut(prog(t, beat - 0.15, 0.3));
+    const card = CARDS[key];
+    const leg = card.rarity === "legendary";
+    const glow = leg ? 0.5 + 0.5 * Math.sin(t * 9) : 0;
+    let lift = 0; if (leg && t > beat) lift = -18 * eOut(prog(t, beat, 0.3));
+    flipCard(card, x0 + i * (w + gap), y + lift, w, k, { serial, glow });
+  });
+  // legendary stamp + shimmer
+  const lx = x0 + 4 * (w + gap), ly = y0 - 18;
+  const st = prog(t, 4.5, 0.18);
+  if (st > 0) {
+    const sh = rng(11);
+    for (let i = 0; i < 26; i++) {
+      const a = sh() * Math.PI * 2, d = 60 + sh() * 260 * eOut(prog(t, 4.4, 1.0)), px = lx + w / 2 + Math.cos(a) * d, py = ly + 260 + Math.sin(a) * d;
+      ctx.fillStyle = `rgba(245,158,11,${(1 - prog(t, 4.4, 1.2)) * 0.9})`; ctx.fillRect(px, py, 5, 5);
+    }
+    ctx.save(); ctx.translate(lx + w / 2, ly + 70); ctx.rotate(-0.12); const ss = lerp(1.8, 1, eOut(st)); ctx.scale(ss, ss); ctx.globalAlpha = st;
+    ctx.font = DISPLAY(46); const tw = ctx.measureText("LEGENDARY").width;
+    rr(-tw / 2 - 20, -42, tw + 40, 58, 8); ctx.fillStyle = "#f59e0b"; ctx.fill();
+    txt("LEGENDARY", 0, 0, DISPLAY(46), "#1a1000", "center"); ctx.restore();
+  }
+  // tagline — the app's own copy (apps/client page.tsx: "Collect. Open. Trade.")
+  if (t >= 4.6) {
+    const words = ["COLLECT.", "OPEN.", "TRADE."];
+    ctx.font = DISPLAY(120); const widths = words.map((s) => ctx.measureText(s).width);
+    const total = widths.reduce((a, b) => a + b, 0) + 60 * 2; let x = (W - total) / 2;
+    words.forEach((s, i) => {
+      const k = eOut(prog(t, 4.6 + i * 0.05, 0.2));
+      ctx.save(); ctx.globalAlpha = clamp(k * 2); ctx.translate(0, (1 - k) * 40);
+      if (i === 2) { ctx.fillStyle = C.red; ctx.beginPath(); ctx.moveTo(x - 14 + 24, 845); ctx.lineTo(x + widths[i] + 30 + 24, 845); ctx.lineTo(x + widths[i] + 30, 965); ctx.lineTo(x - 14, 965); ctx.closePath(); ctx.fill(); }
+      txt(s, x, 945, DISPLAY(120), "#fff"); ctx.restore(); x += widths[i] + 60;
+    });
+  }
+}
+
+// ---------- scene 3: odds ----------
+function scene3(t) {
+  background(t);
+  ctx.save(); ctx.globalAlpha = 0.07; txt("2%", 1880, 1060, DISPLAY(620), C.red, "right"); ctx.restore();
+  display([{ text: "ODDS ON" }, { text: "THE BOX.", red: true }], 130, 330, 120, t, 5.65, { lh: 128 });
+  display([{ text: "ROLLED ON" }, { text: "THE SERVER.", red: true }], 130, 640, 120, t, 6.0, { lh: 128 });
+  // store pack card (apps/client/src/app/store/page.tsx)
+  const e = eOut(prog(t, 5.6, 0.3)); const x = lerp(1960, 1060, e), y = 180, w = 760, h = 720;
+  rr(x, y, w, h, 20); ctx.fillStyle = C.panel; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = C.line; ctx.stroke();
+  txt("OG Era Demo Pack", x + 44, y + 84, `700 44px ${FONT}`, C.text);
+  ctx.font = `700 44px ${FONT}`; badge("demo", x + 60 + ctx.measureText("OG Era Demo Pack").width, y + 78, 20);
+  txt("5 cards · 100 coins", x + 44, y + 140, `400 30px ${FONT}`, C.text);
+  const rows = [["common", 70], ["rare", 20], ["epic", 8], ["legendary", 2]];
+  rows.forEach(([r, v], i) => {
+    const k = eOut(prog(t, 6.0 + i * 0.4, 0.25)); if (k <= 0) return;
+    const ry = y + 220 + i * 92;
+    ctx.save(); ctx.globalAlpha = k;
+    txt(r, x + 44, ry + 10, `500 32px ${FONT}`, C.mute);
+    txt(`${v}%`, x + w - 44, ry + 10, `800 36px ${FONT}`, r === "legendary" ? RAR.legendary : C.text, "right");
+    rr(x + 44, ry + 30, w - 88, 12, 6); ctx.fillStyle = C.input; ctx.fill();
+    rr(x + 44, ry + 30, Math.max(12, (w - 88) * (v / 70) * k), 12, 6); ctx.fillStyle = RAR[r]; ctx.fill();
+    ctx.restore();
+  });
+  const k2 = prog(t, 7.6, 0.2);
+  if (k2 > 0) { ctx.save(); ctx.globalAlpha = k2; txt("Odds v1, rolled on the server.", x + 44, y + 605, `400 30px ${FONT}`, C.mute); ctx.restore(); }
+  const press = pressAt(t, 8.2);
+  button("Open pack", x + 44, y + 630, 250, 66, 30, press);
+  if (t > 7.4) { const m = eInOut(prog(t, 7.4, 0.7)); cursor(lerp(1700, x + 200, m), lerp(1000, y + 670, m), press); }
+}
+
+// ---------- scene 4: pay with Phantom (devnet) ----------
+function scene4(t) {
+  background(t);
+  display([{ text: "PAY WITH" }, { text: "PHANTOM.", red: true }], 130, 330, 120, t, 8.85, { lh: 128 });
+  display([{ text: "VERIFIED" }, { text: "ON-CHAIN.", red: true }], 130, 640, 120, t, 9.2, { lh: 128 });
+  const e = eOut(prog(t, 8.8, 0.3)); const x = lerp(1960, 1000, e), y = 120, w = 840, h = 820;
+  rr(x, y, w, h, 20); ctx.fillStyle = C.bg; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = C.line; ctx.stroke();
+  // header (components/Header.tsx)
+  txt("FAZE CARDS", x + 36, y + 66, `800 30px ${FONT}`, C.red);
+  const bal = Math.round(lerp(500, 1500, eOut(prog(t, 11.6, 0.6))));
+  const flash = t > 11.6 && t < 12.4 ? 1 - prog(t, 11.6, 0.8) : 0;
+  const bf = `${flash > 0 ? 800 : 400} 26px ${FONT}`; ctx.font = bf; const bs = `fan1 · ${bal.toLocaleString("en-US")} coins`; const bw = ctx.measureText(bs).width;
+  txt(bs, x + w - 136 - bw, y + 64, bf, flash > 0 ? "#fff" : C.text);
+  badge("demo", x + w - 112, y + 62, 18);
+  ctx.fillStyle = C.line; ctx.fillRect(x, y + 104, w, 2);
+  // Buy coins section (components/BuyCoins.tsx)
+  const sx = x + 32, sy = y + 136, sw = w - 64, sh = 470;
+  rr(sx, sy, sw, sh, 16); ctx.fillStyle = C.panel; ctx.fill(); ctx.strokeStyle = C.line; ctx.stroke();
+  txt("Buy coins", sx + 32, sy + 66, `700 40px ${FONT}`, C.text);
+  ctx.font = `700 40px ${FONT}`; badge("devnet · demo", sx + 48 + ctx.measureText("Buy coins").width, sy + 60, 18);
+  txt("Pay with devnet SOL via Phantom (set Phantom to Devnet).", sx + 32, sy + 116, `400 22px ${FONT}`, C.mute);
+  txt("Test funds only; coins are not cashable.", sx + 32, sy + 146, `400 22px ${FONT}`, C.mute);
+  const bundles = [["1000 coins", "0.05 SOL"], ["2500 coins", "0.1 SOL"], ["6000 coins", "0.2 SOL"]];
+  const bwid = (sw - 64 - 2 * 20) / 3;
+  const press1 = pressAt(t, 9.6);
+  bundles.forEach(([c, s], i) => {
+    const bx = sx + 32 + i * (bwid + 20), by = sy + 186;
+    rr(bx, by, bwid, 240, 14); ctx.fillStyle = C.bg; ctx.fill(); ctx.strokeStyle = i === 0 && t > 9.6 ? C.red : C.line; ctx.lineWidth = 2; ctx.stroke();
+    txt(c, bx + 24, by + 60, `800 32px ${FONT}`, C.text);
+    txt(s, bx + 24, by + 104, `400 26px ${FONT}`, C.mute);
+    button("Buy", bx + 24, by + 150, bwid - 48, 62, 28, i === 0 ? press1 : 0);
+  });
+  // status line (real strings from lib/payments.ts + BuyCoins.tsx)
+  let status = "", col = C.text, spin = false;
+  if (t >= 9.8 && t < 10.8) status = "Approve the devnet transaction in Phantom…";
+  else if (t >= 10.8 && t < 11.6) { status = "Waiting for on-chain confirmation…"; spin = true; }
+  else if (t >= 11.6) { status = "Payment received (devnet, demo coins)."; col = "#4ade80"; }
+  if (status) {
+    const sy2 = sy + sh + 70;
+    if (spin) { ctx.save(); ctx.translate(sx + 22, sy2 - 10); ctx.rotate(t * 10); ctx.strokeStyle = C.red; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 1.4); ctx.stroke(); ctx.restore(); }
+    if (col !== C.text) { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(sx + 8, sy2 - 10); ctx.lineTo(sx + 18, sy2); ctx.lineTo(sx + 36, sy2 - 22); ctx.stroke(); ctx.restore(); }
+    txt(status, sx + 52, sy2, `600 30px ${FONT}`, col);
+  }
+  txt("Solana devnet · test funds, no real value", x + 32, y + h - 40, `500 22px ${FONT}`, C.mute);
+  // wallet approval sheet (text-labelled, no third-party logo)
+  const inK = eOut(prog(t, 9.8, 0.25)), outK = eInOut(prog(t, 10.8, 0.25));
+  if (inK > 0 && outK < 1) {
+    const ww = 470, wh = 480, wx = lerp(1940, 1340, inK) + outK * 640, wy = 236;
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,0.7)"; ctx.shadowBlur = 60;
+    rr(wx, wy, ww, wh, 24); ctx.fillStyle = "#1d1d24"; ctx.fill(); ctx.restore();
+    ctx.strokeStyle = "#3a3a46"; ctx.lineWidth = 2; rr(wx, wy, ww, wh, 24); ctx.stroke();
+    txt("Phantom", wx + 36, wy + 62, `800 32px ${FONT}`, "#fff");
+    txt("Solana Devnet", wx + ww - 36, wy + 60, `600 20px ${FONT}`, C.mute, "right");
+    txt("Approve transaction", wx + 36, wy + 130, `700 30px ${FONT}`, "#fff");
+    const rowsW = [["Send", "0.05 SOL"], ["To", "FaZe Cards treasury"], ["Network", "Devnet (test funds)"]];
+    rowsW.forEach(([a, b], i) => { const ry = wy + 196 + i * 62; ctx.fillStyle = "#2a2a33"; ctx.fillRect(wx + 36, ry + 22, ww - 72, 1); txt(a, wx + 36, ry, `400 24px ${FONT}`, C.mute); txt(b, wx + ww - 36, ry, `700 24px ${FONT}`, "#fff", "right"); });
+    const pa = pressAt(t, 10.6);
+    button("Cancel", wx + 36, wy + wh - 110, 180, 70, 26, 0, "#2a2a33");
+    button("Approve", wx + ww - 216, wy + wh - 110, 180, 70, 26, pa, "#f2f2f4", "#111");
+  }
+  // cursor path: → Buy (9.6) → Approve (10.6) → away
+  if (t > 9.0) {
+    let cx, cy, pr = 0;
+    const buyX = x + 32 + 32 + 24 + (bwid - 48) / 2 + 32, buyY = sy + 186 + 150 + 36;
+    if (t < 9.6) { const m = eInOut(prog(t, 9.0, 0.55)); cx = lerp(1500, buyX, m); cy = lerp(1050, buyY, m); pr = 0; }
+    else if (t < 10.6) { const m = eInOut(prog(t, 10.0, 0.55)); cx = lerp(buyX, 1340 + 470 - 126, m); cy = lerp(buyY, 236 + 480 - 75, m); pr = pressAt(t, 9.6); }
+    else { const m = eInOut(prog(t, 11.0, 0.6)); cx = lerp(1340 + 470 - 126, 1500, m); cy = lerp(236 + 480 - 75, 1150, m); pr = pressAt(t, 10.6); }
+    cursor(cx, cy, pr);
+  }
+}
+
+// ---------- scene 5: trade ----------
+function scene5(t) {
+  background(t);
+  display([{ text: "TRADE YOUR" }, { text: "PULLS WITH" }, { text: "OTHER FANS.", red: true }], 130, 360, 116, t, 12.85, { lh: 132 });
+  const e = eOut(prog(t, 12.8, 0.3)); const off = (1 - e) * 1000;
+  const px = [1000 + off, 1430 + off], py = 170, pw = 400, ph = 740;
+  ["fan1", "fan2"].forEach((name, i) => {
+    rr(px[i], py, pw, ph, 20); ctx.fillStyle = C.panel; ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
+    txt(name, px[i] + 30, py + 62, `800 36px ${FONT}`, C.text);
+    txt("Collection", px[i] + 30, py + 100, `400 22px ${FONT}`, C.mute);
+  });
+  const cw = 160, slots = [[px[0] + 30, py + 130], [px[0] + 210, py + 130], [px[1] + 30, py + 130], [px[1] + 210, py + 130]];
+  // fan1 owns apex7 (epic) + rug5 ; fan2 owns apex2 (rare) + apexC2
+  const swap = eInOut(prog(t, 14.0, 0.8));
+  const arc = (a, b, k, up) => [lerp(a[0], b[0], k), lerp(a[1], b[1], k) + (up ? -1 : 1) * Math.sin(k * Math.PI) * 140];
+  const draw = (key, pos, serial) => cardTile(CARDS[key], pos[0], pos[1], cw, { serial });
+  draw("rug5", slots[1], 12); draw("apexC2", slots[3], 58);
+  draw("apex7", arc(slots[0], slots[2], swap, true), 4);
+  draw("apex2", arc(slots[2], slots[0], swap, false), 31);
+  // offer box in fan2's panel
+  const ox = px[1] + 30, oy = py + 470, ow = pw - 60;
+  rr(ox, oy, ow, 230, 14); ctx.fillStyle = C.bg; ctx.fill(); ctx.strokeStyle = C.line; ctx.stroke();
+  txt("Incoming offer from fan1", ox + 22, oy + 46, `700 22px ${FONT}`, C.text);
+  txt("Apex / OG Era 7 (epic)", ox + 22, oy + 86, `400 20px ${FONT}`, RAR.epic);
+  txt("for Apex / OG Era 2 (rare)", ox + 22, oy + 116, `400 20px ${FONT}`, RAR.rare);
+  const pa = pressAt(t, 13.9);
+  if (t < 13.9) button("Accept", ox + 22, oy + 146, 150, 56, 24, 0);
+  else { button("Accepted", ox + 22, oy + 146, 170, 56, 24, pa, "#14532d", "#4ade80"); }
+  if (t > 13.1 && t < 14.6) { const m = eInOut(prog(t, 13.2, 0.6)); cursor(lerp(1700, ox + 100, m), lerp(1060, oy + 178, m), pa); }
+  // toast
+  const tk = eBack(prog(t, 14.8, 0.3));
+  if (tk > 0) {
+    ctx.font = `700 26px ${FONT}`; const tw = ctx.measureText("Trade accepted · both sides swapped").width + 140, tx = 1000 + (830 - tw) / 2, ty = lerp(1100, 935, tk);
+    rr(tx, ty, tw, 84, 42); ctx.fillStyle = "#f2f2f4"; ctx.fill();
+    ctx.save(); ctx.strokeStyle = "#16a34a"; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(tx + 40, ty + 44); ctx.lineTo(tx + 54, ty + 58); ctx.lineTo(tx + 78, ty + 30); ctx.stroke(); ctx.restore();
+    txt("Trade accepted · both sides swapped", tx + 98, ty + 52, `700 26px ${FONT}`, "#111");
+  }
+}
+
+// ---------- scene 6: outro ----------
+function scene6(t) {
+  background(t, 0.7);
+  // fanned cards behind
+  const fan = ["apex12", "rain8", "adapt4", "apex7", "apex2"];
+  fan.forEach((k, i) => {
+    const a = (i - 2) * 0.16 + Math.sin(t * 0.8 + i) * 0.02, cw = 250;
+    const e = eOut(prog(t, 16.0 + i * 0.05, 0.5));
+    ctx.save(); ctx.globalAlpha = 0.13 * e; ctx.filter = "blur(4px)"; ctx.translate(W / 2, 1180); ctx.rotate(a); ctx.translate(-cw / 2, -980 - (1 - e) * 200);
+    cardTile(CARDS[k], 0, 0, cw, {}); ctx.restore();
+  });
+  // red slash wipe
+  const wk = eInOut(prog(t, 16.0, 0.4));
+  ctx.save(); ctx.fillStyle = C.red; ctx.beginPath();
+  const sx = lerp(-900, 2100, wk); ctx.moveTo(sx, 0); ctx.lineTo(sx + 320, 0); ctx.lineTo(sx + 120, H); ctx.lineTo(sx - 200, H); ctx.closePath();
+  ctx.globalAlpha = 1 - prog(t, 16.3, 0.3); ctx.fill(); ctx.restore();
+  const k = eOut(prog(t, 16.15, 0.35));
+  if (k > 0) {
+    ctx.save(); ctx.globalAlpha = clamp(k * 2); ctx.translate(W / 2, 520); const s = lerp(1.25, 1, k); ctx.scale(s, s);
+    ctx.font = DISPLAY(250); const w1 = ctx.measureText("FAZE").width, w2 = ctx.measureText(" CARDS").width, tot = w1 + w2;
+    ctx.shadowColor = "rgba(225,6,0,0.8)"; ctx.shadowBlur = 60;
+    txt("FAZE", -tot / 2, 0, DISPLAY(250), C.red); txt(" CARDS", -tot / 2 + w1, 0, DISPLAY(250), "#fff");
+    ctx.restore();
+  }
+  const k2 = eOut(prog(t, 16.6, 0.3));
+  if (k2 > 0) { ctx.save(); ctx.globalAlpha = k2; txt("COLLECT. OPEN. TRADE.", W / 2, 680 + (1 - k2) * 30, DISPLAY(78), "#fff", "center"); ctx.restore(); }
+  const k3 = prog(t, 16.9, 0.3);
+  if (k3 > 0) {
+    ctx.save(); ctx.globalAlpha = k3;
+    txt("Built for HackUTA 2026 · FaZe track", W / 2, 900, `700 32px ${FONT}`, C.text, "center");
+    txt("Demo build · Solana devnet payments · coins have no cash value", W / 2, 950, `400 26px ${FONT}`, C.mute, "center");
+    ctx.restore();
+  }
+}
+
+// ---------- compositor ----------
+const SCENES = [[0, scene1], [2.4, scene2], [5.6, scene3], [8.8, scene4], [12.8, scene5], [16.0, scene6]];
+function drawFrame(t, frameIndex) {
+  let fn = SCENES[0][1]; for (const [s, f] of SCENES) if (t >= s) fn = f;
+  ctx.save(); fn(t); ctx.restore();
+  // FaZe glitch on every hard cut: 3 frames of slice offsets + red/cyan split
+  for (const c of CUTS) {
+    const d = t - c;
+    if (d >= 0 && d < 3 / FPS) {
+      const k = 1 - d / (3 / FPS), r = rng(Math.round(c * 100) + Math.round(d * FPS));
+      const copy = document.createElement("canvas"); copy.width = W; copy.height = H; copy.getContext("2d").drawImage(cv, 0, 0);
+      for (let i = 0; i < 9; i++) { const y = r() * H, h = 20 + r() * 110, dx = (r() - 0.5) * 160 * k; ctx.drawImage(copy, 0, y, W, h, dx, y, W, h); }
+      ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = 0.35 * k; ctx.drawImage(copy, 14 * k, 0); ctx.restore();
+      ctx.fillStyle = `rgba(225,6,0,${0.28 * k})`; ctx.fillRect(0, 0, W, H);
+    }
+  }
+  finish(t, frameIndex);
+}
+
+// ---------- soundtrack (one piece on the 150 BPM grid, A minor) ----------
+const NOTE = (n) => 440 * Math.pow(2, (n - 69) / 12); // midi
+const CHORDS = { Am: [57, 60, 64], F: [53, 57, 60], C: [48, 52, 55], G: [55, 59, 62] };
+const ROOT = { Am: 45, F: 41, C: 48, G: 43 };
+const PROG = [[6, "Am"], [10, "F"], [14, "C"], [18, "G"], [22, "Am"], [26, "F"], [30, "G"], [32, "Am"], [36, "F"], [40, "Am"]];
+const chordAt = (b) => { let c = "Am"; for (const [s, n] of PROG) if (b >= s) c = n; return c; };
+async function renderAudio() {
+  const SR = 48000, ac = new OfflineAudioContext(2, Math.ceil(DUR * SR), SR);
+  const nr = rng(99), noise = ac.createBuffer(1, SR * 2, SR); { const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = nr() * 2 - 1; }
+  const master = ac.createGain(); master.gain.value = 0.8;
+  const comp = ac.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3.5; comp.attack.value = 0.006; comp.release.value = 0.18;
+  const lim = ac.createDynamicsCompressor(); lim.threshold.value = -3; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.08;
+  master.connect(comp).connect(lim).connect(ac.destination);
+  // reverb send (seeded impulse)
+  const ir = ac.createBuffer(2, SR * 1.6, SR); for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch), r = rng(5 + ch); for (let i = 0; i < d.length; i++) d[i] = (r() * 2 - 1) * Math.pow(1 - i / d.length, 3.2); }
+  const verb = ac.createConvolver(); verb.buffer = ir; const verbGain = ac.createGain(); verbGain.gain.value = 0.25; verb.connect(verbGain).connect(master);
+  const bus = (gain, send = 0) => { const g = ac.createGain(); g.gain.value = gain; g.connect(master); if (send) { const s = ac.createGain(); s.gain.value = send; g.connect(s).connect(verb); } return g; };
+  const drums = bus(0.9), music = bus(0.55, 0.35), sfx = bus(0.32, 0.5);
+  const noiseSrc = (t, dur, dest, filt) => { const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); Object.assign(f, { type: filt.type }); f.frequency.value = filt.f; if (filt.q) f.Q.value = filt.q; const g = ac.createGain(); s.connect(f).connect(g).connect(dest); s.start(t, (t * 0.37) % 1, dur + 0.05); return { g, f }; };
+  const kick = (t, amp = 1) => { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.12); g.gain.setValueAtTime(amp, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.42); o.connect(g).connect(drums); o.start(t); o.stop(t + 0.45); const c = noiseSrc(t, 0.01, drums, { type: "highpass", f: 3000 }); c.g.gain.setValueAtTime(0.25 * amp, t); c.g.gain.exponentialRampToValueAtTime(0.001, t + 0.012); };
+  const clap = (t) => { for (const d of [0, 0.011, 0.022]) { const n = noiseSrc(t + d, 0.2, drums, { type: "bandpass", f: 1600, q: 0.9 }); n.g.gain.setValueAtTime(0.0001, t + d); n.g.gain.linearRampToValueAtTime(0.5, t + d + 0.002); n.g.gain.exponentialRampToValueAtTime(0.001, t + d + (d === 0.022 ? 0.18 : 0.03)); } };
+  const hat = (t, amp = 0.16) => { const n = noiseSrc(t, 0.05, drums, { type: "highpass", f: 8000 }); n.g.gain.setValueAtTime(amp, t); n.g.gain.exponentialRampToValueAtTime(0.001, t + 0.045); };
+  const crash = (t, amp = 0.22) => { const n = noiseSrc(t, 1.8, drums, { type: "highpass", f: 5000 }); n.g.gain.setValueAtTime(amp, t); n.g.gain.exponentialRampToValueAtTime(0.001, t + 1.8); };
+  const saw = (t, freq, dur, dest, amp, cutoff, det = [0]) => { const f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.setValueAtTime(cutoff, t); f.frequency.exponentialRampToValueAtTime(Math.max(120, cutoff * 0.3), t + dur); f.Q.value = 2; const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(amp, t + 0.006); g.gain.exponentialRampToValueAtTime(0.001, t + dur); f.connect(g).connect(dest); for (const d of det) { const o = ac.createOscillator(); o.type = "sawtooth"; o.frequency.value = freq; o.detune.value = d; o.connect(f); o.start(t); o.stop(t + dur + 0.05); } };
+  const sine = (t, freq, dur, dest, amp) => { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = freq; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(amp, t + 0.004); g.gain.exponentialRampToValueAtTime(0.001, t + dur); o.connect(g).connect(dest); o.start(t); o.stop(t + dur + 0.05); };
+  const tri = (t, freq, dur, dest, amp) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = "triangle"; o.frequency.value = freq; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(amp, t + 0.005); g.gain.exponentialRampToValueAtTime(0.001, t + dur); o.connect(g).connect(dest); o.start(t); o.stop(t + dur + 0.05); };
+  const stab = (t, chord, amp = 0.16, dur = 0.5) => { for (const n of CHORDS[chord]) saw(t, NOTE(n + 12), dur, music, amp, 4200, [-14, 0, 14]); };
+  const swish = (t, amp = 0.5) => { const n = noiseSrc(t, 0.2, sfx, { type: "bandpass", f: 900, q: 1.4 }); n.f.frequency.setValueAtTime(700, t); n.f.frequency.exponentialRampToValueAtTime(5200, t + 0.18); n.g.gain.setValueAtTime(0.0001, t); n.g.gain.linearRampToValueAtTime(amp, t + 0.06); n.g.gain.exponentialRampToValueAtTime(0.001, t + 0.2); };
+  const B = (b) => b * BEAT;
+
+  // HOOK (beats 0-5): pack thumps = heartbeat kicks, rising noise, dark Am drone
+  for (const b of [0, 1, 2, 3, 4]) kick(B(b), 0.85);
+  { const n = noiseSrc(B(1), B(4), sfx, { type: "bandpass", f: 400, q: 2 }); n.f.frequency.setValueAtTime(400, B(1)); n.f.frequency.exponentialRampToValueAtTime(7000, B(5)); n.g.gain.setValueAtTime(0.0001, B(1)); n.g.gain.linearRampToValueAtTime(0.7, B(5) - 0.02); n.g.gain.linearRampToValueAtTime(0.0001, B(5)); }
+  for (const n of [45, 57]) { const o = ac.createOscillator(), g = ac.createGain(); o.type = "sawtooth"; o.frequency.value = NOTE(n); const f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.setValueAtTime(200, 0); f.frequency.exponentialRampToValueAtTime(1800, B(5)); g.gain.setValueAtTime(0.0001, 0); g.gain.linearRampToValueAtTime(0.18, B(4)); g.gain.linearRampToValueAtTime(0.0001, B(5)); o.connect(f).connect(g).connect(music); o.start(0); o.stop(B(5) + 0.05); }
+  // rip on beat 5
+  { const n = noiseSrc(B(5), 0.35, sfx, { type: "bandpass", f: 2000, q: 0.8 }); n.f.frequency.setValueAtTime(1800, B(5)); n.f.frequency.exponentialRampToValueAtTime(7000, B(5) + 0.3); n.g.gain.setValueAtTime(1.2, B(5)); n.g.gain.exponentialRampToValueAtTime(0.001, B(5) + 0.35); }
+
+  // GROOVE (beats 6-46)
+  for (let b = 6; b < 46; b++) {
+    kick(B(b), b === 6 || b === 40 ? 1.15 : 1);
+    if ((b - 6) % 2 === 1) clap(B(b));
+    hat(B(b + 0.5));
+    if (b >= 22 && b < 32) { hat(B(b + 0.25), 0.07); hat(B(b + 0.75), 0.07); }
+    // offbeat bass + sub on the chord root
+    const ch = chordAt(b);
+    saw(B(b + 0.5), NOTE(ROOT[ch]), 0.19, music, 0.34, 900, [-6, 6]);
+    sine(B(b + 0.5), NOTE(ROOT[ch] - 12), 0.2, music, 0.45);
+  }
+  crash(B(6), 0.3); crash(B(40), 0.3);
+  // stabs on every scene cut + chord changes
+  for (const b of [6, 14, 22, 32, 40]) stab(B(b), chordAt(b), 0.2, 0.7);
+  for (const [b, c] of PROG) if (![6, 14, 22, 32, 40].includes(b)) stab(B(b), c, 0.09, 0.35);
+  // outro: drums drop at beat 46, final Am chord rings
+  kick(B(46), 1); crash(B(46), 0.25);
+  for (const n of CHORDS.Am) saw(B(46), NOTE(n + 12), 1.2, music, 0.12, 3000, [-12, 0, 12]);
+
+  // SFX in key, under the music
+  for (let i = 0; i < 5; i++) swish(B(7 + i) - 0.12, 0.45); // card flips (midpoints on beats 7-11)
+  [69, 72, 76, 81, 84, 88, 93].forEach((n, i) => tri(B(11) + i * BEAT / 4, NOTE(n), 0.5, sfx, 0.22)); // legendary shimmer (A minor arp)
+  for (let i = 0; i < 4; i++) tri(B(15 + i), NOTE(88), 0.12, sfx, 0.16); // odds rows tick in
+  tri(B(24), NOTE(76), 0.08, sfx, 0.25); tri(B(26.5), NOTE(76), 0.08, sfx, 0.25); // clicks: Buy, Approve
+  for (let i = 0; i < 6; i++) tri(B(29) + i * BEAT / 4, NOTE(i % 2 ? 88 : 93), 0.07, sfx, 0.12); // coin counter
+  [81, 88].forEach((n) => tri(B(29), NOTE(n), 0.6, sfx, 0.18)); // payment confirmed chime
+  swish(B(35), 0.5); swish(B(35.5), 0.4); // trade whooshes
+  [76, 81].forEach((n) => tri(B(37), NOTE(n), 0.5, sfx, 0.16)); // trade accepted
+  [57, 60, 64, 69, 72, 76].forEach((n, i) => tri(B(41) + i * BEAT / 2, NOTE(n + 12), 0.9, sfx, 0.14)); // outro arp
+
+  const buf = await ac.startRendering();
+  // normalize to -1 dBFS
+  let peak = 0; for (let ch = 0; ch < 2; ch++) { const d = buf.getChannelData(ch); for (let i = 0; i < d.length; i++) peak = Math.max(peak, Math.abs(d[i])); }
+  const gain = peak > 0 ? Math.pow(10, -1 / 20) / peak : 1;
+  for (let ch = 0; ch < 2; ch++) { const d = buf.getChannelData(ch); for (let i = 0; i < d.length; i++) d[i] *= gain; }
+  return buf;
+}
+
+// ---------- API for the driver ----------
+window.ready = loadAssets();
+window.still = async (t) => { await window.ready; drawFrame(t, Math.round(t * FPS)); return cv.toDataURL("image/jpeg", 0.88); };
+window.render = async () => {
+  await window.ready;
+  const { Muxer, ArrayBufferTarget } = await import("./mp4-muxer.mjs");
+  const muxer = new Muxer({ target: new ArrayBufferTarget(), video: { codec: "avc", width: W, height: H, frameRate: FPS }, audio: { codec: "aac", numberOfChannels: 2, sampleRate: 48000 }, fastStart: "in-memory", firstTimestampBehavior: "offset" });
+  let err = null;
+  const venc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: (e) => (err = e) });
+  venc.configure({ codec: "avc1.640028", width: W, height: H, bitrate: 12_000_000, framerate: FPS, avc: { format: "avc" } });
+  const N = Math.round(DUR * FPS);
+  for (let i = 0; i < N; i++) {
+    const t = i === 0 ? POSTER_T : i / FPS; // poster baked in as frame 0 (replaces, not adds)
+    drawFrame(t, i);
+    const f = new VideoFrame(cv, { timestamp: Math.round((i * 1e6) / FPS), duration: Math.round(1e6 / FPS) });
+    venc.encode(f, { keyFrame: i % 60 === 0 }); f.close();
+    while (venc.encodeQueueSize > 8) await new Promise((r) => setTimeout(r, 2));
+    if (err) throw err;
+  }
+  await venc.flush();
+  const buf = await renderAudio();
+  const aenc = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: (e) => (err = e) });
+  aenc.configure({ codec: "mp4a.40.2", sampleRate: 48000, numberOfChannels: 2, bitrate: 192000 });
+  const L = buf.getChannelData(0), R = buf.getChannelData(1), CH = 1024;
+  for (let i = 0; i < buf.length; i += CH) {
+    const n = Math.min(CH, buf.length - i), d = new Float32Array(n * 2); d.set(L.subarray(i, i + n), 0); d.set(R.subarray(i, i + n), n);
+    const a = new AudioData({ format: "f32-planar", sampleRate: 48000, numberOfFrames: n, numberOfChannels: 2, timestamp: Math.round((i / 48000) * 1e6), data: d });
+    aenc.encode(a); a.close();
+  }
+  await aenc.flush();
+  if (err) throw err;
+  muxer.finalize();
+  const bytes = new Uint8Array(muxer.target.buffer);
+  let s = ""; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+};
+</script>

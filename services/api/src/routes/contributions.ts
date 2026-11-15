@@ -18,6 +18,7 @@ const ReviewBody = z.object({ bountyLamports: z.number().int().min(1).max(1_000_
 const RejectBody = z.object({ note: z.string().trim().min(3).max(1000) });
 const PayerBody = z.object({ payerWallet: z.string().trim().refine(isSolanaPublicKey, "payerWallet must be a Solana public key") });
 const SignatureBody = z.object({ signature: z.string().trim().min(1).max(128) });
+const DemoWalletBody = z.object({ wallet: z.string().trim().refine(isSolanaPublicKey, "wallet must be a Solana public key") });
 
 function toContribution(row: any) {
   return {
@@ -78,6 +79,29 @@ export async function contributionRoutes(app: FastifyInstance, chain: Contributi
     );
     await audit(pool, user.sub, "contribution.submit", result.rows[0].id, { title: body.title });
     return reply.code(201).send({ contribution: toContribution(result.rows[0]) });
+  });
+
+  app.post("/contributions/demo-wallet", async (req) => {
+    const user = requireUser(req);
+    if (user.role !== "fan") fail("FORBIDDEN", "Connect a fan account to link demo submissions");
+    const { wallet } = DemoWalletBody.parse(req.body);
+    const linkedDemoContributions = await tx(async (db) => {
+      const updated = await db.query(
+        `UPDATE contribution_proposals
+         SET creator_user_id=$1,
+             contributor_name=(SELECT display_name FROM users WHERE id=$1),
+             recipient_wallet=$2
+         WHERE demo=true AND payout_reference IS NULL AND payout_signature IS NULL
+         RETURNING id`,
+        [user.sub, wallet],
+      );
+      await db.query(
+        "INSERT INTO audit_log (actor_id, action, entity, entity_id, detail) VALUES ($1,'contribution.demo_wallet_link','contribution_demo_batch',$1,$2)",
+        [user.sub, JSON.stringify({ wallet, linked: updated.rowCount ?? 0 })],
+      );
+      return updated.rowCount ?? 0;
+    });
+    return { wallet, linkedDemoContributions };
   });
 
   app.get("/admin/contributions", async (req) => {

@@ -1,0 +1,1 @@
+Five 5:7 foil pack covers for the FaZe Collector Cards demo. All covers are 1060 x 1484 transparent PNGs. Pack art is generated concept artwork, not actual historical photographs. The OG, House, Gaming Legends, and Rebirth era packs are fictional curated pack concepts.  Daily Drop pack reflects the planned free daily pack of five cards.

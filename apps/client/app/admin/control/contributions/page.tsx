@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, type FormEvent } from "react";
 import { connectContributionPayer, signContributionPayout, type ContributionQuote } from "../../../../lib/contribution-payout";
 import { Heading, Toast } from "../_components/ui";
@@ -26,6 +27,24 @@ type Contribution = {
 
 const sol = (lamports: number) => (lamports / 1_000_000_000).toLocaleString("en-US", { maximumFractionDigits: 3 });
 const shortWallet = (wallet: string) => `${wallet.slice(0, 6)}…${wallet.slice(-5)}`;
+function youtubeThumbnail(sourceUrl: string) {
+  try {
+    const url = new URL(sourceUrl);
+    const host = url.hostname.toLowerCase();
+    const videoId = host === "youtu.be"
+      ? url.pathname.split("/").filter(Boolean)[0]
+      : host === "youtube.com" || host.endsWith(".youtube.com")
+        ? url.pathname === "/watch"
+          ? url.searchParams.get("v")
+          : url.pathname.match(/^\/(?:shorts|embed|live)\/([^/]+)/)?.[1]
+        : null;
+    return videoId && /^[A-Za-z0-9_-]{11}$/.test(videoId)
+      ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 function ContributionCard({ contribution, busy, onApprove, onReject, onPay }: {
   contribution: Contribution;
@@ -37,10 +56,16 @@ function ContributionCard({ contribution, busy, onApprove, onReject, onPay }: {
   const [bountySol, setBountySol] = useState(contribution.bountyLamports ? String(contribution.bountyLamports / 1_000_000_000) : "0.05");
   const pending = contribution.status === "pending";
   const payable = contribution.status === "approved" || contribution.status === "payout_pending";
+  const thumbnail = youtubeThumbnail(contribution.sourceUrl);
   return (
     <article className={`contribution-card is-${contribution.status}`}>
       <div className="contribution-head">
-        <div>
+        {thumbnail ? (
+          <a className="contribution-thumb" href={contribution.sourceUrl} target="_blank" rel="noreferrer" aria-label={`Open ${contribution.title} on YouTube`}>
+            <Image src={thumbnail} alt={`${contribution.title} YouTube thumbnail`} width={320} height={180} loading="lazy" />
+          </a>
+        ) : <div className="contribution-thumb is-empty" aria-label="No YouTube video thumbnail available">NO CLIP PREVIEW</div>}
+        <div className="contribution-title">
           <p className="contribution-by">{contribution.contributorName} · {ago(contribution.createdAt)}{contribution.demo ? " · demo" : ""}</p>
           <h2>{contribution.title}</h2>
         </div>
@@ -50,7 +75,7 @@ function ContributionCard({ contribution, busy, onApprove, onReject, onPay }: {
       <dl className="contribution-meta">
         <div><dt>Member</dt><dd>{contribution.fazeMember}</dd></div>
         <div><dt>Recipient</dt><dd className="contribution-wallet">{contribution.recipientWallet}</dd></div>
-        {contribution.sourceUrl && <div><dt>Source</dt><dd><a href={contribution.sourceUrl} target="_blank" rel="noreferrer">Open evidence ↗</a></dd></div>}
+        {contribution.sourceUrl && <div className="contribution-source"><dt>Source</dt><dd><a href={contribution.sourceUrl} target="_blank" rel="noreferrer">Open source ↗</a><small>{contribution.sourceUrl}</small></dd></div>}
       </dl>
       {contribution.reviewNote && <p className="contribution-note">{contribution.reviewNote}</p>}
       {pending && (

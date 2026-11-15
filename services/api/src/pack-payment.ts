@@ -53,7 +53,7 @@ catch {
     fail('CONFLICT', 'Solana RPC unavailable. Check this purchase again; do not pay twice.');
 } }
 export const livePackChain: PackChain = {
-    async find(reference) { const rows = await rpc('getSignaturesForAddress', [reference, { limit: 20 }, 'finalized']); return rows?.find((r: any) => !r.err)?.signature; },
+    async find(reference) { const rows = await rpc('getSignaturesForAddress', [reference, { limit: 20, commitment: 'finalized' }]); return rows?.find((r: any) => !r.err)?.signature; },
     async verify(order, signature) {
         const cfg = settings();
         if (cfg.simulated) {

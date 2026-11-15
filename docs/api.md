@@ -125,6 +125,8 @@ Fan Store now uses direct devnet SOL checkout and fulfillment. See [direct-sol-p
 | POST | `/admin/contributions/:id/payouts` | `{payerWallet}` returns one idempotent devnet `PayoutQuote`. |
 | POST | `/admin/contributions/:id/payouts/confirm` | `{signature}` verifies and records exactly one payout. |
 
+`POST /contributions/demo-wallet` accepts `{wallet}` for the signed-in fan's connected Phantom address and links every unpaid demo pitch to that fan account and wallet. It does not change real community submissions.
+
 The browser signs the quoted System Program transfer in Phantom. The server fetches the finalized **devnet** receipt and requires the exact quoted payer, recipient, lamports and unique reference before marking a contribution `paid`. The server never stores or signs with a wallet key; rejected, unapproved, duplicate-signature and replayed payouts are refused.
 
 ## Control Room — intelligence, sponsors, operations (lead, v1.8; all `requireAdmin`)
