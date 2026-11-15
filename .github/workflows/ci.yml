@@ -1,0 +1,27 @@
+name: ci
+on:
+  push: { branches: [main] }
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_USER: faze, POSTGRES_PASSWORD: faze, POSTGRES_DB: faze }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U faze" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://faze:faze@localhost:5432/faze
+      JWT_SECRET: ci-only-jwt-secret
+      INTERNAL_SECRET: ci-only-internal-secret
+      STRIPE_SECRET_KEY: sk_test_ci_dummy
+      STRIPE_WEBHOOK_SECRET: whsec_ci_dummy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci || npm install
+      - run: npm run typecheck
+      - run: npm test
