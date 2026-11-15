@@ -9,6 +9,7 @@ import { packCoverForName } from '../lib/pack-covers';
 import { buyPack, confirmPackPurchase, clearPackCheckout, type PackPurchase } from '../lib/phantom';
 import Marketplace from './marketplace';
 import ProfileMenu from './profile-menu';
+import LeaderboardTab from './leaderboard';
 import LivePill from './live-pill';
 import PackOpening from './pack-opening';
 import Contribute from './contribute';
@@ -68,7 +69,7 @@ export default function Home() {
  {tab === 'Game' && <ClipClash userId={me.user.id}/>}
  {tab === 'Binder' && <BinderTab/>}
  {tab === 'Trades' && <Marketplace onChange={refresh}/>}
- {tab === 'Leaderboard' && board && <div className="leader-layout"><section className="panel"><h3>TOP COLLECTORS</h3>{board.collectors.map((c, n) => <div className="rank" key={c.user.id}><b>{String(n + 1).padStart(2, '0')}</b><span>{c.user.displayName}</span><strong>{c.score} pts</strong></div>)}{!board.collectors.length && <p>No ranked collectors yet.</p>}</section><section><h3>TRENDING / SIMULATED ENGAGEMENT</h3><div className="grid">{board.trending.map(c => <CardView key={c.card.id} card={c.card} extra={<p className="hype">HYPE {c.hype}/100 · SIMULATED</p>} onClick={() => run(async () => setDetail(await request(`/cards/${c.card.id}`)))}/>)}</div></section></div>}
+ {tab === 'Leaderboard' && board && <LeaderboardTab board={board} meId={me.user.id} trending={<div className="grid">{board.trending.map(c => <CardView key={c.card.id} card={c.card} extra={<p className="hype">HYPE {c.hype}/100 · SIMULATED</p>} onClick={() => run(async () => setDetail(await request(`/cards/${c.card.id}`)))}/>)}</div>}/>}
  {tab === 'Contribute' && <Contribute displayName={me.user.displayName}/>}
 
  </>}{detail && <div className="modal" role="dialog" aria-modal="true" aria-label="Card details" onClick={e => { if (e.target === e.currentTarget) setDetail(null); }}><section className="panel"><button autoFocus onClick={() => setDetail(null)}>Close details ✕</button><CardView card={detail.card}/><p>Hype: {detail.stats.hype}/100 · simulated engagement</p><p>Set: {detail.card.setId}</p><p>Supply: {detail.card.maxSupply ?? 'Unlimited'}</p></section></div>}</main><footer>FAZE CLIPDECK / DEMO COLLECTIBLES <span>Demo packs · Solana devnet payments.</span></footer></>;
