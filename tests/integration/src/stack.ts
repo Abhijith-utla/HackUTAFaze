@@ -5,7 +5,7 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { GlobalSetupContext } from "vitest/node";
+import type { TestProject } from "vitest/node";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 export const TREASURY = "11111111111111111111111111111112"; // any valid pubkey; simulated chain only
@@ -54,7 +54,8 @@ async function runOnce(cwd: string, script: string, env: NodeJS.ProcessEnv) {
   if (code !== 0) throw new Error(`${script} failed with exit code ${code}`);
 }
 
-export default async function setup({ provide }: GlobalSetupContext) {
+export default async function setup(project: TestProject) {
+  const provide = project.provide.bind(project);
   if (!process.env.TEST_DATABASE_URL) throw new Error("TEST_DATABASE_URL must identify an isolated test database; no application database fallback");
   const env = {
     DATABASE_URL: process.env.DATABASE_URL,

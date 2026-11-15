@@ -42,7 +42,7 @@ export function buildApp(deps: AppDeps) {
       return reply.status(ERROR_STATUS[err.code]).send({ error: { code: err.code, message: err.message } });
     }
     if ((err as { statusCode?: number }).statusCode === 400) {
-      return reply.status(400).send({ error: { code: "VALIDATION", message: err.message } });
+      return reply.status(400).send({ error: { code: "VALIDATION", message: err instanceof Error ? err.message : "Invalid request" } });
     }
     app.log.error(err);
     return reply.status(500).send({ error: { code: "CONFLICT", message: "internal error" } });
