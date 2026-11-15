@@ -1,6 +1,8 @@
 // Demo seed (everything demo=true). Idempotent: safe to run many times.
-// TODO(@tanejakeshav): switch to content/seed/ once D's seed files land.
+// Imports D's deterministic catalog when available, retaining the fallback for isolated API development.
 import bcrypt from "bcryptjs";
+import { readFile } from "node:fs/promises";
+import { Card, CardSet, Pack } from "@faze/shared";
 import { pool, tx } from "./db.js";
 import { postEntry } from "./ledger.js";
 import { migrate } from "./migrate.js";
@@ -99,6 +101,27 @@ async function upsertUser(email: string, password: string, name: string, role: "
   });
 }
 
+async function importContentCatalog(): Promise<boolean> {
+  let raw: string;
+  try { raw = await readFile(new URL("../../../content/seed/catalog.json", import.meta.url), "utf8"); }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return false; throw error; }
+  const catalog = JSON.parse(raw);
+  const sets = CardSet.array().parse(catalog.sets);
+  const cards = Card.array().parse(catalog.cards);
+  const packs = Pack.array().parse(catalog.packs);
+  await tx(async c => {
+    for (const set of sets) await c.query(
+      "INSERT INTO card_sets(id,name,description,status,demo,published_at) VALUES($1,$2,$3,$4,true,$5) ON CONFLICT(id) DO NOTHING",
+      [set.id,set.name,set.description,set.status,set.publishedAt]);
+    for (const card of cards) {
+      await c.query("INSERT INTO cards(id,set_id,name,faze_member,rarity,art_url,base_power,max_supply,demo) VALUES($1,$2,$3,$4,$5,$6,$7,$8,true) ON CONFLICT(id) DO NOTHING", [card.id,card.setId,card.name,card.fazeMember,card.rarity,card.artUrl,card.basePower,card.maxSupply]);
+      await c.query("INSERT INTO card_stats(card_id,hype) VALUES($1,0) ON CONFLICT DO NOTHING", [card.id]);
+    }
+    for (const pack of packs) await c.query("INSERT INTO packs(id,set_id,name,price_coins,cards_per_pack,odds,odds_version,active) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(id) DO NOTHING", [pack.id,pack.setId,pack.name,pack.priceCoins,pack.cardsPerPack,pack.odds,pack.oddsVersion, catalog.packs.find((p: {id:string}) => p.id===pack.id).active ?? true]);
+  });
+  return true;
+}
+
 async function main() {
   await migrate();
   const counts = { users: 0, sets: 0, cards: 0, packs: 0 };
@@ -106,6 +129,11 @@ async function main() {
   if (await upsertUser("admin@demo.faze", "demo-admin-pass", "FaZe Admin (demo)", "admin")) counts.users++;
   for (let i = 1; i <= 4; i++) {
     if (await upsertUser(`fan${i}@demo.faze`, "demo-fan-pass", `DemoFan${i}`, "fan")) counts.users++;
+  }
+
+  if (await importContentCatalog()) {
+    console.log("Imported demo content catalog and seeded demo users");
+    return;
   }
 
   for (const s of SETS) {

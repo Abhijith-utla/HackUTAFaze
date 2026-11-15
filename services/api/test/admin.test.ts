@@ -161,3 +161,12 @@ describe("engagement spike", () => {
     expect(j.rows[0]).toEqual({ kind: "engagement_spike", status: "queued", payload: { fazeMember: "FaZe Rug" } });
   });
 });
+
+it("PATCH cannot bypass publication validation", async () => {
+  const created = await app.inject({ method: "POST", url: "/admin/sets", payload: { name: "Unpublishable draft" }, ...as(admin.cookie) });
+  const id = created.json().set.id;
+  const patch = await app.inject({ method: "PATCH", url: `/admin/sets/${id}`, payload: { status: "live" }, ...as(admin.cookie) });
+  expect(patch.statusCode).toBe(400);
+  const stored = await pool.query("SELECT status, published_at FROM card_sets WHERE id=$1", [id]);
+  expect(stored.rows[0]).toEqual({ status: "draft", published_at: null });
+});

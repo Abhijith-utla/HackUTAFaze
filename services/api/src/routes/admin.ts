@@ -94,7 +94,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const { id } = Id.parse(req.params);
     const b = SetPatch.parse(req.body ?? {});
     const { cols, vals } = setClause({ name: b.name?.trim(), description: b.description, status: b.status });
-    if (b.status === "live") cols.push("published_at = COALESCE(published_at, now())");
+    if (b.status === "live") fail("VALIDATION", "Use the publish endpoint to validate and publish a set");
     const r = cols.length
       ? await pool.query(`UPDATE card_sets SET ${cols.join(", ")} WHERE id=$1 RETURNING *`, [id, ...vals])
       : await pool.query("SELECT * FROM card_sets WHERE id=$1", [id]);

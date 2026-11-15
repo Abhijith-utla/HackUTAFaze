@@ -77,12 +77,13 @@ export async function packsRoutes(app: FastifyInstance) {
       const bal = await balanceOf(c, s.sub);
       if (bal < pack.price_coins) fail("INSUFFICIENT_COINS", `Need ${pack.price_coins} coins, have ${bal}`);
 
-      // Lock every card in the set (stable order) so supply + serials are race-free.
+      // Lock first, then read aggregates in a fresh statement snapshot after any lock wait.
+      await c.query("SELECT id FROM cards WHERE set_id=$1 ORDER BY id FOR UPDATE", [pack.set_id]);
       const cr = await c.query(
         `SELECT c.id, c.rarity, c.max_supply,
                 (SELECT COUNT(*) FROM card_instances ci WHERE ci.card_id=c.id)::int AS minted,
                 (SELECT COALESCE(MAX(serial),0) FROM card_instances ci WHERE ci.card_id=c.id)::int AS max_serial
-           FROM cards c WHERE c.set_id=$1 ORDER BY c.id FOR UPDATE`,
+           FROM cards c WHERE c.set_id=$1 ORDER BY c.id`,
         [pack.set_id],
       );
       const slots: CardSlot[] = cr.rows.map((r) => ({ id: r.id, rarity: r.rarity, maxSupply: r.max_supply, minted: r.minted }));
