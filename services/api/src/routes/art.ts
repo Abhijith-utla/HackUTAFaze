@@ -52,7 +52,7 @@ export async function artRoutes(app: FastifyInstance, uploadDir = config.uploadD
     });
     return reply.code(201).send({ submission: toSubmission(submission) });
   });
-  app.get<{ Params: { file: string } }>(["/uploaded-art/:file", "/art/:file"], async (req, reply) => {
+  for (const route of ["/uploaded-art/:file", "/art/:file"]) app.get<{ Params: { file: string } }>(route, async (req, reply) => {
     const match = /^([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\.(png|jpg|webp)$/i.exec(req.params.file);
     if (!match) return fail("NOT_FOUND", "Image not found");
     try {
