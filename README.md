@@ -58,3 +58,5 @@ CI (`.github/workflows/ci.yml`) runs all three on `main` and every `agent-*/**` 
 Server-authoritative pulls, odds, balances, trades and payments. Append-only ledger. Devnet only (mainnet refused at boot). Every seed, simulated engagement event and test payment is labelled. No secrets in code.
 
 Database: PostgreSQL via server-only `DATABASE_URL` (local default: `docker compose up -d db`). Managed Postgres such as Tiger Cloud works through the same URL with `sslmode=require`; adopting it is **pending the lead's decision**. Set a distinct `TEST_DATABASE_URL` before running tests. Live managed-DB and real Phantom devnet checks are manual.
+
+Public trading: visit http://localhost:3000/trades. After pulling this feature, run npm run migrate --workspace @faze/api, then restart services. See docs/marketplace.md for the exchange and notification contract.
