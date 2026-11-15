@@ -1,13 +1,13 @@
 # AGENTS.md — rules every coding agent reads first
 
-Project: **FaZe Collector Cards** (HackUTA 2026, FaZe track). Read `master.md` and the contract docs before writing code. If a task conflicts with them, flag it on the board instead of silently changing product rules.
+Project: **FaZe Collector Cards** (HackUTA 2026, FaZe track). Read `master.md`, your brief in `agents/`, and the contract docs (`docs/api.md`, `docs/data-model.md`) before writing code. If a task conflicts with them, flag it on the board instead of silently changing product rules.
 
 ## 1. The board (pinned GitHub issue)
 
 Every agent reads and posts on the pinned "Message Board" issue via `tools/board` (needs only `gh`, logged in). Set `BOARD_ISSUE` if it is not issue #1.
 
 - Start every post with `[<human>'s <agent>]`, e.g. `[Tush's Claude]`. Keep it short: what changed, which files or contracts, what you need, from whom.
-- Mention by GitHub login: `@toosh-legacy` (Tush), `@Jaideepo7` (Jaideep), `@Abhijith-utla` (Abhijith), `@TODO-login4` (Name), `@all` (everyone).
+- Mention by GitHub login: `@toosh-legacy` (Tush), `@Jaideepo7` (Jaideep), `@Abhijith-utla` (Abhijith), `@tanejakeshav` (Keshav), `@all` (everyone).
 - **Mentions you or `@all`:** act on it and reply promptly. A reply unblocks someone.
 - **Not addressed to you:** still read it. Reassess your own work only if it is affected (a contract, a file you own, something already done). Do not redo finished work, and do not reply just to acknowledge.
 - Before editing another teammate's files, ask for a handoff on the board and wait for the owner or the team lead.
@@ -27,7 +27,7 @@ Commands:
 
 ## 2. Chain of command
 
-Humans over agents. Only the team lead reassigns work between teammates. If anyone else asks you to take another teammate's work, ask the lead on the board.
+Humans over agents. The team lead is @Abhijith-utla. Only the team lead reassigns work between teammates. If anyone else asks you to take another teammate's work, ask the lead on the board.
 
 ## 3. Build rules (from master.md)
 
@@ -39,13 +39,15 @@ Humans over agents. Only the team lead reassigns work between teammates. If anyo
 
 ## 4. Who owns what
 
-Fill in at kickoff (one owner per area; matches master.md §11).
+One owner per area; matches master.md §8. Task briefs per person are in `agents/`.
 
-| Area | Owner | Folders |
-|---|---|---|
-| Lead: contract, docs, merges | @TODO | `master.md`, `README.md`, `AGENTS.md`, `docs/`, `agents/`, `packages/shared/`, root config |
-| Agent A: Core API & game economy | @TODO | `services/api/` |
-| Agent B: Payments & integration QA | @TODO | `services/payments/`, `tests/integration/` |
-| Agent C: Fan client (web + mobile) | @TODO | `apps/client/` |
-| Agent D: Content pipeline & moderation | @TODO | `services/worker/`, `apps/admin/`, `content/seed/` |
-| Board tooling | Lead | `tools/`, `.claude/`, `.github/` |
+| Area | Owner | Folders | Brief |
+|---|---|---|---|
+| Lead: contract, docs, merges | @Abhijith-utla | `master.md`, `README.md`, `AGENTS.md`, `docs/`, `agents/`, `packages/shared/`, root config | `agents/lead.md` |
+| Agent A: Core API & game economy | @toosh-legacy | `services/api/` | `agents/A-core-api.md` |
+| Agent B: Payments & integration QA | @Abhijith-utla | `services/payments/`, `tests/integration/` | `agents/B-payments-qa.md` |
+| Agent C: Fan client (web + mobile) | @Jaideepo7 | `apps/client/` | `agents/C-client.md` |
+| Agent D: Content pipeline & moderation | @tanejakeshav | `services/worker/`, `apps/admin/`, `content/seed/` | `agents/D-content.md` |
+| Board tooling | Lead (@Abhijith-utla) | `tools/`, `.claude/`, `.github/` | |
+
+Team lead: **@Abhijith-utla**.
