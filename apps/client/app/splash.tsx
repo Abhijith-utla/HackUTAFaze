@@ -116,7 +116,7 @@ export default function Splash({ children }: { children: React.ReactNode }) {
           </svg>
           <div className="faze-splash-mark">
             {imgFailed
-              ? <span className="faze-splash-text">FAZE VAULT</span>
+              ? <span className="faze-splash-text">FAZE CLIPDECK</span>
               // eslint-disable-next-line @next/next/no-img-element
               : <img ref={img} src="/brand/faze-wordmark-white.png" alt="FaZe Clan" onError={() => setImgFailed(true)} />}
           </div>

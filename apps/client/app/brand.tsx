@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 /** Original toolkit mark. Never recreate or recolor a missing brand asset. */
-export default function Brand({ label = 'Vault' }: { label?: string }) {
+export default function Brand({ label = 'ClipDeck' }: { label?: string }) {
   const [missing, setMissing] = useState(false);
   const mark = useRef<HTMLImageElement>(null);
   useEffect(() => {

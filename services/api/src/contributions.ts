@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { fail } from "./errors.js";
 
 const SYSTEM_PROGRAM = "11111111111111111111111111111111";
-const DEVNET_GENESIS_HASH = "EtWTRABZaYq6iMfeYKouRu166VU2xqa1";
+const DEVNET_GENESIS_HASH = "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG";
 const BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
 export type ContributionPayout = {

@@ -164,10 +164,10 @@ export default function Watch() {
 
   return <div className="watch-root">
     <header>
-      <a className="brand" href="/">F<span>Λ</span>ZE <b>VAULT</b></a>
+      <a className="brand" href="/">F<span>Λ</span>ZE <b>CLIPDECK</b></a>
       <div className="account">
         {me && <strong>{me.balance.toLocaleString()} <small>COINS</small></strong>}
-        <a className="watch-back" href="/">← Back to vault</a>
+        <a className="watch-back" href="/">← Back to ClipDeck</a>
       </div>
     </header>
     <main className="watch">
@@ -235,7 +235,7 @@ export default function Watch() {
 
       <section className="watch-cta panel">
         <div><p className="eyebrow">WHILE YOU WATCH</p><h2>{pack ? pack.name : 'Open a pack'}</h2>
-          <p>{pack ? `${pack.cardsPerPack} cards · ${pack.priceCoins} coins · published odds v${pack.oddsVersion}` : 'Packs open in the vault store. Every pull is decided by the server.'}</p></div>
+          <p>{pack ? `${pack.cardsPerPack} cards · ${pack.priceCoins} coins · published odds v${pack.oddsVersion}` : 'Packs open in the ClipDeck store. Every pull is decided by the server.'}</p></div>
         <a className="watch-button primary" href="/">{me ? 'Open a pack in the store →' : 'Sign in to open a pack →'}</a>
       </section>
 
@@ -258,6 +258,6 @@ export default function Watch() {
         </>}
       </section>
     </main>
-    <footer>FΛZE VAULT / DEMO COLLECTIBLES <span>Stream embedded from Twitch. Hype is simulated engagement.</span></footer>
+    <footer>FΛZE CLIPDECK / DEMO COLLECTIBLES <span>Stream embedded from Twitch. Hype is simulated engagement.</span></footer>
   </div>;
 }

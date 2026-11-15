@@ -2,11 +2,12 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent }  from 'react';
 import type { CardInstance } from '@faze/shared';
 import { art } from '../lib/api';
+import { packCoverForName } from '../lib/pack-covers';
 import { DecodeText, GlitchGhosts, GlitchOverlay, RARITY_RANK, glitchLevel, trackSpotlight } from './pack-fx';
 import './pack-fx.css';
 
 const colors = { common: '#a9bed1', rare: '#42baff', epic: '#be75ff', legendary: '#ffd270' };
-export default function PackOpening({ cards, onClose }: { cards: CardInstance[]; packName?: string; onClose: () => void }) {
+export default function PackOpening({ cards, packName, onClose }: { cards: CardInstance[]; packName?: string; onClose: () => void }) {
   const [stage, setStage] = useState<'sealed' | 'opening' | 'cards' | 'summary'>('sealed');
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -76,20 +77,21 @@ export default function PackOpening({ cards, onClose }: { cards: CardInstance[];
   const glitching = stage === 'cards' && level && glitch === current.id ? level : null;
   return <div className={`pack-cinema cinema-${stage}${glitching ? ` fx-glitching fx-gl-${glitching}` : ''}`} style={{ '--rarity-glow': color } as CSSProperties}>
     <div ref={panel} tabIndex={-1} className="cinema-dialog" role="dialog" aria-modal="true" aria-labelledby="opening-title">
-      <div className="cinema-top"><span>FAZE VAULT / PACK REVEAL</span><button onClick={onClose} aria-label="Close pack reveal">Close ×</button></div>
+      <div className="cinema-top"><span>FAZE CLIPDECK / PACK REVEAL</span><button onClick={onClose} aria-label="Close pack reveal">Close ×</button></div>
       <div className="cinema-floor" aria-hidden="true" />
       <div className="cinema-copy"><p className="eyebrow">{stage === 'summary' ? 'YOUR COLLECTION JUST GOT STRONGER' : 'EVERY PACK HAS A STORY'}</p><h2 id="opening-title">{stage === 'sealed' ? 'Rip. Reveal. Collect.' : stage === 'opening' ? 'Seal removed.' : stage === 'summary' ? 'Meet your new lineup.' : flipped ? current.card.name : 'Who’s inside?'}</h2><p aria-live="polite">{stage === 'cards' ? `Card ${index + 1} of ${shown.length}${flipped ? ` · ${current.card.rarity}` : ' · Tap to reveal'}` : stage === 'sealed' ? 'Pinch the notched corner. Pull right to tear across the foil.' : 'These cards are already safely added to your collection.'}</p></div>
-      {(stage === 'sealed' || stage === 'opening') && <div className={`cinema-booster ${stage === 'opening' ? 'tearing' : ''} ${tearProgress > 0 && stage === 'sealed' ? 'is-dragging' : ''}`} style={{ '--tear-progress': tearProgress } as CSSProperties}>
+      {(stage === 'sealed' || stage === 'opening') && <div className={`cinema-booster has-cover ${stage === 'opening' ? 'tearing' : ''} ${tearProgress > 0 && stage === 'sealed' ? 'is-dragging' : ''}`} style={{ '--tear-progress': tearProgress, '--pack-cover': `url(${packCoverForName(packName ?? '')})` } as CSSProperties}>
+        <span className="booster-cover" aria-hidden="true" />
         <span className="booster-mouth" aria-hidden="true"><span className="booster-inner-cards" /></span>
         <svg className="booster-tear-seam" viewBox="0 0 250 18" preserveAspectRatio="none" aria-hidden="true"><polyline points={seamPoints} /></svg>
         <button className="booster-top-seal" disabled={stage !== 'sealed'} onPointerDown={startTear} onPointerMove={moveTear} onPointerUp={endTear} onPointerCancel={() => { if (drag.current) { drag.current = null; } }} onLostPointerCapture={() => { if (drag.current) { drag.current = null; } }} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); removeSeal(); } }} aria-label="Tear the notched foil corner to the right, or press Enter or Space."><span className="seal-intact" aria-hidden="true"><span className="seal-foil"><span>COLLECTOR SERIES</span></span></span><span className="seal-loose" aria-hidden="true"><span className="seal-foil"><span>COLLECTOR SERIES</span></span></span><span className="seal-grip" aria-hidden="true"><span>PINCH</span><b>→</b></span></button>
-        <span className="booster-seal">COLLECTOR SERIES / DEMO</span><span className="booster-logo">VAULT</span><span className="booster-vault">COLLECTOR SERIES</span><span className="booster-count">{cards.length} CARDS INSIDE</span><span className="booster-tear">{stage === 'opening' ? 'TOP REMOVED' : 'PINCH THE CORNER · PULL RIGHT'}</span>
+        <span className="booster-seal">COLLECTOR SERIES / DEMO</span><span className="booster-logo">CLIPDECK</span><span className="booster-vault">COLLECTOR SERIES</span><span className="booster-count">{cards.length} CARDS INSIDE</span><span className="booster-tear">{stage === 'opening' ? 'TOP REMOVED' : 'PINCH THE CORNER · PULL RIGHT'}</span>
       </div>}
       {stage === 'cards' && <div className={`cinema-card-stage fx-stage fx-r-${current.card.rarity}${index === 0 ? ' fx-first' : ''}${flipped ? ' fx-revealed' : ''}`} key={current.id}>
         <span className="fx-deck" aria-hidden="true">{shown.slice(index + 1, index + 5).map((item, n) => <span key={item.id} style={{ '--i': n } as CSSProperties} />)}</span>
         {flipped && <div className="rarity-rays" aria-hidden="true" />}
         <button className={`cinema-flipper ${flipped ? 'is-flipped' : ''}`} onClick={() => flipped ? next() : reveal()} onPointerMove={trackSpotlight} aria-label={flipped ? `${current.card.name}, ${current.card.rarity}. Continue.` : 'Reveal card'}>
-          <span className="cinema-card-back"><b>VAULT</b><span>VAULT / COLLECTOR CARD</span><small>TAP TO REVEAL</small></span>
+          <span className="cinema-card-back"><b>CLIPDECK</b><span>CLIPDECK / COLLECTOR CARD</span><small>TAP TO REVEAL</small></span>
           <span className="cinema-card-front"><span className="cinema-rarity" data-text={current.card.rarity}>{current.card.rarity}</span><img src={art(current.card.artUrl)} alt={current.card.name} /><span className="cinema-card-label"><small>{current.card.fazeMember}</small><strong data-text={current.card.name}><DecodeText text={current.card.name} play={flipped && current.card.rarity === 'legendary'} /></strong><span>POWER {current.card.basePower} · SERIAL #{current.serial}</span></span><span className="card-foil" aria-hidden="true" /></span>
         </button>
         {glitching && <GlitchGhosts src={art(current.card.artUrl)} />}

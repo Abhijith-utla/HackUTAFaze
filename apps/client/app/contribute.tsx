@@ -70,7 +70,7 @@ export default function Contribute({ displayName }: Props) {
     <section className="contribute-page" aria-labelledby="contribute-title">
       <div className="contribute-intro">
         <p className="eyebrow">FAZE COMMUNITY / YOUR MOMENT</p>
-        <h2 id="contribute-title">Put the moment back in the vault.</h2>
+        <h2 id="contribute-title">Put the moment back in the deck.</h2>
         <p>Pitch a viral clip, a career-defining play, or a nostalgic FaZe memory. The team reviews every idea before it can become a card.</p>
       </div>
 

@@ -167,3 +167,12 @@
   .pack-cinema .fx-stage .cinema-flipper.is-flipped{transform:rotateY(180deg)}
 }
 @keyframes fx-calm{0%{opacity:0}35%{opacity:.7}100%{opacity:0}}
+
+/* Pack cover art as the booster: body + the tear-off strip carry the selected pack's cover. */
+.pack-cinema .cinema-booster.has-cover{--bw:260px}
+@media(max-width:650px){.pack-cinema .cinema-booster.has-cover{--bw:235px}}
+.pack-cinema .has-cover::before,.pack-cinema .has-cover::after{display:none}
+.pack-cinema .has-cover .booster-cover{position:absolute;left:0;right:0;top:62px;bottom:0;background:var(--pack-cover) center bottom/var(--bw) auto no-repeat;border-radius:0 0 6px 6px}
+.pack-cinema .has-cover .seal-foil{background:var(--pack-cover) 0 0/var(--bw) auto no-repeat}
+.pack-cinema .has-cover .seal-foil>span,.pack-cinema .has-cover :is(.booster-seal,.booster-logo,.booster-vault,.booster-count){display:none}
+.pack-cinema .has-cover .booster-tear{color:#fff;text-shadow:0 1px 6px #000c;z-index:4}

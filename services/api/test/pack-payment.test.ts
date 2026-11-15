@@ -35,7 +35,7 @@ it('RPC verification requires devnet, finalized successful transfer, correct pay
     const order = { reference, recipient: treasury, lamports: 5000000, pack_snapshot: { payerWallet: payer } } as PackOrder;
     const base = { meta: { err: null }, transaction: { message: { accountKeys: [{ pubkey: reference, signer: false }, { pubkey: payer, signer: true }], instructions: [{ programId: '11111111111111111111111111111111', parsed: { type: 'transfer', info: { source: payer, destination: treasury, lamports: 5000000 } } }] } } };
     let current: any = base;
-    let genesis = 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1';
+    let genesis = 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG';
     const mock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => { const body = JSON.parse(init?.body as string); if (body.method === 'getTransaction')
         expect(body.params[1].commitment).toBe('finalized'); return new Response(JSON.stringify({ result: body.method === 'getGenesisHash' ? genesis : current }), { status: 200 }); });
     await expect(livePackChain.verify(order, 'receipt')).resolves.toBeUndefined();

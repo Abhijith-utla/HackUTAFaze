@@ -44,14 +44,23 @@ export function clearPackCheckout(userId: string, packId: string, purchaseId: st
 }
 catch { /* A damaged local hint cannot affect server fulfillment. */ } }
 export async function buyPack(packId: string, userId: string, onStatus: (status: string) => void) {
-    const phantom = (window as unknown as {
+    const w = window as unknown as {
         phantom?: {
             solana?: Phantom;
         };
-    }).phantom?.solana;
-    if (!phantom?.isPhantom)
-        throw Error('Install Phantom and enable Solana Devnet to buy a pack.');
-    const { publicKey } = await phantom.connect();
+        solana?: Phantom;
+    };
+    const phantom = w.phantom?.solana?.isPhantom ? w.phantom.solana : w.solana?.isPhantom ? w.solana : undefined;
+    if (!phantom)
+        throw Error('Phantom not found. Install the Phantom extension, unlock it, switch it to Solana Devnet (Settings > Developer Settings > Testnet Mode), then reload.');
+    onStatus('Connecting to Phantom…');
+    let publicKey: PublicKey;
+    try {
+        ({ publicKey } = await phantom.connect());
+    }
+    catch (e) {
+        throw Error((e as { code?: number }).code === 4001 ? 'Wallet connection was declined in Phantom. Approve the connect prompt to buy a pack.' : 'Could not connect to Phantom. Unlock it and try again.');
+    }
     const storageKey = `faze.pack.${userId}.${packId}`;
     let saved: SavedPackCheckout | null = null;
     try {
@@ -77,6 +86,20 @@ export async function buyPack(packId: string, userId: string, onStatus: (status:
         throw Error('Only Solana devnet pack payments are supported.');
     if (order.simulated)
         throw Error('Wallet payments are disabled while PAYMENTS_SIMULATE=1. Set it to 0 on the server for Phantom devnet payments.');
+    if (saved.attempted && !saved.signature) {
+        // A previous attempt never produced a signature. If the chain has nothing for this order's reference, it is safe to send again.
+        try {
+            const result = await confirmPackPurchase(order.purchaseId);
+            clearPackCheckout(userId, packId, order.purchaseId);
+            return result;
+        }
+        catch (e) {
+            if (!(e instanceof ApiError) || e.status !== 409)
+                throw e;
+            saved.attempted = false;
+            save();
+        }
+    }
     if (!saved.attempted) {
         const connection = new Connection(process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.devnet.solana.com', 'confirmed');
         const transfer = SystemProgram.transfer({ fromPubkey: publicKey, toPubkey: new PublicKey(order.recipient), lamports: order.lamports });
@@ -102,7 +125,9 @@ export async function buyPack(packId: string, userId: string, onStatus: (status:
                 save();
                 throw Error('Payment cancelled in Phantom. No pack was opened.');
             }
-            throw Error('Payment status is uncertain. Use Check payment below; do not send another payment.');
+            saved.attempted = false;
+            save();
+            throw Error(`Phantom could not send the payment: ${(e as { message?: string }).message || 'unknown error'}. Make sure Phantom is on Solana Devnet and try again; nothing was sent.`);
         }
     }
     onStatus('Waiting for finalized payment. Your pack will open after server verification.');

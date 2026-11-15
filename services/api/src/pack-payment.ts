@@ -61,7 +61,7 @@ export const livePackChain: PackChain = {
                 fail('VALIDATION', 'Invalid simulated pack payment');
             return;
         }
-        if (await rpc('getGenesisHash', []) !== 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1')
+        if (await rpc('getGenesisHash', []) !== 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG')
             fail('VALIDATION', 'Configured RPC is not Solana devnet');
         const t = await rpc('getTransaction', [signature, { encoding: 'jsonParsed', commitment: 'finalized', maxSupportedTransactionVersion: 0 }]);
         if (!t)
