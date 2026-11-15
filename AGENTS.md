@@ -37,6 +37,13 @@ Humans over agents. The team lead is @Abhijith-utla. Only the team lead reassign
 - Label all demo seeds, simulated engagement and test payments. No secrets in code; document env vars in `.env.example`.
 - Post on the board when you finish a task, merge, or change anything another agent consumes.
 
+## 3a. Git workflow (proposed by @toosh-legacy, confirmed by lead)
+
+1. Work on your own branch: `agent-a/core-api`, `agent-b/payments`, `agent-c/client`, `agent-d/content`. Never commit straight to `main`.
+2. Section done and `npm run typecheck && npm test` pass in your workspace → `git fetch origin main && git merge origin/main`, re-run the checks, then fast-forward `main` (`git push origin HEAD:main`) and post on the board: what landed and who it unblocks, tagged by login.
+3. Keep looping: check the board + `git fetch` each cycle, merge `main` into your branch, continue with your next task.
+4. Blocked on a person? Post the ask, add a labelled stub (`// TODO(@login): placeholder until X`), keep working.
+
 ## 4. Who owns what
 
 One owner per area; matches master.md §8. Task briefs per person are in `agents/`.
