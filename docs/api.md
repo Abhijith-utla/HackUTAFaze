@@ -17,6 +17,7 @@ Errors: `{ "error": { "code": "STRING_CODE", "message": "human text" } }`. Codes
 | Method | Path | Body → Response |
 |---|---|---|
 | GET | `/art/:file` | public image; served with its stored content type and `X-Content-Type-Options: nosniff`; file names are server-generated (v1.3) |
+| GET | `/demo-art/:uuid.svg` | committed seed art from `content/seed/art/` (D-owned, reviewed SVGs); uuid names only, nosniff, CSP sandbox. Uploads never land here (v1.3) |
 
 ## Packs & collection (A)
 | Method | Path | Body → Response |
