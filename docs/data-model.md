@@ -36,3 +36,12 @@ PostgreSQL, one database shared by all services (local docker by default; manage
 Follow the [Tiger Data quickstart](https://www.tigerdata.com/docs/get-started/quickstart/quickstart-5-minutes): create a Tiger Cloud service, securely save its downloaded database configuration, configure DATABASE_URL from the service URL, and verify SELECT CURRENT_DATE before migrations. Never commit downloaded credentials.
 
 Keep economy, inventory, purchases, moderation and jobs as ordinary PostgreSQL tables. Hypertables for engagement time-series are optional and require a lead-reviewed migration covering partitioning and unique-key compatibility.
+
+## Control Room tables (lead, v1.6 — `services/api/migrations/003_control_room.sql`)
+| Table | Key columns | Writer |
+|---|---|---|
+| `archive_moments` | key (unique), occurred_on, precision (`day`\|`month`\|`year`), title, summary, members[], tags[], source (PDF page), citations[], search (tsvector) | loaded from `content/archive/faze-timeline.json` |
+| `opportunities` | moment_id, score, signals (jsonb), recommendation, status (`new`\|`accepted`\|`dismissed`), scan_id | KAM scan |
+| `campaigns` | opportunity_id, moment_id, name, pitch, status (`draft`\|`pending_approval`\|`approved`\|`rejected`\|`live`\|`ended`), generator, rights_confirmed, rights_note, pack_price_coins, set_id, pack_id, created_by, reviewed_by, launched_at, ended_at, demo | Control Room |
+| `campaign_assets` | campaign_id, position, name, faze_member, rarity, lore, art_url, base_power, max_supply, duplicate_of, similarity, card_id | Studio; card_id set at launch |
+| `audit_log` | actor_id, action, entity, entity_id, detail (jsonb) — append-only | every Control Room action |

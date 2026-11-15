@@ -13,11 +13,12 @@ import { tradesRoutes } from "./routes/trades.js";
 import { leaderboardRoutes } from "./routes/leaderboard.js";
 import { artRoutes } from "./routes/art.js";
 import { adminRoutes } from "./routes/admin.js";
+import { controlRoutes } from "./routes/control.js"; // FaZe Control Room (lead, contract v1.6)
 
 export async function buildApp() {
   const app = Fastify({ logger: process.env.VITEST ? false : { level: "info" } });
   await app.register(cookie);
-  await app.register(cors, { origin: config.clientOrigins, credentials: true });
+  await app.register(cors, { origin: config.clientOrigins, credentials: true, methods: ["GET", "HEAD", "POST", "PATCH", "DELETE"] });
   registerErrorHandler(app);
 
   app.get("/health", async () => ({ ok: true }));
@@ -38,6 +39,7 @@ export async function buildApp() {
   await app.register(tradesRoutes);
   await app.register(leaderboardRoutes);
   await app.register(adminRoutes);
+  await app.register(controlRoutes);
   await artRoutes(app);
   return app;
 }
