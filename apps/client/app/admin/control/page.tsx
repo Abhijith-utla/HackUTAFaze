@@ -1,6 +1,5 @@
 "use client";
-// Control Room home: minimal, high-impact. One sentence, one next move, one live drop, three numbers,
-// and only the things that need a human. Everything else is in ⌘K / the sidebar.
+// Analytics is the Control Room default: one sentence, one next move, one live drop and three numbers.
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -102,7 +101,7 @@ export default function Home() {
         </p>
         <h1 className="hm-headline">{headline}</h1>
         <p className="hm-sub">{k ? <>{n(k.collectors)} collectors · {n(k.newCollectors24h)} joined today · {n(k.solReceived, 2)} devnet SOL received</> : " "}</p>
-        <p className="hm-hint">Press <kbd>⌘</kbd><kbd>K</kbd> to jump anywhere.</p>
+        <p className="hm-hint">Live collector, drop, and devnet payment signals.</p>
       </section>
 
       <section className="hm-pair">
@@ -189,7 +188,7 @@ export default function Home() {
         ))}
       </section>
 
-      <p className="hm-foot"><Link href="/admin/control/analytics">Full analytics</Link> · <Link href="/admin/control/fans">Fans</Link> · <Link href="/admin/control/revenue">Revenue</Link> · <Link href="/admin/control/trust">Trust</Link></p>
+      <p className="hm-foot">Operational detail stays available through direct links; this surface is for the signals that change a decision.</p>
       {(ov.error || kam.error) && <p className="cr-error" role="alert">{ov.error || kam.error}</p>}
       {toast && <Toast msg={toast.msg} kind={toast.kind} onDone={() => setToast(null)} />}
     </div>

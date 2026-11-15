@@ -2,62 +2,20 @@
 // FaZe Control Room — Business Operations shell + primitives (no chart dependency; plain SVG).
 import Link from "next/link";
 import Brand from "../../../brand";
-import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState, type ReactNode } from "react";
 import { api, RARITY_COLORS, SIGNAL_COLORS, STATUS_LABEL, type Campaign, type Signal } from "./lib";
-import { CommandPalette } from "./command";
-
-// One admin, one sidebar. Content views live at /admin/control/content?view=…
-const GROUPS: { title: string; items: { href: string; label: string; code: string; view?: string }[] }[] = [
-  { title: "COMMAND", items: [
-    { href: "/admin/control", label: "Home", code: "01" },
-    { href: "/admin/control/analytics", label: "Analytics", code: "A" },
-    { href: "/admin/control/kam", label: "KAM Intelligence", code: "02" },
-    { href: "/admin/control/scout", label: "Moment Scout", code: "03" },
-  ] },
-  { title: "CAMPAIGNS", items: [
-    { href: "/admin/control/studio", label: "Moment Studio", code: "04" },
-    { href: "/admin/control/campaigns", label: "Campaign Command", code: "05" },
-  ] },
-  { title: "INTELLIGENCE", items: [
-    { href: "/admin/control/fans", label: "Fan Intelligence", code: "06" },
-    { href: "/admin/control/revenue", label: "Revenue & Sponsors", code: "07" },
-  ] },
-  { title: "CONTENT", items: [
-    { href: "/admin/control/content?view=sets", label: "Sets", code: "S", view: "sets" },
-    { href: "/admin/control/content?view=cards", label: "Cards", code: "C", view: "cards" },
-    { href: "/admin/control/content?view=packs", label: "Packs", code: "P", view: "packs" },
-    { href: "/admin/control/content?view=moderation", label: "Moderation", code: "M", view: "moderation" },
-    { href: "/admin/control/content?view=engagement", label: "Engagement", code: "E", view: "engagement" },
-  ] },
-  { title: "TRUST", items: [
-    { href: "/admin/control/trust", label: "Trust & Operations", code: "08" },
-    { href: "/admin/control/audit", label: "Audit log", code: "09" },
-  ] },
-];
+import { PRIMARY_TABS } from "./navigation";
 
 function Nav() {
   const path = usePathname();
-  const params = useSearchParams();
-  const view = params.get("view") ?? "sets";
   return (
-    <>
-      {GROUPS.map((g, gi) => (
-        <div key={g.title} className="cr-group">
-          <p className={`eyebrow${gi ? " cr-gap" : ""}`}>{g.title}</p>
-          {g.items.map((n) => {
-            const base = n.href.split("?")[0];
-            const on = n.view ? path === base && view === n.view : base === "/admin/control" ? path === base : path.startsWith(base);
-            return (
-              <Link key={n.href} href={n.href} className={`cr-nav${on ? " on" : ""}`} aria-current={on ? "page" : undefined}>
-                <span className="cr-code" aria-hidden="true">{n.code}</span>
-                {n.label}
-              </Link>
-            );
-          })}
-        </div>
-      ))}
-    </>
+    <nav className="cr-tabs" aria-label="Control Room">
+      {PRIMARY_TABS.map((tab) => {
+        const on = tab.href === "/admin/control" ? path === tab.href : path.startsWith(tab.href);
+        return <Link key={tab.href} href={tab.href} className={`cr-tab${on ? " on" : ""}`} aria-current={on ? "page" : undefined}>{tab.label}</Link>;
+      })}
+    </nav>
   );
 }
 
@@ -100,9 +58,6 @@ function SignIn({ onDone }: { onDone: (me: { user: { displayName: string; role: 
 export function Shell({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<{ user: { displayName: string; role: string } } | null | "none">(null);
   const [down, setDown] = useState("");
-  const [menu, setMenu] = useState(false);
-  const path = usePathname();
-  useEffect(() => setMenu(false), [path]);
   useEffect(() => {
     api("/me").then(setMe).catch((e: Error & { status?: number }) => (e.status === 0 ? setDown(e.message) : setMe("none")));
   }, []);
@@ -121,30 +76,16 @@ export function Shell({ children }: { children: ReactNode }) {
   if (me === "none" || me.user.role !== "admin") return <SignIn onDone={setMe} />;
   return (
     <>
-      <header>
+      <header className="cr-header">
         <Brand label="Control room" />
+        <Nav />
         <div className="staff">
-          <button className="quiet cr-menu" aria-expanded={menu} aria-controls="cr-aside" onClick={() => setMenu((m) => !m)}>{menu ? "Close" : "Menu"}</button>
-          <span className="cr-wide">{me.user.displayName}</span>
-          <span className="badge cr-wide">DEMO</span>
-          <span className="badge live cr-wide">DEVNET</span>
-          <button className="quiet cr-kbd" onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))} aria-label="Open command palette">⌘K</button>
-          <Link href="/" className="cr-muted cr-small cr-wide">Fan app ↗</Link>
+          <span className="cr-admin-name">{me.user.displayName}</span>
+          <span className="badge live">DEVNET</span>
           <button className="quiet" onClick={async () => { await api("/auth/logout", "POST").catch(() => {}); setMe("none"); }}>Sign out</button>
         </div>
       </header>
-      <div className="shell">
-        <aside id="cr-aside" className={`cr-aside${menu ? " open" : ""}`}>
-          <Suspense fallback={null}><Nav /></Suspense>
-          <p className="aside-note">
-            Demo data · Solana devnet
-            <br />
-            Every action is server-checked and audit-logged.
-          </p>
-        </aside>
-        <main className="cr-main">{children}</main>
-      </div>
-      <CommandPalette />
+      <main className="cr-main">{children}</main>
     </>
   );
 }
