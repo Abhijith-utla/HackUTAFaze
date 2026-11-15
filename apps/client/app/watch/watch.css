@@ -53,7 +53,7 @@
 .watch-root .watch-fallback p:not(.eyebrow) { color: var(--w-muted); max-width: 46ch; margin: 0 0 8px; font-size: 14px; }
 
 /* Branded offline state: below the player, never on top of it. */
-.watch-root .watch-offline { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 12px; padding: 18px 20px; border: 1px solid var(--w-line); border-left: 3px solid var(--w-red); border-radius: 8px; background: var(--w-panel); }
+.watch-root .watch-offline { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 12px; padding: 18px 20px; border: 1px solid color-mix(in srgb, var(--w-red) 45%, var(--w-line)); border-radius: 8px; background: linear-gradient(90deg, color-mix(in srgb, var(--w-red) 12%, var(--w-panel)), var(--w-panel) 60%); }
 .watch-root .watch-offline h2 { margin: 4px 0; font-size: 22px; }
 .watch-root .watch-offline p:not(.eyebrow) { margin: 0; color: var(--w-muted); font-size: 14px; }
 
@@ -72,10 +72,10 @@
 .watch-root .watch-chips button[aria-pressed='true'] { border-color: var(--w-red); color: #fff; background: #e4002b26; }
 .watch-root .watch-chips .watch-chip-clear { color: var(--w-muted); }
 .watch-root .watch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
-.watch-root .watch-card { border: 1px solid var(--w-line); border-top: 3px solid var(--p-common, #A9BED1); border-radius: 8px; padding: 8px; background: var(--w-panel); min-width: 0; }
-.watch-root .watch-card.rare { border-top-color: var(--p-rare, #42BAFF); }
-.watch-root .watch-card.epic { border-top-color: var(--p-epic, #BE75FF); }
-.watch-root .watch-card.legendary { border-top-color: var(--p-legendary, #FFD270); }
+.watch-root .watch-card { border: 1px solid color-mix(in srgb, var(--p-common, #A9BED1) 55%, var(--w-line)); border-radius: 8px; padding: 8px; background: var(--w-panel); min-width: 0; }
+.watch-root .watch-card.rare { border-color: color-mix(in srgb, var(--p-rare, #42BAFF) 55%, var(--w-line)); }
+.watch-root .watch-card.epic { border-color: color-mix(in srgb, var(--p-epic, #BE75FF) 55%, var(--w-line)); }
+.watch-root .watch-card.legendary { border-color: color-mix(in srgb, var(--p-legendary, #FFD270) 55%, var(--w-line)); }
 .watch-root .watch-card-art { position: relative; aspect-ratio: 5 / 6; overflow: hidden; border-radius: 6px; background: var(--w-well); }
 .watch-root .watch-card-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .watch-root .watch-card h4 { margin: 6px 0 2px; font-size: 14px; overflow-wrap: anywhere; }
