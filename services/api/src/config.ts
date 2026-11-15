@@ -17,6 +17,7 @@ function required(name: string, testFallback?: string): string {
 }
 
 export const config = {
+  uploadDir: path.resolve(process.env.UPLOAD_DIR || path.join(here, "..", "..", "..", ".data", "uploads")),
   databaseUrl: databaseUrlFor(process.env, isTest),
   jwtSecret: required("JWT_SECRET", "test-jwt-secret"),
   internalSecret: required("INTERNAL_SECRET", "test-internal-secret"),
