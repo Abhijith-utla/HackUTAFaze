@@ -108,13 +108,23 @@ export function scoreMoment(m: ReturnType<typeof toMoment>, stats: Map<string, M
   return { score, signals, recommendation };
 }
 
+/** Moments that should never become a fan collectible drop (legal, gambling, health, harm). */
+const UNFIT = /\b(lawsuit|sues|sued|court|arrest|betting|gambling|igaming|casino|depression|suicide|died|death|overdose|harass|assault|brawl|feud|scam|layoffs?|delist|bankrupt)/i;
+export function collectibleFit(m: { title: string; summary: string; tags: string[]; members: string[] }): { ok: boolean; reason: string } {
+  if (m.tags.includes("controversy")) return { ok: false, reason: "controversy" };
+  const hit = UNFIT.exec(`${m.title} ${m.summary}`);
+  if (hit) return { ok: false, reason: `sensitive topic: ${hit[1].toLowerCase()}` };
+  if (!m.members.length && m.tags.includes("business")) return { ok: false, reason: "business deal with no featured member" };
+  return { ok: true, reason: "" };
+}
+
 /** Scores every archive moment, stores the top `keep` as a new scan, returns them ranked. */
 export async function runScan(db: Db, now = new Date(), keep = 12) {
   const { by, totalPulls7d } = await memberStats(db);
   const moments = (await db.query("SELECT * FROM archive_moments")).rows.map(toMoment);
   const used = new Set((await db.query<{ moment_id: string }>("SELECT moment_id FROM campaigns WHERE moment_id IS NOT NULL")).rows.map((r) => r.moment_id));
   const ranked = moments
-    .filter((m) => !used.has(m.id))
+    .filter((m) => !used.has(m.id) && collectibleFit(m).ok)
     .map((m) => ({ moment: m, ...scoreMoment(m, by, totalPulls7d, now) }))
     .sort((a, b) => b.score - a.score)
     .slice(0, keep);
@@ -127,5 +137,5 @@ export async function runScan(db: Db, now = new Date(), keep = 12) {
     );
     out.push({ id: ins.rows[0].id as string, status: ins.rows[0].status as string, score: r.score, signals: r.signals, recommendation: r.recommendation, moment: r.moment, scanId, createdAt: ins.rows[0].created_at });
   }
-  return { scanId, scanned: moments.length, opportunities: out };
+  return { scanId, scanned: moments.length, excluded: moments.filter((m) => !collectibleFit(m).ok).length, opportunities: out };
 }

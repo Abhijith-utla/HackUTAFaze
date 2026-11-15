@@ -202,6 +202,8 @@ export default function Page() {
               </span>
             </button>
           ))}
+          <p className="eyebrow" style={{ marginTop: 28 }}>BUSINESS OPERATIONS</p>
+          <a className="cr-link" href="/control">KAM, Moment Studio, campaigns ↗</a>
           <p className="aside-note">
             Demo content • Solana devnet
             <br />

@@ -9,7 +9,7 @@ import { pool, tx, type Db } from "../db.js";
 import { fail } from "../errors.js";
 import { ensureArchive, searchArchive, toMoment } from "../control/archive.js";
 import { runScan } from "../control/kam.js";
-import { campaignOdds, DUPLICATE_THRESHOLD, findDuplicate, ollamaLore, templateDrafts } from "../control/studio.js";
+import { campaignOdds, DUPLICATE_THRESHOLD, findDuplicate, ollamaLore, shortTitle, templateDrafts } from "../control/studio.js";
 
 const Id = z.object({ id: z.string().uuid() });
 const AssetParams = z.object({ id: z.string().uuid(), assetId: z.string().uuid() });
@@ -205,7 +205,7 @@ export async function controlRoutes(app: FastifyInstance) {
       const m = toMoment({ ...o.rows[0], id: o.rows[0].m_id });
       const camp = await c.query(
         "INSERT INTO campaigns (opportunity_id, moment_id, name, pitch, created_by) VALUES ($1,$2,$3,$4,$5) RETURNING id",
-        [opportunityId, m.id, `Moments: ${m.title}`.slice(0, 120), o.rows[0].recommendation, s.sub],
+        [opportunityId, m.id, `Moments: ${shortTitle(m.title, 48)}`, o.rows[0].recommendation, s.sub],
       );
       await c.query("UPDATE opportunities SET status='accepted' WHERE id=$1", [opportunityId]);
       const generator = await generateAssets(c, camp.rows[0].id, m);
@@ -354,9 +354,14 @@ export async function controlRoutes(app: FastifyInstance) {
     ).rows[0];
     const series = (
       await pool.query(
-        `SELECT to_char(date_trunc('minute', created_at AT TIME ZONE 'UTC'), 'YYYY-MM-DD"T"HH24:MI:00"Z"') AS t, count(*)::int AS n
-         FROM pulls WHERE pack_id = $1 GROUP BY 1 ORDER BY 1`,
-        [c.pack_id],
+        // every minute from launch to now (or end), capped at the last 120 minutes, zeros included
+        `SELECT to_char(m, 'YYYY-MM-DD"T"HH24:MI:00"Z"') AS t, coalesce(p.n, 0)::int AS n
+         FROM generate_series(
+                greatest(date_trunc('minute', $2::timestamptz AT TIME ZONE 'UTC') - interval '1 minute', date_trunc('minute', coalesce($3::timestamptz, now()) AT TIME ZONE 'UTC') - interval '119 minutes'),
+                date_trunc('minute', coalesce($3::timestamptz, now()) AT TIME ZONE 'UTC'), interval '1 minute') m
+         LEFT JOIN (SELECT date_trunc('minute', created_at AT TIME ZONE 'UTC') AS b, count(*) AS n FROM pulls WHERE pack_id = $1 GROUP BY 1) p ON p.b = m
+         ORDER BY m`,
+        [c.pack_id, c.launched_at, c.ended_at],
       )
     ).rows;
     const rarity = (

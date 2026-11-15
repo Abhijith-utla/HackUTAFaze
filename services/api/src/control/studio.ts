@@ -42,20 +42,22 @@ const clip = (s: string, n: number) => (s.length <= n ? s : s.slice(0, n - 1).re
 
 /** Deterministic, archive-grounded drafts. Never invents facts: lore is the moment's own sentences. */
 export function templateDrafts(m: Moment, artFor: (member: string, i: number) => string): Draft[] {
-  const members = m.members.length ? m.members : ["Clan"];
+  const members = m.members.length ? m.members : [null];
   const year = m.occurredOn.slice(0, 4);
   const base = shortTitle(m.title);
   const lines = sentences(m.summary);
   return PLAN.map((p, i) => {
     const member = members[i % members.length];
-    const lore = clip(lines[i % Math.max(1, lines.length)] ?? m.summary, 220) + ` (${year} · ${m.source.replace(/^.*\(PDF\),\s*/, "PDF ")})`;
+    const cite = `(${year} · ${m.source.replace(/^.*\(PDF\),\s*/, "PDF ")})`;
+    // Use each archive sentence once; past that, a plain factual caption (no invented detail).
+    const lore = i < lines.length ? `${clip(lines[i], 220)} ${cite}` : `${p.angle} card from “${shortTitle(m.title, 60)}”, ${year}. ${cite}`;
     return {
       position: i,
-      name: clip(`${member} / ${base} · ${p.angle}`, 80),
-      fazeMember: `FaZe ${member}`,
+      name: clip(member ? `${member} / ${base} · ${p.angle}` : `${base} · ${p.angle}`, 80),
+      fazeMember: member ? `FaZe ${member}` : "FaZe Clan",
       rarity: p.rarity,
       lore,
-      artUrl: artFor(member, i),
+      artUrl: artFor(member ?? "", i),
       basePower: p.power,
       maxSupply: p.supply,
     };

@@ -18,7 +18,7 @@ import { controlRoutes } from "./routes/control.js"; // FaZe Control Room (lead,
 export async function buildApp() {
   const app = Fastify({ logger: process.env.VITEST ? false : { level: "info" } });
   await app.register(cookie);
-  await app.register(cors, { origin: config.clientOrigins, credentials: true });
+  await app.register(cors, { origin: config.clientOrigins, credentials: true, methods: ["GET", "HEAD", "POST", "PATCH", "DELETE"] });
   registerErrorHandler(app);
 
   app.get("/health", async () => ({ ok: true }));

@@ -1,4 +1,4 @@
-# API contract — v1.5 FROZEN (2026-11-15: v1.5 relative artUrl + card art in DB, v1.1 payments → Solana devnet, v1.2 user search, v1.3 art upload, v1.4 fan-art submissions + /uploaded-art; changes only via the lead on the board)
+# API contract — v1.6 FROZEN (2026-11-15: v1.6 Control Room, v1.5 relative artUrl + card art in DB, v1.1 payments → Solana devnet, v1.2 user search, v1.3 art upload, v1.4 fan-art submissions + /uploaded-art; changes only via the lead on the board)
 
 Base URL `services/api`: `http://localhost:4000`. Payments `services/payments`: `http://localhost:4100`. JSON in and out. Auth via httpOnly JWT cookie `session`: HS256 signed with `JWT_SECRET`, claims `{sub: userId, role: "fan"|"admin", exp}`, 7-day expiry, `SameSite=Lax`, `Path=/`. Every service that needs the user verifies this cookie with the shared `JWT_SECRET`.
 
@@ -79,3 +79,27 @@ Shapes for `User`, `Card`, `CardInstance`, `Trade`, `Purchase`, `Submission` fol
 POST `/admin/art` requires an admin session. Body `{base64,mimeType}` accepts canonical base64 PNG, JPEG or WebP up to 2 MiB; server validates image signatures and MIME. Returns `{artUrl}` under `/uploaded-art/<uuid>.<ext>`. GET of that URL serves fixed content type with nosniff. Uploaded SVG is rejected; original seed SVGs use the separate trusted `/demo-art/` route. Configure durable server storage through UPLOAD_DIR.
 `POST /submissions/fan-art` requires a fan session and `{name,base64,mimeType}` with the same 2 MiB PNG/JPEG/WebP validation. Returns `{submission}` with status pending and queues automatic moderation atomically. Bytes remain in the private moderation payload; no public art URL is issued before staff review. Approval alone does not mint cards or bypass staff publishing.
 Compatibility: `/admin/art` accepts both `{base64,mimeType}` and the v1.3 `{filename,contentType,dataBase64}` form. The legacy form returns an absolute `/art/<uuid>.<ext>` URL; the new form returns `/uploaded-art/<uuid>.<ext>`. Both public routes serve the same validated stored artwork. UPLOAD_DIR takes precedence over legacy ART_DIR.
+
+## Control Room — business operations (lead, v1.6; all `requireAdmin`)
+Lives in `services/api/src/routes/control.ts` + `src/control/*`; UI in `apps/admin/app/control/**`. Launch and end call the existing `/admin/sets|cards|packs|publish` endpoints with the admin's own session, so their validation and publish checks still apply.
+
+| Method | Path | Body → Response |
+|---|---|---|
+| GET | `/admin/control/overview` | → `{kpis, health, series: {pullsByHour, coinsByDay}, topMembers}` |
+| GET | `/admin/control/archive?q=&member=&limit=` | full-text search over `archive_moments` → `{moments}` |
+| GET | `/admin/control/kam` | latest scan → `{scanId, scannedAt, opportunities: [{id, status, score, signals[5], recommendation, moment}]}` |
+| POST | `/admin/control/kam/scan` | scores every collectible-fit archive moment against live data, keeps the top 12 → same shape + `scanned` |
+| POST | `/admin/control/opportunities/:id/dismiss` | → `{ok}` |
+| GET | `/admin/control/campaigns` | → `{campaigns}` (with `pulls`) |
+| POST | `/admin/control/campaigns` | `{opportunityId}` → `201 {campaign, assets[5], moment}` (draft, archive-grounded drafts, duplicate-checked) |
+| GET | `/admin/control/campaigns/:id` | → `{campaign, assets, moment}` |
+| PATCH | `/admin/control/campaigns/:id/assets/:assetId` | `{name?, lore?, rarity?}` (draft/rejected only; re-runs duplicate check) |
+| POST | `/admin/control/campaigns/:id/regenerate` \| `/submit` | draft → `pending_approval` |
+| POST | `/admin/control/campaigns/:id/review` | `{decision: approve\|reject, rightsConfirmed, rightsNote?, note?}`; approve needs `rightsConfirmed: true` and no duplicate ≥ 0.82 |
+| POST | `/admin/control/campaigns/:id/launch` | `{packPriceCoins?}` approved → live: creates set, 5 cards, pack (odds over present rarities), publishes |
+| POST | `/admin/control/campaigns/:id/end` | live → ended: pack `active=false`, set `retired` |
+| GET | `/admin/control/campaigns/:id/metrics` | → `{pulls, collectors, demoCollectors, coinsSpent, cardsMinted, tradesInvolvingDrop, avgHype, attributedPurchases, attributedSol, attribution, rarityMix, pullsByMinute}` |
+| POST | `/admin/control/campaigns/:id/simulate` | `{collectors ≤ 40}` DEMO ONLY: creates `demo` fans who open the drop through the real `/packs/:id/open` |
+| GET | `/admin/control/audit?limit=` | → `{entries}` (append-only `audit_log`) |
+
+KAM score = sum of 5 explained signals (anniversary 30, member momentum 25, collector demand 20, catalog gap 10, archive weight 15). Moments about lawsuits, gambling, health, harm, controversy, or business deals with no featured member are never recommended. Studio's default writer (`template`) only reuses the archive entry's own sentences; `OLLAMA_URL` (+ `OLLAMA_MODEL`) optionally rewrites lore and falls back to the template on any error.

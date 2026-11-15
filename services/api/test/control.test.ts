@@ -3,7 +3,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { FastifyInstance } from "fastify";
 import { makeAdmin, makeApp, makeSetWithPack, pool, signup } from "./helpers.js";
-import { daysToAnniversary, scoreMoment, viewsIn } from "../src/control/kam.js";
+import { collectibleFit, daysToAnniversary, scoreMoment, viewsIn } from "../src/control/kam.js";
 import { campaignOdds, findDuplicate, similarity, templateDrafts } from "../src/control/studio.js";
 
 let app: FastifyInstance;
@@ -43,6 +43,18 @@ describe("KAM scoring (pure)", () => {
   });
 });
 
+describe("KAM collectible fit", () => {
+  const base = { title: "x", summary: "", tags: [] as string[], members: ["Banks"] };
+  it("never recommends legal, gambling, health or harm moments", () => {
+    expect(collectibleFit({ ...base, summary: "Tfue sues FaZe Clan over his contract" }).ok).toBe(false);
+    expect(collectibleFit({ ...base, summary: "becomes the official sports betting and iGaming partner" }).ok).toBe(false);
+    expect(collectibleFit({ ...base, summary: "breaks his silence on depression" }).ok).toBe(false);
+    expect(collectibleFit({ ...base, tags: ["controversy"] }).ok).toBe(false);
+    expect(collectibleFit({ ...base, members: [], tags: ["business"] }).ok).toBe(false);
+    expect(collectibleFit({ ...base, summary: "The 1 Million Subscribers Teamtage" }).ok).toBe(true);
+  });
+});
+
 describe("Moment Studio (pure)", () => {
   const moment = { title: "Introducing FaZe Temperrr", summary: "1.62M views on the intro video. Thomas “Temperrr” Oliveira joins at sixteen, brings the graphic-design skills that produce the logo. His concept invents the reversed F.", members: ["Temperrr"], occurredOn: "2010-08-03", source: "FaZe Clan: A Timeline, 2010–2026 (PDF), p.1" };
   it("drafts 5 cards across every rarity, with lore taken only from the archive text", () => {
@@ -54,6 +66,12 @@ describe("Moment Studio (pure)", () => {
       expect(moment.summary).toContain(sentence.slice(0, 30));
     }
     expect(d[4].maxSupply).toBe(50);
+    expect(new Set(d.map((x) => x.lore)).size).toBe(5); // no repeated lore
+  });
+  it("names org-wide moments cleanly", () => {
+    const d = templateDrafts({ ...moment, members: [] }, () => "");
+    expect(d[0].name.startsWith("Introducing")).toBe(true);
+    expect(d[0].fazeMember).toBe("FaZe Clan");
   });
   it("flags near-duplicate card names, not unrelated ones", () => {
     expect(similarity("Banks / OG Era 1", "Banks / OG Era 1")).toBe(1);
@@ -136,6 +154,8 @@ describe("Control Room API", () => {
 
     const metrics = (await app.inject({ method: "GET", url: `/admin/control/campaigns/${campaign.id}/metrics`, ...as(admin.cookie) })).json();
     expect(metrics).toMatchObject({ launched: true, pulls: 6, collectors: 3, demoCollectors: 3, coinsSpent: 720, cardsMinted: 30 });
+    expect(metrics.pullsByMinute.length).toBeGreaterThanOrEqual(2); // zero-filled from launch
+    expect(metrics.pullsByMinute.reduce((a: number, p: { n: number }) => a + p.n, 0)).toBe(6);
 
     const ended = await app.inject({ method: "POST", url: `/admin/control/campaigns/${campaign.id}/end`, ...as(admin.cookie) });
     expect(ended.json().campaign.status).toBe("ended");

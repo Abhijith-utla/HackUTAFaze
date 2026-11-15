@@ -332,3 +332,5 @@ footer {
     flex-wrap: wrap;
   }
 }
+/* link into /control (lead) */
+.cr-link { display: block; padding: 11px 12px; color: #fca5b4; text-decoration: none; font-weight: 700; border-left: 3px solid var(--red); background: #1c1013; border-radius: 3px; }
