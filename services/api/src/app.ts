@@ -18,6 +18,7 @@ import { insightsRoutes } from "./routes/insights.js"; // Control Room analytics
 
 import { marketplaceRoutes } from './routes/marketplace.js';
 import { pipelineRoutes } from "./routes/pipeline.js"; // clip/frame → face → card art (A, v1.9 draft)
+import { battlesRoutes } from "./routes/battles.js"; // Battles demo slice (A, contract v1.9 draft)
 
 export async function buildApp() {
   const app = Fastify({ logger: process.env.VITEST ? false : { level: "info" } });
@@ -47,6 +48,7 @@ export async function buildApp() {
   await app.register(controlRoutes);
   await app.register(insightsRoutes);
   await app.register(pipelineRoutes);
+  await app.register(battlesRoutes);
   await artRoutes(app);
   return app;
 }
