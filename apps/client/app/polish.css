@@ -1,0 +1,805 @@
+/* ==========================================================================
+   FaZe Vault: polish layer (opt-in)
+   --------------------------------------------------------------------------
+   Load AFTER style.css:   import './style.css'; import './polish.css';
+   Never edits style.css; it only overrides it. Delete the import to roll back.
+
+   Scope rules
+   - Interactive rules are scoped to header/main/footer so the full-screen pack
+     reveal (.pack-cinema, rendered outside <main>) is left untouched.
+   - No .pack*, .reveal*, .cinema*, booster/tear/foil/flip selectors here.
+   - Brand tokens come from app/brand-tokens.css; every use has a fallback so
+     this file works on its own.
+   ========================================================================== */
+
+:root {
+  /* Brand */
+  --p-red: var(--faze-red, #E4002B);          /* fills, borders, large type (3.9:1 on #111) */
+  --p-red-press: #C40025;                     /* hover/press fill; white text 5.9:1 */
+  --p-red-text: #FF3B5C;                      /* small red text: 5.4:1 on #111 */
+  --p-black: var(--faze-black, #111111);
+  --p-white: var(--faze-white, #FFFFFF);
+
+  /* Surfaces: #111 family, each layer a step lighter */
+  --p-s0: #0b0b0b;                            /* wells: inputs, art */
+  --p-s1: var(--faze-black, #111111);         /* page */
+  --p-s2: #181818;                            /* panels, cards */
+  --p-s3: #212121;                            /* raised: hover, selected */
+  --p-line: #262626;
+  --p-line-strong: #383838;
+  --p-text: #F3F3F3;                          /* 17:1 on #111 */
+  --p-muted: #9C9C9C;                         /* 6:1 on #181818 */
+
+  /* Rarity (fallbacks match pack-opening.tsx) */
+  --p-common: var(--rarity-common, #A9BED1);
+  --p-rare: var(--rarity-rare, #42BAFF);
+  --p-epic: var(--rarity-epic, #BE75FF);
+  --p-legendary: var(--rarity-legendary, #FFD270);
+
+  /* Type */
+  --p-display: var(--font-display, "Arial Black", "Helvetica Neue", Arial, sans-serif);
+  --p-body: var(--font-body, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif);
+
+  /* Motion */
+  --p-ease-out: var(--ease-out, cubic-bezier(.23, 1, .32, 1));
+  --p-ease-io: var(--ease-in-out, cubic-bezier(.77, 0, .175, 1));
+  --p-fast: var(--dur-fast, 140ms);
+  --p-med: var(--dur-med, 220ms);
+  --p-slow: var(--dur-slow, 360ms);
+
+  /* Re-point style.css's own tokens at the brand */
+  --bg: var(--p-s1);
+  --panel: var(--p-s2);
+  --red: var(--p-red);
+  --line: var(--p-line);
+  --muted: var(--p-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Base + mobile platform layer
+   -------------------------------------------------------------------------- */
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: var(--p-s1);
+}
+
+body {
+  background: var(--p-s1);
+  color: var(--p-text);
+  font-family: var(--p-body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+  width: 100%;
+  margin-block: 0;
+  margin-inline: auto;
+}
+
+::selection { background: color-mix(in srgb, var(--p-red) 55%, transparent); color: var(--p-white); }
+
+:where(header, main, footer) :is(button, a, summary, label:has(> input[type="checkbox"])) {
+  touch-action: manipulation;
+}
+
+:where(header, main, footer) :is(button, summary, nav button) {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* iOS zooms into inputs under 16px; only bump on coarse pointers. */
+@media (pointer: coarse) {
+  :where(main) :is(input, select, textarea) { font-size: 16px; }
+}
+
+/* Safe areas (need viewport-fit=cover in the viewport meta to be non-zero). */
+header {
+  padding-top: max(23px, env(safe-area-inset-top, 0px));
+  padding-left: max(5vw, env(safe-area-inset-left, 0px));
+  padding-right: max(5vw, env(safe-area-inset-right, 0px));
+}
+main {
+  padding-left: max(5vw, env(safe-area-inset-left, 0px));
+  padding-right: max(5vw, env(safe-area-inset-right, 0px));
+}
+footer {
+  padding-bottom: calc(25px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(5vw, env(safe-area-inset-left, 0px));
+  padding-right: max(5vw, env(safe-area-inset-right, 0px));
+}
+@media (max-width: 650px) {
+  header { padding-top: max(18px, env(safe-area-inset-top, 0px)); }
+}
+
+/* --------------------------------------------------------------------------
+   Typography
+   -------------------------------------------------------------------------- */
+:where(header, main, footer) :is(h1, h2, h3, h4) {
+  font-family: var(--p-display);
+  text-transform: uppercase;
+  font-weight: 900;
+  text-wrap: balance;
+  color: var(--p-text);
+}
+
+main h1 {
+  font-size: clamp(40px, 6vw, 84px);
+  line-height: .96;
+  letter-spacing: -.02em;
+  margin: 18px 0 22px;
+}
+main h1 span { color: var(--p-red); }
+
+main h2 {
+  font-size: clamp(24px, 2.6vw, 34px);
+  line-height: 1.05;
+  letter-spacing: -.005em;
+}
+main h3 {
+  font-size: 15px;
+  line-height: 1.2;
+  letter-spacing: .06em;
+}
+main h4 {
+  font-size: 12px;
+  letter-spacing: .1em;
+  color: var(--p-muted);
+}
+
+main p { text-wrap: pretty; }
+
+.eyebrow {
+  font-family: var(--p-display);
+  color: var(--p-red-text);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.hero > p:last-child { color: var(--p-muted); font-size: 17px; max-width: 46ch; }
+
+.brand {
+  font-family: var(--p-display);
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+.brand span { color: var(--p-red); }
+.brand b { font-family: var(--p-display); letter-spacing: .32em; }
+
+/* Balance */
+.account strong {
+  font-family: var(--p-display);
+  font-size: 18px;
+  letter-spacing: .02em;
+  font-variant-numeric: tabular-nums;
+}
+.account small { letter-spacing: .14em; }
+.demo { letter-spacing: .18em; }
+
+.rank > b {
+  font-family: var(--p-display);
+  color: var(--p-red-text);
+  font-variant-numeric: tabular-nums;
+}
+.rank strong { font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+
+footer { color: var(--p-muted); letter-spacing: .16em; text-transform: uppercase; }
+
+/* --------------------------------------------------------------------------
+   Hero tint: shift the glow to Red Alert
+   -------------------------------------------------------------------------- */
+.hero {
+  background:
+    radial-gradient(ellipse at 88% 62%, color-mix(in srgb, var(--p-red) 20%, transparent), transparent 55%),
+    radial-gradient(ellipse at 0% 0%, #ffffff06, transparent 40%);
+  border-bottom-color: var(--p-line);
+}
+
+/* --------------------------------------------------------------------------
+   Surfaces
+   -------------------------------------------------------------------------- */
+header { border-bottom-color: var(--p-line); }
+
+main .panel {
+  background: linear-gradient(180deg, #ffffff05, transparent 40%), var(--p-s2);
+  border: 1px solid var(--p-line);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 #ffffff0a, 0 1px 2px #0006, 0 8px 24px -12px #000c;
+}
+
+:where(main) :is(input, select, textarea) {
+  background: var(--p-s0);
+  border: 1px solid var(--p-line-strong);
+  border-radius: 8px;
+  color: var(--p-text);
+  transition: border-color var(--p-fast) ease, background-color var(--p-fast) ease;
+}
+:where(main) :is(input, select, textarea):focus-visible {
+  border-color: var(--p-red);
+  outline: 2px solid color-mix(in srgb, var(--p-red) 45%, transparent);
+  outline-offset: 1px;
+}
+:where(main) :is(input, textarea)::placeholder { color: #7a7a7a; }
+:where(main) label { color: #C8C8C8; }
+
+/* Alert: replaces the thick one-sided "side-tab" border (style.css L61)
+   with an even hairline, a tinted fill and a small status dot. */
+main .alert {
+  position: relative;
+  padding: 14px 16px 14px 34px;
+  border: 1px solid color-mix(in srgb, #80b8f5 28%, var(--p-line));
+  border-left-width: 1px;
+  border-left-color: color-mix(in srgb, #80b8f5 28%, var(--p-line));
+  border-radius: 10px;
+  background: color-mix(in srgb, #80b8f5 7%, var(--p-s2));
+  color: var(--p-text);
+}
+main .alert::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 1.45em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #80b8f5;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #80b8f5 20%, transparent);
+}
+main .alert.error {
+  border-color: color-mix(in srgb, var(--p-red) 45%, var(--p-line));
+  background: color-mix(in srgb, var(--p-red) 10%, var(--p-s2));
+}
+main .alert.error::before {
+  background: var(--p-red-text);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--p-red) 25%, transparent);
+}
+
+main .loading {
+  color: var(--p-red-text);
+  font-family: var(--p-display);
+  font-size: 11px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  animation: p-pulse 1.2s ease-in-out infinite;
+}
+
+main .empty { color: var(--p-muted); }
+
+/* --------------------------------------------------------------------------
+   Focus rings
+   -------------------------------------------------------------------------- */
+:where(header, main, footer) :is(button, a, summary):focus-visible {
+  outline: 2px solid var(--p-white);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* --------------------------------------------------------------------------
+   Buttons
+   -------------------------------------------------------------------------- */
+:where(header, main, footer) button {
+  border-radius: 8px;
+  border-color: var(--p-line-strong);
+  background-color: transparent;
+  color: var(--p-text);
+  transition:
+    transform var(--p-fast) var(--p-ease-out),
+    opacity var(--p-fast) ease,
+    background-color var(--p-fast) ease;
+}
+
+:where(header, main, footer) button:active:not(:disabled) {
+  transform: scale(.97);
+}
+
+:where(header, main, footer) button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+  transform: none;
+}
+
+:where(header, main, footer) button.selected {
+  background-color: color-mix(in srgb, var(--p-red) 16%, var(--p-s3));
+  border-color: color-mix(in srgb, var(--p-red) 60%, var(--p-line));
+}
+
+:where(header, main, footer) button.primary {
+  background-color: var(--p-red);
+  border-color: var(--p-red);
+  color: var(--p-white);
+  font-family: var(--p-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  box-shadow: inset 0 1px 0 #ffffff30;
+}
+
+/* Touch: kill style.css's ungated :hover backgrounds so nothing sticks after a tap. */
+@media not all and (hover: hover) {
+  :where(header, main, footer) button:hover:not(:disabled):not(.selected) { background-color: transparent; }
+  :where(header, main, footer) button.primary:hover:not(:disabled) { background-color: var(--p-red); }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :where(header, main, footer) button:hover:not(:disabled):not(.selected) {
+    background-color: var(--p-s3);
+    transform: translateY(-1px);
+  }
+  :where(header, main, footer) button.primary:hover:not(:disabled) {
+    background-color: var(--p-red-press);
+  }
+  :where(header, main, footer) button:active:not(:disabled) {
+    transform: scale(.97);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Tabs: sticky, blurred bar; indicator grows in/out (scaleX + opacity)
+   -------------------------------------------------------------------------- */
+main nav {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  gap: 4px;
+  padding: 8px 0 0;
+  margin-inline: -4px;
+  padding-inline: 4px;
+  background: color-mix(in srgb, var(--p-s1) 82%, transparent);
+  -webkit-backdrop-filter: saturate(140%) blur(12px);
+  backdrop-filter: saturate(140%) blur(12px);
+  border-bottom: 1px solid var(--p-line);
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+main nav::-webkit-scrollbar { display: none; }
+
+main nav button {
+  position: relative;
+  padding: 12px 14px 14px;
+  border: 0;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  background-color: transparent;
+  color: var(--p-muted);
+  font-family: var(--p-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  transition:
+    color var(--p-fast) ease,
+    background-color var(--p-fast) ease,
+    transform var(--p-fast) var(--p-ease-out);
+}
+main nav button::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--p-red);
+  opacity: 0;
+  transform: scaleX(.3);
+  transition:
+    transform var(--p-med) var(--p-ease-out),
+    opacity var(--p-fast) ease;
+}
+main nav button[aria-current] {
+  color: var(--p-white);
+  border-bottom: 0;
+}
+main nav button[aria-current]::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+/* The nav scrolls horizontally, so an outset ring would be clipped. */
+main nav button:focus-visible {
+  outline: 2px solid var(--p-white);
+  outline-offset: -4px;
+  border-radius: 8px;
+}
+main nav button:active:not(:disabled) { transform: scale(.97); }
+
+@media not all and (hover: hover) {
+  main nav button:hover:not(:disabled) { background-color: transparent; }
+}
+@media (hover: hover) and (pointer: fine) {
+  main nav button:hover:not(:disabled):not(.selected) {
+    color: var(--p-text);
+    background-color: #ffffff08;
+    transform: none;
+  }
+  main nav button:not([aria-current]):hover::after {
+    opacity: .35;
+    transform: scaleX(.6);
+  }
+  main nav button:active:not(:disabled) { transform: scale(.97); }
+}
+
+/* --------------------------------------------------------------------------
+   View switch: each tab's content re-mounts, so a mount animation reads as a
+   crossfade + slight rise. (.reveal is owned by the pack-animation layer.)
+   -------------------------------------------------------------------------- */
+main .section-title ~ :not(.modal):not(.reveal):not(script) {
+  animation: p-view-in var(--p-slow) var(--p-ease-out) both;
+}
+main .auth.panel { animation: p-view-in var(--p-slow) var(--p-ease-out) both; }
+
+main .section-title { padding: 28px 0 20px; }
+
+/* --------------------------------------------------------------------------
+   Cards (collection / store results / trending / modal)
+   -------------------------------------------------------------------------- */
+main .card {
+  --rc: var(--p-common);
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--rc) 28%, var(--p-line));
+  border-top: 1px solid color-mix(in srgb, var(--rc) 55%, var(--p-line));
+  border-radius: 12px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 7%, transparent), transparent 45%), var(--p-s2);
+  box-shadow: inset 0 1px 0 #ffffff0d, 0 1px 2px #0007;
+  overflow: hidden;
+  transition:
+    transform var(--p-med) var(--p-ease-out),
+    opacity var(--p-fast) ease;
+}
+main .card.rare { --rc: var(--p-rare); }
+main .card.epic { --rc: var(--p-epic); }
+main .card.legendary { --rc: var(--p-legendary); }
+
+/* style.css paints every button:hover with a flat grey; keep the card surface. */
+main .card:hover:not(:disabled),
+main .card:active:not(:disabled) {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 9%, transparent), transparent 45%), var(--p-s2);
+}
+
+/* Glow layer: opacity-only so the hover stays on the compositor. */
+main .card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--rc) 55%, transparent), 0 14px 36px -10px color-mix(in srgb, var(--rc) 45%, transparent);
+  opacity: 0;
+  transition: opacity var(--p-med) ease;
+  pointer-events: none;
+}
+main .card.legendary::before { opacity: .45; }
+
+/* Sheen: a soft diagonal highlight that sweeps once on hover. */
+main .card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(115deg, transparent 35%, #ffffff14 48%, #ffffff05 54%, transparent 64%);
+  transform: translateX(-110%);
+  pointer-events: none;
+}
+
+main .card .art {
+  aspect-ratio: 5 / 6;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1e1e1e, var(--p-s0));
+}
+main .card .art img {
+  display: block;
+  animation: p-img-in 420ms var(--p-ease-out) both;
+  transition: transform var(--p-slow) var(--p-ease-out);
+}
+main .card .rarity {
+  top: auto;
+  bottom: 8px;
+  left: 8px;
+  padding: 4px 7px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--rc) 50%, transparent);
+  background: #000c;
+  color: var(--rc);
+  font-family: var(--p-display);
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+main .card > small {
+  margin-top: 12px;
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--p-muted);
+}
+main .card h3 { font-size: 14px; letter-spacing: .03em; margin: 6px 0 12px; }
+main .card .card-meta {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--p-line);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .12em;
+}
+main .card .card-meta span:first-child { color: #C8C8C8; }
+main .card > p { color: var(--p-muted); margin: 10px 0 0; }
+
+main .card:active:not(:disabled) { transform: scale(.98); }
+
+@media (hover: hover) and (pointer: fine) {
+  main .card:hover:not(:disabled) { transform: translateY(-4px); }
+  main .card:hover:not(:disabled)::before { opacity: 1; }
+  main .card:hover:not(:disabled)::after {
+    transform: translateX(110%);
+    transition: transform 700ms var(--p-ease-io);
+  }
+  main .card:hover:not(:disabled) .art img { transform: scale(1.03); }
+  main .card:active:not(:disabled) { transform: translateY(-2px) scale(.98); }
+}
+
+/* Grid rhythm */
+main .grid { gap: 18px; align-items: stretch; }
+@media (max-width: 650px) {
+  main .grid { gap: 12px; }
+  main .card { padding: 8px; border-radius: 10px; }
+  main .card h3 { font-size: 12px; }
+}
+
+/* --------------------------------------------------------------------------
+   Trades, leaderboard, purchases
+   -------------------------------------------------------------------------- */
+main .picker {
+  border: 1px solid var(--p-line);
+  border-radius: 10px;
+  background: var(--p-s0);
+  overscroll-behavior: contain;
+}
+main .picker label {
+  padding: 12px;
+  gap: 12px;
+  cursor: pointer;
+  transition: background-color var(--p-fast) ease;
+}
+main .picker label:last-child { border-bottom: 0; }
+main .picker label:has(input:checked) { background: color-mix(in srgb, var(--p-red) 10%, transparent); }
+main .picker label:has(input:disabled) { cursor: not-allowed; opacity: .55; }
+main .picker input { accent-color: var(--p-red); flex: none; }
+@media (hover: hover) and (pointer: fine) {
+  main .picker label:not(:has(input:disabled)):hover { background-color: var(--p-s3); }
+}
+
+main .trade-columns h3 { color: var(--p-muted); letter-spacing: .16em; }
+main .trade-columns article.panel small { text-transform: uppercase; letter-spacing: .1em; }
+
+main .rank { border-bottom-color: var(--p-line); transition: background-color var(--p-fast) ease; }
+main .rank:first-of-type > b { color: var(--p-legendary); }
+
+main .purchase small { text-transform: uppercase; letter-spacing: .12em; }
+
+main details summary { transition: color var(--p-fast) ease; }
+@media (hover: hover) and (pointer: fine) {
+  main details summary:hover { color: var(--p-text); }
+}
+
+/* --------------------------------------------------------------------------
+   Modal: blurred backdrop fades in, panel scales up from .96
+   -------------------------------------------------------------------------- */
+main .modal {
+  background: #000b;
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  backdrop-filter: blur(10px) saturate(120%);
+  padding: max(20px, env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) max(20px, env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+  overscroll-behavior: contain;
+  animation: p-fade-in var(--p-med) ease both;
+}
+main .modal > .panel {
+  width: min(100%, 420px);
+  max-height: 92vh;
+  max-height: 92dvh;
+  margin: 0;
+  border-color: var(--p-line-strong);
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 #ffffff12, 0 30px 80px -20px #000;
+  overscroll-behavior: contain;
+  animation: p-modal-in var(--p-slow) var(--p-ease-out) both;
+}
+/* Closing animation works once the modal stays mounted with data-closing
+   (see notes for Jaideep); harmless until then. */
+main .modal[data-closing] { animation: p-fade-out 160ms ease forwards; }
+main .modal[data-closing] > .panel { animation: p-modal-out 160ms ease forwards; }
+
+/* --------------------------------------------------------------------------
+   Skeleton: <div class="skeleton" style="height:240px"></div>
+   Variants: .skeleton-text (one line), .skeleton-card (5:6 art block)
+   -------------------------------------------------------------------------- */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  display: block;
+  min-height: 1em;
+  border-radius: 8px;
+  background: var(--p-s3);
+  isolation: isolate;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, #ffffff0f 50%, transparent);
+  transform: translateX(-100%);
+  animation: p-shimmer 1.4s var(--p-ease-io) infinite;
+}
+.skeleton-text { height: .9em; width: 70%; border-radius: 4px; margin: .4em 0; }
+.skeleton-card { aspect-ratio: 5 / 6; border-radius: 12px; }
+
+/* --------------------------------------------------------------------------
+   Grain + dot grid background (pattern: 21st.dev noise backgrounds, plain CSS)
+   body's own background is moved to <html> so these fixed layers can sit
+   behind content at z-index:-1.
+   -------------------------------------------------------------------------- */
+body { background: transparent; }
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+body::before {
+  opacity: .04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.4 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+body::after {
+  background-image: radial-gradient(#ffffff0d 1px, transparent 1.2px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 0%, transparent 75%);
+}
+
+/* --------------------------------------------------------------------------
+   Spotlight card (pattern: 21st.dev spotlight-card). A red radial glow that
+   follows the pointer via --mx/--my (px, set by a pointermove handler; see
+   notes). Without the handler it sits centred, which still reads as a glow.
+   Lives on ::before together with the rarity ring, so it only costs opacity.
+   -------------------------------------------------------------------------- */
+main .card::before {
+  background-image: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--p-red) 22%, transparent), transparent 60%);
+}
+main .card.legendary::before {
+  background-image: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--p-legendary) 18%, transparent), transparent 60%);
+}
+
+/* --------------------------------------------------------------------------
+   Slide tabs (pattern: 21st.dev slide-tabs). Opt-in: once the tab bar has
+   data-slide and --tab-x/--tab-w set from the active tab, one shared
+   indicator slides between tabs and the per-tab underline (CSS fallback
+   above) is hidden.
+   -------------------------------------------------------------------------- */
+main nav[data-slide]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: calc(var(--tab-w, 0px) - 28px);
+  border-radius: 2px 2px 0 0;
+  background: var(--p-red);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--p-red) 60%, transparent);
+  transform: translateX(calc(var(--tab-x, 0px) + 14px));
+  transition:
+    transform 300ms var(--p-ease-out),
+    width 300ms var(--p-ease-out);
+  pointer-events: none;
+}
+main nav[data-slide] button::after { display: none; }
+
+/* --------------------------------------------------------------------------
+   Shiny button (pattern: 21st.dev shiny-button). Primary CTAs in a grid only:
+   "Open pack" and "Connect Phantom & pay". A conic highlight orbits the
+   border every 3s.
+   -------------------------------------------------------------------------- */
+@property --shine-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+main .grid button.primary:not(:disabled) {
+  position: relative;
+  isolation: isolate;
+}
+main .grid button.primary:not(:disabled)::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--shine-angle), transparent 0 62%, #ffffffb3 75%, #ffd3db 80%, transparent 92%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: p-shine 3s linear infinite;
+  pointer-events: none;
+}
+main .grid button.primary:not(:disabled)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(120% 140% at 50% 0%, #ffffff26, transparent 55%);
+  pointer-events: none;
+}
+main .grid button.primary:active:not(:disabled) { transform: translateY(1px) scale(.98); }
+@media (hover: hover) and (pointer: fine) {
+  main .grid button.primary:active:not(:disabled) { transform: translateY(1px) scale(.98); }
+}
+@keyframes p-shine { to { --shine-angle: 360deg; } }
+
+/* --------------------------------------------------------------------------
+   Keyframes
+   -------------------------------------------------------------------------- */
+@keyframes p-view-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes p-fade-in { from { opacity: 0; } }
+@keyframes p-fade-out { to { opacity: 0; } }
+@keyframes p-modal-in { from { opacity: 0; transform: translateY(6px) scale(.96); } }
+@keyframes p-modal-out { to { opacity: 0; transform: scale(.97); } }
+@keyframes p-img-in { from { opacity: 0; } }
+@keyframes p-shimmer { to { transform: translateX(100%); } }
+@keyframes p-pulse { 50% { opacity: .55; } }
+
+/* --------------------------------------------------------------------------
+   Reduced motion: no movement; keep short opacity fades for comprehension.
+   style.css kills every animation/transition with !important; these rules are
+   later and more specific, so they restore opacity/colour only.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  :where(header, main, footer) button,
+  main nav button,
+  main nav button::after,
+  main .card,
+  main .card::before,
+  main .picker label {
+    transition-property: opacity, background-color, color !important;
+    transition-duration: 120ms !important;
+    transition-timing-function: ease !important;
+  }
+  :where(header, main, footer) button:hover,
+  :where(header, main, footer) button:active,
+  main nav button:active,
+  main .card:hover,
+  main .card:active,
+  main .card:hover .art img { transform: none !important; }
+  main nav button::after { transform: none !important; }
+  main .card::after { display: none; }
+
+  main .section-title ~ :not(.modal):not(.reveal):not(script),
+  main .auth.panel,
+  main .modal,
+  main .modal > .panel,
+  main .card .art img {
+    animation: p-fade-in 150ms ease both !important;
+  }
+  main .loading { animation: none !important; }
+  main nav[data-slide]::after { transition: none !important; }
+  main .grid button.primary:not(:disabled)::before { animation: none !important; opacity: 0; }
+  main .grid button.primary:active:not(:disabled) { transform: none !important; }
+  .skeleton::after { animation: none !important; display: none; }
+}
