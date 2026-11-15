@@ -10,6 +10,7 @@ import { collectionRoutes } from "./routes/collection.js";
 import { tradesRoutes } from "./routes/trades.js";
 import { leaderboardRoutes } from "./routes/leaderboard.js";
 import { adminRoutes } from "./routes/admin.js";
+import { artRoutes } from "./routes/art.js";
 
 export async function buildApp() {
   const app = Fastify({ logger: process.env.VITEST ? false : { level: "info" } });
@@ -25,5 +26,6 @@ export async function buildApp() {
   await app.register(tradesRoutes);
   await app.register(leaderboardRoutes);
   await app.register(adminRoutes);
+  await app.register(artRoutes);
   return app;
 }
