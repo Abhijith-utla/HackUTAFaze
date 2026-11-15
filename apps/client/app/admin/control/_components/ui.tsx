@@ -1,20 +1,100 @@
 "use client";
 // FaZe Control Room — Business Operations shell + primitives (no chart dependency; plain SVG).
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { api, RARITY_COLORS, SIGNAL_COLORS, STATUS_LABEL, type Campaign, type Signal } from "./lib";
 
-const NAV = [
-  { href: "/admin/control", label: "Overview", code: "01" },
-  { href: "/admin/control/kam", label: "KAM Intelligence", code: "02" },
-  { href: "/admin/control/studio", label: "Moment Studio", code: "03" },
-  { href: "/admin/control/campaigns", label: "Campaign Command", code: "04" },
-  { href: "/admin/control/audit", label: "Trust & Audit", code: "05" },
+// One admin, one sidebar. Content views live at /admin/control/content?view=…
+const GROUPS: { title: string; items: { href: string; label: string; code: string; view?: string }[] }[] = [
+  { title: "COMMAND", items: [
+    { href: "/admin/control", label: "Overview", code: "01" },
+    { href: "/admin/control/kam", label: "KAM Intelligence", code: "02" },
+    { href: "/admin/control/scout", label: "Moment Scout", code: "03" },
+  ] },
+  { title: "CAMPAIGNS", items: [
+    { href: "/admin/control/studio", label: "Moment Studio", code: "04" },
+    { href: "/admin/control/campaigns", label: "Campaign Command", code: "05" },
+  ] },
+  { title: "INTELLIGENCE", items: [
+    { href: "/admin/control/fans", label: "Fan Intelligence", code: "06" },
+    { href: "/admin/control/revenue", label: "Revenue & Sponsors", code: "07" },
+  ] },
+  { title: "CONTENT", items: [
+    { href: "/admin/control/content?view=sets", label: "Sets", code: "S", view: "sets" },
+    { href: "/admin/control/content?view=cards", label: "Cards", code: "C", view: "cards" },
+    { href: "/admin/control/content?view=packs", label: "Packs", code: "P", view: "packs" },
+    { href: "/admin/control/content?view=moderation", label: "Moderation", code: "M", view: "moderation" },
+    { href: "/admin/control/content?view=engagement", label: "Engagement", code: "E", view: "engagement" },
+  ] },
+  { title: "TRUST", items: [
+    { href: "/admin/control/trust", label: "Trust & Operations", code: "08" },
+    { href: "/admin/control/audit", label: "Audit log", code: "09" },
+  ] },
 ];
 
-export function Shell({ children }: { children: ReactNode }) {
+function Nav() {
   const path = usePathname();
+  const params = useSearchParams();
+  const view = params.get("view") ?? "sets";
+  return (
+    <>
+      {GROUPS.map((g, gi) => (
+        <div key={g.title} className="cr-group">
+          <p className={`eyebrow${gi ? " cr-gap" : ""}`}>{g.title}</p>
+          {g.items.map((n) => {
+            const base = n.href.split("?")[0];
+            const on = n.view ? path === base && view === n.view : base === "/admin/control" ? path === base : path.startsWith(base);
+            return (
+              <Link key={n.href} href={n.href} className={`cr-nav${on ? " on" : ""}`} aria-current={on ? "page" : undefined}>
+                <span className="cr-code">{n.code}</span>
+                {n.label}
+              </Link>
+            );
+          })}
+        </div>
+      ))}
+    </>
+  );
+}
+
+function SignIn({ onDone }: { onDone: (me: { user: { displayName: string; role: string } }) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  return (
+    <div className="cr-boot">
+      <form
+        className="cr-signin"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const d = Object.fromEntries(new FormData(e.currentTarget));
+          setBusy(true);
+          setErr("");
+          try {
+            const r = await api<{ user: { displayName: string; role: string } }>("/auth/login", "POST", d);
+            if (r.user.role !== "admin") setErr("This account isn't an administrator.");
+            else onDone(r);
+          } catch (x) {
+            setErr((x as Error).message);
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        <div className="brand">F<span>/</span> CONTROL ROOM</div>
+        <h1>Staff sign-in.</h1>
+        <p className="cr-muted">One login for content, campaigns, intelligence and operations.</p>
+        <label>Email<input name="email" type="email" required autoComplete="username" /></label>
+        <label>Password<input name="password" type="password" required autoComplete="current-password" /></label>
+        <button disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>
+        {err && <p className="cr-error" role="alert">{err}</p>}
+        <Link href="/" className="cr-muted cr-small">← Back to the fan app</Link>
+      </form>
+    </div>
+  );
+}
+
+export function Shell({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<{ user: { displayName: string; role: string } } | null | "none">(null);
   const [down, setDown] = useState("");
   useEffect(() => {
@@ -32,17 +112,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </div>
     );
   if (me === null) return <div className="cr-boot"><span className="cr-pulse" /> Connecting to the Control Room…</div>;
-  if (me === "none" || me.user.role !== "admin")
-    return (
-      <div className="cr-boot">
-        <div>
-          <p className="eyebrow">FAZE CONTROL ROOM</p>
-          <h1>Staff sign-in required.</h1>
-          <p className="cr-muted">Sign in with an admin account on the staff console, then come back.</p>
-          <Link className="cr-btn" href="/admin">Go to staff sign-in</Link>
-        </div>
-      </div>
-    );
+  if (me === "none" || me.user.role !== "admin") return <SignIn onDone={setMe} />;
   return (
     <>
       <header>
@@ -51,22 +121,13 @@ export function Shell({ children }: { children: ReactNode }) {
           {me.user.displayName}
           <span className="badge">DEMO</span>
           <span className="badge live">DEVNET</span>
+          <Link href="/" className="cr-muted cr-small">Fan app ↗</Link>
+          <button className="quiet" onClick={async () => { await api("/auth/logout", "POST").catch(() => {}); setMe("none"); }}>Sign out</button>
         </div>
       </header>
       <div className="shell">
         <aside className="cr-aside">
-          <p className="eyebrow">BUSINESS OPERATIONS</p>
-          {NAV.map((n) => {
-            const on = n.href === "/admin/control" ? path === "/admin/control" : path.startsWith(n.href);
-            return (
-              <Link key={n.href} href={n.href} className={`cr-nav${on ? " on" : ""}`}>
-                <span className="cr-code">{n.code}</span>
-                {n.label}
-              </Link>
-            );
-          })}
-          <p className="eyebrow cr-gap">CONTENT OPERATIONS</p>
-          <Link href="/admin" className="cr-nav"><span className="cr-code">↩</span>Sets, cards, packs, moderation</Link>
+          <Suspense fallback={null}><Nav /></Suspense>
           <p className="aside-note">
             Demo data · Solana devnet
             <br />
