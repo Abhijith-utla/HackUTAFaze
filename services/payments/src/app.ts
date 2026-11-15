@@ -27,8 +27,9 @@ export class HttpError extends Error {
   }
 }
 
-// Real Solana signatures are base58 (64-88 chars); "sim_<reference>_<lamports>" is the test-only simulated form.
-const SIGNATURE_RE = /^(?:[1-9A-HJ-NP-Za-km-z]{32,90}|sim_[1-9A-HJ-NP-Za-km-z]{32,44}_\d{1,19})$/;
+const SIGNATURE_RE = /^[1-9A-HJ-NP-Za-km-z]{64,88}$/;
+// Only the explicit simulated reader recognizes this format; real RPC never does.
+const SIMULATED_SIGNATURE_RE = /^sim_[1-9A-HJ-NP-Za-km-z]{32,44}_[0-9]+$/;
 
 export function buildApp(deps: AppDeps) {
   const app = Fastify({ logger: deps.logger ?? false });
@@ -102,7 +103,7 @@ export function buildApp(deps: AppDeps) {
     const purchase = await deps.repo.get(parsed.data.purchaseId);
     if (!purchase || purchase.userId !== user.sub) throw new HttpError("NOT_FOUND", "purchase not found");
 
-    if (parsed.data.signature !== undefined && !SIGNATURE_RE.test(parsed.data.signature)) throw new HttpError("VALIDATION", "malformed signature");
+    if (parsed.data.signature !== undefined && !(SIGNATURE_RE.test(parsed.data.signature) || SIMULATED_SIGNATURE_RE.test(parsed.data.signature))) throw new HttpError("VALIDATION", "malformed signature");
     return fulfill(deps.repo, deps.ledger, deps.chain, purchase, parsed.data.signature);
   });
 

@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+﻿import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { Keypair } from "@solana/web3.js";
 import { SignJWT } from "jose";
@@ -12,7 +12,7 @@ import { checkTransfer, simulatedReader, solanaPayUrl, type ChainReader, type Ch
 const JWT_SECRET = "test-jwt-secret";
 const TREASURY = Keypair.generate().publicKey.toBase58();
 const PAYER = Keypair.generate().publicKey.toBase58();
-const sig = () => Keypair.generate().publicKey.toBase58() + "x".repeat(20); // base58, sig-length
+const sig = () => Keypair.generate().publicKey.toBase58() + "x".repeat(24); // base58, sig-length
 
 async function token(sub: string) {
   return new SignJWT({ role: "fan" })
@@ -81,6 +81,13 @@ describe("payments (Solana devnet)", () => {
     const forged = await new SignJWT({ role: "fan" }).setProtectedHeader({ alg: "HS256" }).setSubject(userId).setExpirationTime("1h").sign(new TextEncoder().encode("nope"));
     const res2 = await t.app.inject({ method: "POST", url: "/payments/checkout", cookies: { session: forged }, payload: { bundleId: "coins_1000" } });
     expect(res2.statusCode).toBe(401);
+  });
+
+  it("accepts explicitly simulated signatures containing decimal zeroes", async () => {
+    const c = (await checkout()).json();
+    const signature = `sim_${c.reference}_50000000`;
+    t.chain.txs.set(signature, transfer(c.reference, c.lamports));
+    expect((await confirm({ purchaseId: c.purchaseId, signature })).statusCode).toBe(200);
   });
 
   it("rejects unknown bundles", async () => {
@@ -206,7 +213,7 @@ describe("payments (Solana devnet)", () => {
     expect((await confirm({ purchaseId: c.purchaseId, signature: "0OIl" + "!".repeat(40) })).statusCode).toBe(400);
   });
 
-  it("ledger outage → 409 and stays pending, then succeeds on retry", async () => {
+  it("ledger outage â†’ 409 and stays pending, then succeeds on retry", async () => {
     const real = t.ledger.credit.bind(t.ledger);
     let down = true;
     t.ledger.credit = async (b) => {
@@ -275,9 +282,13 @@ describe("simulatedReader", () => {
 });
 
 describe("config", () => {
-  const base = { DATABASE_URL: "postgres://x", JWT_SECRET: "j", INTERNAL_SECRET: "i", SOLANA_TREASURY_PUBKEY: TREASURY };
+  const base = { DATABASE_URL: "postgres://localhost/test", JWT_SECRET: "j", INTERNAL_SECRET: "i", SOLANA_TREASURY_PUBKEY: TREASURY };
   it("defaults to devnet", () => {
     expect(loadConfig(base)).toMatchObject({ cluster: "devnet", rpcUrl: "https://api.devnet.solana.com" });
+  });
+  it("requires TLS on remote Tiger Cloud connections", () => {
+    expect(() => loadConfig({ ...base, DATABASE_URL: 'postgres://user:pass@cloud.example/db' })).toThrow(/TLS/);
+    expect(loadConfig({ ...base, DATABASE_URL: 'postgres://user:pass@cloud.example/db?sslmode=require' }).databaseUrl).toContain('sslmode=require');
   });
   it("refuses mainnet", () => {
     expect(() => loadConfig({ ...base, SOLANA_CLUSTER: "mainnet-beta" })).toThrow(/never mainnet/);
@@ -288,3 +299,4 @@ describe("config", () => {
     expect(() => loadConfig({ ...base, PAYMENTS_SIMULATE: "1", NODE_ENV: "production" })).toThrow(/test-only/);
   });
 });
+
