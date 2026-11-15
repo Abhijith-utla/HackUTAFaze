@@ -144,3 +144,13 @@ describe("collection + leaderboard", () => {
     expect(lb.json().trending.some((t: any) => t.card.id === cardIds[0])).toBe(true);
   });
 });
+
+it("concurrent purchases by different collectors retain unique serials", async () => {
+  const other = await signup(app);
+  const first = await signup(app);
+  const { packId } = await makeSetWithPack({ cards: [{ rarity: "common" }], odds: { common: 100 } });
+  const responses = await Promise.all([first, other].map(fan => app.inject({ method: "POST", url: `/packs/${packId}/open`, headers: { cookie: fan.cookie }, payload: { idempotencyKey: `concurrent-${fan.id}` } })));
+  expect(responses.map(r => r.statusCode)).toEqual([200, 200]);
+  const serials = responses.flatMap(r => r.json().cards.map((c: any) => c.serial));
+  expect(new Set(serials).size).toBe(10);
+});
