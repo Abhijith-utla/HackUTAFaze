@@ -33,5 +33,11 @@ export const config = {
   artDir: process.env.ART_DIR || path.join(here, "..", "uploads"),
   /** D's committed demo content (read-only). */
   catalogPath: process.env.SEED_CATALOG || path.join(here, "..", "..", "..", "content", "seed", "catalog.json"),
+  /** Twitch Helix (optional): app credentials from dev.twitch.tv/console. Never logged. */
+  twitch: {
+    clientId: process.env.TWITCH_CLIENT_ID || "",
+    clientSecret: process.env.TWITCH_CLIENT_SECRET || "",
+    channel: (process.env.TWITCH_CHANNEL || "faze").toLowerCase(),
+  },
   demoArtDir: process.env.DEMO_ART_DIR || path.join(here, "..", "..", "..", "content", "seed", "art"),
 };

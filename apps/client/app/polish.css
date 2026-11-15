@@ -803,3 +803,8 @@ main .grid button.primary:active:not(:disabled) { transform: translateY(1px) sca
   main .grid button.primary:active:not(:disabled) { transform: none !important; }
   .skeleton::after { animation: none !important; display: none; }
 }
+
+/* Header link to the Twitch watch-along page (/watch). */
+header .account .header-watch { color: var(--faze-red, #E4002B); font-family: var(--font-display, inherit); font-size: 12px; letter-spacing: .12em; text-decoration: none; padding: 6px 10px; border: 1px solid color-mix(in srgb, var(--faze-red, #E4002B) 45%, transparent); border-radius: 999px; }
+header .account .header-watch:hover { background: color-mix(in srgb, var(--faze-red, #E4002B) 14%, transparent); }
+header .account .header-watch:focus-visible { outline: 2px solid var(--faze-red, #E4002B); outline-offset: 2px; }
