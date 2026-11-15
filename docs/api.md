@@ -1,4 +1,4 @@
-# API contract — v1.3 FROZEN (2026-11-15: v1.1 payments → Solana devnet, v1.2 user search, v1.3 art upload; changes only via the lead on the board)
+# API contract — v1.4 FROZEN (2026-11-15: v1.1 payments → Solana devnet, v1.2 user search, v1.3 art upload, v1.4 fan-art submissions + /uploaded-art; changes only via the lead on the board)
 
 Base URL `services/api`: `http://localhost:4000`. Payments `services/payments`: `http://localhost:4100`. JSON in and out. Auth via httpOnly JWT cookie `session`: HS256 signed with `JWT_SECRET`, claims `{sub: userId, role: "fan"|"admin", exp}`, 7-day expiry, `SameSite=Lax`, `Path=/`. Every service that needs the user verifies this cookie with the shared `JWT_SECRET`.
 
@@ -73,7 +73,7 @@ Signup and `POST /trades` with a message also insert a `pending` `submissions` r
 
 Shapes for `User`, `Card`, `CardInstance`, `Trade`, `Purchase`, `Submission` follow `docs/data-model.md` in camelCase and live in `packages/shared`.
 
-## Admin artwork upload
+## Admin artwork upload + fan-art submissions (v1.4, lead-approved)
 POST `/admin/art` requires an admin session. Body `{base64,mimeType}` accepts canonical base64 PNG, JPEG or WebP up to 2 MiB; server validates image signatures and MIME. Returns `{artUrl}` under `/uploaded-art/<uuid>.<ext>`. GET of that URL serves fixed content type with nosniff. Uploaded SVG is rejected; original seed SVGs use the separate trusted `/demo-art/` route. Configure durable server storage through UPLOAD_DIR.
 `POST /submissions/fan-art` requires a fan session and `{name,base64,mimeType}` with the same 2 MiB PNG/JPEG/WebP validation. Returns `{submission}` with status pending and queues automatic moderation atomically. Bytes remain in the private moderation payload; no public art URL is issued before staff review. Approval alone does not mint cards or bypass staff publishing.
 Compatibility: `/admin/art` accepts both `{base64,mimeType}` and the v1.3 `{filename,contentType,dataBase64}` form. The legacy form returns an absolute `/art/<uuid>.<ext>` URL; the new form returns `/uploaded-art/<uuid>.<ext>`. Both public routes serve the same validated stored artwork. UPLOAD_DIR takes precedence over legacy ART_DIR.

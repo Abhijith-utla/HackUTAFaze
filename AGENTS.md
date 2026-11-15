@@ -59,5 +59,5 @@ One owner per area; matches master.md §8. Task briefs per person are in `agents
 
 Team lead: **@Abhijith-utla**.
 
-## User-authorized stack requirements
-All agents use Solana devnet (Phantom wallet, server-verified payments) and Tiger Cloud by Tiger Data for the shared database. Follow master.md, the current API/data contracts and updated briefs. Implementation ownership remains unchanged.
+## Stack (lead-decided)
+Payments: Phantom wallet + Solana devnet, server-verified (lead decision, Abhijith). Database: PostgreSQL via server-only `DATABASE_URL` (local default: `docker compose up -d db`). Managed Postgres such as Tiger Cloud works through the same URL with `sslmode=require`; adopting it is **pending the lead's decision**. Only the lead changes these lines.

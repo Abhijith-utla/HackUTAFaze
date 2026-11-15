@@ -31,7 +31,7 @@ Anything not on this list is a stretch goal (§9).
 ## 4. Architecture
 
 ```
-apps/client  (Next.js web, responsive mobile)  ──HTTP/JSON──▶  services/api  (Node/TS, Tiger Cloud)
+apps/client  (Next.js web, responsive mobile)  ──HTTP/JSON──▶  services/api  (Node/TS, Postgres)
 apps/admin   (Next.js, staff only)             ──HTTP/JSON──▶  services/api
 services/payments  (Solana devnet verify)       ──internal──▶  services/api ledger
                    ◀──RPC── api.devnet.solana.com      (client signs with Phantom)
@@ -39,9 +39,9 @@ services/worker    (queues: moderation, engagement sim, set publishing)
 packages/shared    (TS types + zod schemas generated from docs/api.md, docs/data-model.md)
 ```
 
-- One Tiger Cloud database by Tiger Data (managed PostgreSQL with TimescaleDB), shared by all services. Preserve SQL transactions, row locks and unique constraints. Migrations live in `services/api/migrations/` (Agent A owns them; others request schema changes on the board).
+- One PostgreSQL database shared by all services, via server-only `DATABASE_URL` (TLS `sslmode=require` for any remote host). Preserve SQL transactions, row locks and unique constraints. Migrations live in `services/api/migrations/` (Agent A owns them; others request schema changes on the board). Managed hosting (e.g. Tiger Cloud) is pending the lead's decision.
 - Auth: email + password with JWT (httpOnly cookie). Roles: `fan`, `admin`.
-- Development: server services use a dedicated Tiger Cloud development database through DATABASE_URL with TLS and connection pooling; each service has `npm run dev`. Integration tests use an isolated Tiger Cloud test database. Never expose database credentials to browser apps.
+- Local dev: `docker compose up -d db`; each service has `npm run dev`. Tests use a separate `TEST_DATABASE_URL`. Never expose database credentials to browser apps.
 
 ## 5. Contract
 
