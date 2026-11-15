@@ -62,7 +62,21 @@ async function memberStats(db: Db): Promise<{ by: Map<string, MemberStats>; tota
   return { by, totalPulls7d };
 }
 
-export function scoreMoment(m: ReturnType<typeof toMoment>, stats: Map<string, MemberStats>, totalPulls7d: number, now: Date) {
+/**
+ * Fresh, refreshable reach data for moments that come from external sources (Moment Scout, v1.7).
+ * Reads the optional view `scout_moment_views(moment_key, views, fetched_at)` if it exists; only rows
+ * fetched in the last 30 days count (YouTube API ToS). API stats are never stored in archive text.
+ */
+async function externalViews(db: Db): Promise<Map<string, number>> {
+  const has = await db.query<{ t: string | null }>("SELECT to_regclass('scout_moment_views')::text AS t");
+  if (!has.rows[0].t) return new Map();
+  const r = await db.query<{ moment_key: string; views: string }>(
+    "SELECT moment_key, views::text FROM scout_moment_views WHERE fetched_at > now() - interval '30 days'",
+  );
+  return new Map(r.rows.map((x) => [x.moment_key, Number(x.views)]));
+}
+
+export function scoreMoment(m: ReturnType<typeof toMoment> & { key?: string }, stats: Map<string, MemberStats>, totalPulls7d: number, now: Date, liveViews?: number) {
   const signals: Signal[] = [];
   const push = (key: keyof typeof W, label: string, value: number, detail: string) =>
     signals.push({ key, label, weight: W[key], value: Math.max(0, Math.min(1, value)), points: Math.round(W[key] * Math.max(0, Math.min(1, value)) * 10) / 10, detail });
@@ -97,9 +111,9 @@ export function scoreMoment(m: ReturnType<typeof toMoment>, stats: Map<string, M
   push("gap", "Catalog gap", m.members.length ? 1 / (1 + existing / 6) : 0.2, m.members.length ? `${existing} existing card${existing === 1 ? "" : "s"} for ${m.members.join(", ")}` : "Org-wide moment");
 
   // 5. Archive weight: the moment's own reach + type
-  const views = viewsIn(m.summary);
+  const views = liveViews ?? viewsIn(m.summary);
   const typeBoost = m.tags.includes("milestone") || m.tags.includes("esports") ? 0.25 : 0;
-  push("archive", "Archive weight", Math.min(1, (views ? Math.log10(views) / 7.1 : 0.35) + typeBoost), `${views ? `${fmt(views)} views on record` : "No view count on record"}${typeBoost ? `; ${m.tags.filter((t) => t === "milestone" || t === "esports").join(" + ")} moment` : ""}; ${m.source}`);
+  push("archive", "Archive weight", Math.min(1, (views ? Math.log10(views) / 7.1 : 0.35) + typeBoost), `${views ? `${fmt(views)} views ${liveViews !== undefined ? "(live, refreshed ≤30 days)" : "on record"}` : "No view count on record"}${typeBoost ? `; ${m.tags.filter((t) => t === "milestone" || t === "esports").join(" + ")} moment` : ""}; ${m.source}`);
 
   const score = Math.round(signals.reduce((a, s) => a + s.points, 0) * 10) / 10;
   const lead = [...signals].sort((a, b) => b.points - a.points)[0];
@@ -121,11 +135,13 @@ export function collectibleFit(m: { title: string; summary: string; tags: string
 /** Scores every archive moment, stores the top `keep` as a new scan, returns them ranked. */
 export async function runScan(db: Db, now = new Date(), keep = 12) {
   const { by, totalPulls7d } = await memberStats(db);
-  const moments = (await db.query("SELECT * FROM archive_moments")).rows.map(toMoment);
+  const rows = (await db.query("SELECT * FROM archive_moments")).rows;
+  const moments = rows.map((r) => ({ ...toMoment(r), key: r.key as string }));
+  const live = await externalViews(db);
   const used = new Set((await db.query<{ moment_id: string }>("SELECT moment_id FROM campaigns WHERE moment_id IS NOT NULL")).rows.map((r) => r.moment_id));
   const ranked = moments
     .filter((m) => !used.has(m.id) && collectibleFit(m).ok)
-    .map((m) => ({ moment: m, ...scoreMoment(m, by, totalPulls7d, now) }))
+    .map((m) => ({ moment: m, ...scoreMoment(m, by, totalPulls7d, now, live.get(m.key)) }))
     .sort((a, b) => b.score - a.score)
     .slice(0, keep);
   const scanId = randomUUID();
