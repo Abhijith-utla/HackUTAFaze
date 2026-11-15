@@ -113,7 +113,7 @@ export function scoreMoment(m: ReturnType<typeof toMoment> & { key?: string }, s
   // 5. Archive weight: the moment's own reach + type
   const views = liveViews ?? viewsIn(m.summary);
   const typeBoost = m.tags.includes("milestone") || m.tags.includes("esports") ? 0.25 : 0;
-  push("archive", "Archive weight", Math.min(1, (views ? Math.log10(views) / 7.1 : 0.35) + typeBoost), `${views ? `${fmt(views)} views ${liveViews !== undefined ? "(live, refreshed ≤30 days)" : "on record"}` : "No view count on record"}${typeBoost ? `; ${m.tags.filter((t) => t === "milestone" || t === "esports").join(" + ")} moment` : ""}; ${m.source}`);
+  push("archive", "Archive weight", Math.min(1, (views ? Math.log10(views) / 7.1 : 0.35) + typeBoost), `${liveViews !== undefined ? "Live YouTube reach (count refreshed ≤30 days; not stored in scan history)" : views ? `${fmt(views)} views on record` : "No view count on record"}${typeBoost ? `; ${m.tags.filter((t) => t === "milestone" || t === "esports").join(" + ")} moment` : ""}; ${m.source}`);
 
   const score = Math.round(signals.reduce((a, s) => a + s.points, 0) * 10) / 10;
   const lead = [...signals].sort((a, b) => b.points - a.points)[0];

@@ -102,6 +102,6 @@ Lives in `services/api/src/routes/control.ts` + `src/control/*`; UI in `apps/cli
 | POST | `/admin/control/campaigns/:id/simulate` | `{collectors ≤ 40}` DEMO ONLY: creates `demo` fans who open the drop through the real `/packs/:id/open` |
 | GET | `/admin/control/audit?limit=` | → `{entries}` (append-only `audit_log`) |
 
-External reach hook (for Moment Scout, v1.7): if a view `scout_moment_views(moment_key, views, fetched_at)` exists, KAM uses its views for archive moments whose `key` matches, counting only rows fetched in the last 30 days. API statistics must never be written into `archive_moments.summary` (Studio copies summary text into card lore).
+External reach hook (for Moment Scout, v1.7): if a view `scout_moment_views(moment_key, views, fetched_at)` exists, KAM uses its views for archive moments whose `key` matches, counting only rows fetched in the last 30 days. API statistics must never be written into `archive_moments.summary` (Studio copies summary text into card lore). KAM also never writes the live view count into stored scan evidence (`opportunities.signals`); it uses the count for points only.
 
 KAM score = sum of 5 explained signals (anniversary 30, member momentum 25, collector demand 20, catalog gap 10, archive weight 15). Moments about lawsuits, gambling, health, harm, controversy, or business deals with no featured member are never recommended. Studio's default writer (`template`) only reuses the archive entry's own sentences; `OLLAMA_URL` (+ `OLLAMA_MODEL`) optionally rewrites lore and falls back to the template on any error.
