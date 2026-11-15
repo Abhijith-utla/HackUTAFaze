@@ -2,6 +2,7 @@
 // The battle table. Top: scoreboard + the current prompt. Middle: the cards in play. Bottom: your hand. You pick the card that best
 // matches the prompt; the server scores both sides by tag match and the higher score wins the round (a point). Best of five.
 import type { ClashClip, ClashState } from '@faze/shared';
+import { useEffect, useRef } from 'react';
 import { thumb } from '../../lib/api';
 import type { Opponent } from './opponent';
 import { derive, roundResult, weightList, type PipState, type RoundResult, type Side } from './view';
@@ -79,32 +80,25 @@ export default function Battle({ state, opponent, selected, onSelect, onPlay, bu
   state: ClashState; opponent: Opponent; selected: string | null; onSelect: (id: string | null) => void; onPlay: () => void; busy: boolean;
   reveal: number | null; onContinue: () => void; onLeave: () => void; onAgain: () => void;
 }) {
+  const table = useRef<HTMLDivElement>(null);
+  // Bring the table to the top of the screen once, so the whole match is in view without scrolling.
+  useEffect(() => { table.current?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }, []);
+
   const v = derive(state);
   const revealed = reveal !== null ? roundResult(state, reveal) : null;
   const showFinal = v.status === 'completed' && reveal === null;
   const promptRound = revealed ?? (v.current ? roundResult(state, v.current.number) : null) ?? (showFinal ? roundResult(state, state.rounds.length) : null);
-  const oppLeft = v.oppLineup.filter((c) => !(c.id in v.oppUsed));
   const canPlay = v.status === 'active' && !!v.current && reveal === null && !v.current.submissions.some((s) => s.seat === v.me);
 
-  return <div className="cg-table" data-phase={showFinal ? 'final' : revealed ? 'reveal' : 'play'}>
+  return <div ref={table} className="cg-table cg-battle" data-phase={showFinal ? 'final' : revealed ? 'reveal' : 'play'}>
     <div className="cg-top">
       <Scoreboard state={state} opponent={opponent} />
       {promptRound && !showFinal && <Prompt title={promptRound.title} description={promptRound.description} weights={promptRound.weights} round={promptRound.number} />}
     </div>
 
-    <div className="cg-opp" aria-label={`${opponent.handle}'s hand`}>
-      <p><span aria-hidden="true">{opponent.flag}</span> <b>{opponent.handle}</b> · {opponent.city}, {opponent.country} <em>demo: computer</em></p>
-      <div className="cg-backs">{oppLeft.map((c) => <Back key={c.id} />)}</div>
-    </div>
-
-    <div className="cg-center">
-      {showFinal ? <Final state={state} opponent={opponent} onAgain={onAgain} />
-        : revealed ? <Reveal r={revealed} last={v.status === 'completed' && reveal === state.rounds.length} onContinue={onContinue} opponent={opponent} />
-        : <p className="cg-center-hint">{canPlay ? (selected ? 'Locked and loaded. Play it!' : 'Pick the card that best fits the prompt.') : 'Resolving…'}</p>}
-    </div>
-
-    <div className="cg-hand" aria-label="Your hand">
-      <ul>{v.myLineup.map((c) => {
+    <aside className="cg-col cg-col-me" aria-label="Your team">
+      <p className="cg-col-title">YOUR TEAM</p>
+      <ul className="cg-grid">{v.myLineup.map((c) => {
         const used = c.id in v.myUsed, on = selected === c.id;
         return <li key={c.id}><button type="button" className={`cg-hcard${on ? ' is-on' : ''}${used ? ' is-used' : ''}`} disabled={!canPlay || used || busy} aria-pressed={on}
           onClick={() => onSelect(on ? null : c.id)} title={`${c.name} · ${c.moment_tags.join(', ')}`}>
@@ -113,10 +107,24 @@ export default function Battle({ state, opponent, selected, onSelect, onPlay, bu
           <span className="cg-htags">{used ? `played in round ${v.myUsed[c.id]}` : c.moment_tags.join(' · ')}</span>
         </button></li>;
       })}</ul>
-      {!showFinal && <div className="cg-actions">
-        <button type="button" className="cg-primary" disabled={!canPlay || !selected || busy} onClick={onPlay}>{busy ? 'Playing…' : 'Play this card'}</button>
-        <button type="button" className="cg-link" onClick={onLeave}>Forfeit match</button>
-      </div>}
-    </div>
+    </aside>
+
+    <section className="cg-center" aria-live="polite">
+      {showFinal ? <Final state={state} opponent={opponent} onAgain={onAgain} />
+        : revealed ? <Reveal r={revealed} last={v.status === 'completed' && reveal === state.rounds.length} onContinue={onContinue} opponent={opponent} />
+        : <div className="cg-play">
+            <p className="cg-center-hint">{canPlay ? (selected ? 'Locked and loaded. Play it!' : 'Pick the card that best fits the prompt.') : 'Resolving…'}</p>
+            <div className="cg-actions">
+              <button type="button" className="cg-primary" disabled={!canPlay || !selected || busy} onClick={onPlay}>{busy ? 'Playing…' : 'Play this card'}</button>
+              <button type="button" className="cg-link" onClick={onLeave}>Forfeit match</button>
+            </div>
+          </div>}
+    </section>
+
+    <aside className="cg-col cg-col-opp" aria-label={`${opponent.handle}'s hand`}>
+      <p className="cg-col-title"><span aria-hidden="true">{opponent.flag}</span> {opponent.handle}<em>{opponent.city} · demo: computer</em></p>
+      <ul className="cg-grid">{v.oppLineup.map((c) => <li key={c.id}>{c.id in v.oppUsed ? <span className="cg-back is-played" aria-hidden="true" /> : <Back />}</li>)}</ul>
+      <p className="cg-col-count">{v.oppLineup.filter((c) => !(c.id in v.oppUsed)).length} cards left</p>
+    </aside>
   </div>;
 }
