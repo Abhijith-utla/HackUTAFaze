@@ -28,10 +28,12 @@ export function validateContributionQuote(quote: ContributionQuote, wallet: stri
   if (!Number.isSafeInteger(quote.lamports) || quote.lamports <= 0) throw Error("The quoted reward amount is invalid.");
 }
 
-export async function connectContributionPayer(): Promise<string> {
+export async function connectContributionWallet(): Promise<string> {
   const connected = await provider().connect();
   return connected.publicKey.toBase58();
 }
+
+export const connectContributionPayer = connectContributionWallet;
 
 /** Opens Phantom for exactly the server-issued devnet transfer. Server confirmation remains authoritative. */
 export async function signContributionPayout(quote: ContributionQuote, onStatus: (message: string) => void): Promise<string> {
