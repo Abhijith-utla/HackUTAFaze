@@ -51,6 +51,11 @@ test(
         "INSERT INTO submissions(user_id,kind,payload) VALUES ($1,'display_name','{\"displayName\":\"SHIT\"}')",
         [user],
       );
+      // Previously the oldest 100 pending rows were re-scanned forever, starving later rows.
+      await pool.query(
+        "INSERT INTO submissions(user_id,kind,payload) SELECT $1,'display_name',jsonb_build_object('displayName','SHIT') FROM generate_series(1,150)",
+        [user],
+      );
       await pool.query(
         "INSERT INTO jobs(kind,payload) VALUES ('engagement_spike','{\"fazeMember\":\"FaZe Banks\"}'),('publish_set',$1),('engagement_spike','{\"fazeMember\":\"Missing\"}')",
         [{ setId: set }],
@@ -81,6 +86,8 @@ test(
       ).rows[0];
       assert.equal(sub.status, "pending");
       assert.deepEqual(sub.auto_flags, ["profanity"]);
+      const scanned = (await pool.query("SELECT count(*)::int AS count FROM submissions WHERE status='pending' AND auto_flags=ARRAY['profanity']::text[]")).rows[0].count;
+      assert.equal(scanned, 151, 'all pending rows including those beyond 100 receive automatic checks');
       const jobs = (await pool.query("SELECT status FROM jobs")).rows;
       assert.equal(jobs.filter((j) => j.status === "done").length, 2);
       assert.equal(jobs.filter((j) => j.status === "failed").length, 1);
