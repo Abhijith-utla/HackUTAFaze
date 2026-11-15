@@ -144,3 +144,14 @@ describe("collection + leaderboard", () => {
     expect(lb.json().trending.some((t: any) => t.card.id === cardIds[0])).toBe(true);
   });
 });
+
+describe("concurrency regressions", () => {
+  it("parallel opens by different users on one card never collide on serial", async () => {
+    const { packId } = await makeSetWithPack({ perPack: 2, cards: [{ rarity: "common" }] });
+    const users = await Promise.all(Array.from({ length: 6 }, () => signup(app)));
+    const res = await Promise.all(users.map((u) => open(packId, u.cookie)));
+    expect(res.map((r) => r.statusCode)).toEqual(Array(6).fill(200));
+    const serials = res.flatMap((r) => r.json().cards.map((c: any) => c.serial)).sort((a, b) => a - b);
+    expect(serials).toEqual(Array.from({ length: 12 }, (_, i) => i + 1));
+  });
+});
