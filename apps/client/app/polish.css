@@ -841,7 +841,7 @@ button.profile-icon:hover, button.profile-icon[aria-expanded="true"] { border-co
 .profile-dropdown :is(a, button) { display: block; text-align: left; width: 100%; padding: 10px 12px; border: 0; border-radius: 4px; background: transparent; color: #f2f2f2; font: 12px/1.3 var(--font-mono, monospace); text-decoration: none; cursor: pointer; }
 .profile-dropdown :is(a, button):hover { background: #262626; }
 .profile-dropdown a[href^="/admin"] { color: var(--faze-red, #e4002b); }
-.mono-theme header button.profile-icon { width: 34px; height: 34px; min-width: 0; padding: 0; border-radius: 50%; }
+.mono-theme header .profile-menu button.profile-icon { width: 34px; height: 34px; min-width: 34px; min-height: 34px; max-width: 34px; max-height: 34px; flex: none; aspect-ratio: 1; padding: 0; border-radius: 50%; }
 .mono-theme header .profile-dropdown :is(a, button) { border: 0; }
 
 /* ===== Login: textured field, fanned FaZe cards, chamfered panel ===== */
