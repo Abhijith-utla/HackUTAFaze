@@ -865,7 +865,8 @@ button.profile-icon:hover, button.profile-icon[aria-expanded="true"] { border-co
 .login-panel .auth { margin: 0; width: 100%; border: 0; border-radius: 0; padding: 44px 36px 32px; text-align: center;
   background: radial-gradient(circle, #ffffff10 1px, transparent 1.4px) 0 0/9px 9px, #050505;
   clip-path: polygon(33px 0, 100% 0, 100% calc(100% - 33px), calc(100% - 33px) 100%, 0 100%, 0 33px); }
-.login-panel .auth h2 { margin: 0 0 26px; font: 400 clamp(32px, 3vw, 50px)/.98 Impact, 'Haettenschweiler', 'Arial Narrow Bold', sans-serif; text-transform: uppercase; letter-spacing: .01em; color: #fff; }
+.login-panel .auth h2 { margin: 0 0 8px; font: 400 clamp(32px, 3vw, 50px)/.98 Impact, 'Haettenschweiler', 'Arial Narrow Bold', sans-serif; text-transform: uppercase; letter-spacing: .01em; color: #fff; }
+.login-panel .auth .auth-tagline { margin: 0 0 28px; font: 400 12px/1.4 var(--font-mono, monospace); letter-spacing: .14em; text-transform: uppercase; color: #6f6f76; }
 .login-panel .auth form { display: flex; flex-direction: column; gap: 12px; }
 .login-panel .auth label { display: block; margin: 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
