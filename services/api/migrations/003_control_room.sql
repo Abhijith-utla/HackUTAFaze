@@ -13,11 +13,7 @@ CREATE TABLE archive_moments (
   tags text[] NOT NULL DEFAULT '{}',
   source text NOT NULL,
   citations text[] NOT NULL DEFAULT '{}',
-  search tsvector GENERATED ALWAYS AS (
-    setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
-    setweight(to_tsvector('english', array_to_string(members, ' ')), 'A') ||
-    setweight(to_tsvector('english', coalesce(summary, '')), 'B')
-  ) STORED
+  search tsvector NOT NULL                          -- written by the archive loader (title+members weight A, summary B)
 );
 CREATE INDEX archive_moments_search_idx ON archive_moments USING gin (search);
 CREATE INDEX archive_moments_members_idx ON archive_moments USING gin (members);

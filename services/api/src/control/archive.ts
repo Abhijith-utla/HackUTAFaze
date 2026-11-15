@@ -27,8 +27,12 @@ export async function ensureArchive(db: Db, file = ARCHIVE_FILE): Promise<number
   let inserted = 0;
   for (const m of doc.moments) {
     const r = await db.query(
-      `INSERT INTO archive_moments (key, occurred_on, precision, title, summary, members, tags, source, citations)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (key) DO NOTHING`,
+      `INSERT INTO archive_moments (key, occurred_on, precision, title, summary, members, tags, source, citations, search)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,
+         setweight(to_tsvector('english', $4), 'A') ||
+         setweight(to_tsvector('english', array_to_string($6::text[], ' ')), 'A') ||
+         setweight(to_tsvector('english', $5), 'B'))
+       ON CONFLICT (key) DO NOTHING`,
       [m.key, m.occurredOn, m.precision, m.title, m.summary, m.members, m.tags, m.source, m.citations],
     );
     inserted += r.rowCount ?? 0;
