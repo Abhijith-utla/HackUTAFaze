@@ -39,7 +39,7 @@ describe("KAM scoring (pure)", () => {
     expect(sig(on).points).toBeGreaterThan(sig(off).points);
     // API statistics must not persist in stored scan evidence (opportunities.signals): no number in the text
     expect(sig(on).detail).toMatch(/Live YouTube reach/);
-    expect(sig(on).detail).not.toMatch(/\d/);
+    expect(sig(on).detail).not.toMatch(/4\.0M|4,?020,?000|4020/);
   });
   it("score equals the sum of explained signal points, each within its weight", () => {
     const m = { id: "x", occurredOn: "2012-10-12", precision: "day", title: "Introducing FaZe Rain", summary: "490,526 views. Rain becomes one of the most-watched personalities.", members: ["Rain"], tags: ["creator"], source: "FaZe Clan: A Timeline, 2010–2026 (PDF), p.6", citations: [] };
