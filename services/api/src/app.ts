@@ -1,3 +1,4 @@
+import { clipClashRoutes } from './routes/clip-clash.js';
 import Fastify from "fastify";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -23,7 +24,7 @@ import { paidPackRoutes, type PackChain } from './pack-payment.js';
 export async function buildApp(options: {packChain?: PackChain} = {}) {
   const app = Fastify({ logger: process.env.VITEST ? false : { level: "info" } });
   await app.register(cookie);
-  await app.register(cors, { origin: config.clientOrigins, credentials: true, methods: ["GET", "HEAD", "POST", "PATCH", "DELETE"] });
+  await app.register(cors, { origin: config.clientOrigins, credentials: true, methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"] });
   registerErrorHandler(app);
 
   app.get("/health", async () => ({ ok: true }));
@@ -49,5 +50,6 @@ export async function buildApp(options: {packChain?: PackChain} = {}) {
   await app.register(controlRoutes);
   await app.register(insightsRoutes);
   await artRoutes(app);
+  await app.register(clipClashRoutes);
   return app;
 }

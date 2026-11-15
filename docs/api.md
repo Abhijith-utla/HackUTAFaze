@@ -127,3 +127,24 @@ Fan Store now uses direct devnet SOL checkout and fulfillment. See [direct-sol-p
 | GET | `/admin/control/ops` | → `{health, jobs{byKindStatus, recent}, moderation[pending, text only — never image bytes], rights[register], migrations, users}` |
 
 Sponsor fees are demo contract values for reporting; no money moves. Moderation actions in the UI use the existing `POST /admin/moderation/:id`.
+## Clip Clash (migration 007)
+
+Clip Clash is separate from pack purchases and trades: no coins, payments, burns or ownership transfers. All endpoints require the existing session cookie.
+
+| Method | Path | Request / response |
+|---|---|---|
+| GET | `/game/cards` | Available owned approved clips (one row per instance), plus CPU availability |
+| GET | `/game/matches` | Your most recent 30 persisted matches |
+| POST | `/game/matches` | `{mode:"pvp"|"cpu"}` ? `ClashState` |
+| POST | `/game/join` | `{code}` ? `ClashState`; 16 hexadecimal characters, case insensitive |
+| GET | `/game/matches/:id` | Participant-only `ClashState`; safe for polling every 2 seconds |
+| POST | `/game/matches/:id/lineup` | `{instanceIds:[five UUIDs]}` ? confirmed state; exactly five distinct owned moments |
+| POST | `/game/matches/:id/submit` | `{cardId,round}` ? state; rejects used cards, duplicate submissions and stale rounds |
+| POST | `/game/matches/:id/cancel` | `{}` ? terminal state with reservations released |
+| GET | `/game/assets/:id` | Authenticated approved or participant-snapshot asset bytes |
+| POST | `/admin/game/assets` | Admin only: `{mime,base64}` ? `{assetId}`; immutable MP4/WebM/PNG/JPEG, up to 20MiB |
+| PUT | `/admin/game/cards/:id` | Admin only: `{clipAssetId,thumbnailAssetId?,startMs,endMs,tags,rightsReference,description,game?,event?,featuredMembers?,approval,cpuPool?}` |
+
+`ClashState` is exported from `@faze/shared`. Opponent submissions are omitted until the round resolves; future prompts are private. Lineups are public after confirmation, including CPU lineup before play. Each match freezes five distinct prompts at creation and freezes card/clip metadata on lineup confirmation. Scores are the sum of weights for distinct matching tags, with per-tag explanations. Tags use lowercase letters, digits, underscores/hyphens (40 characters max). Weights are finite nonnegative numbers up to 1000. Rarity and base power have no effect. CPU ties choose the lowest card UUID, and the CPU sees only the current prompt and its unused cards.
+
+First to three wins; after five rounds without three wins, draw even if scores differ. Cancellation is available to either participant. Matches expire after 24 hours; API lifecycle cleanup runs every minute and on game traffic. All terminal updates trigger database lock release. With the API stopped, expiry cleanup resumes on startup/game traffic; persistent locks remain exclusive until cleanup executes.

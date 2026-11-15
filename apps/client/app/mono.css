@@ -170,3 +170,11 @@
 @media (prefers-reduced-motion: reduce) {
   .mono-theme *, .mono-theme *::before, .mono-theme *::after { scroll-behavior: auto; }
 }
+.clash video { width:100%;max-height:440px;background:#000; }
+.clash figure { margin:0; }
+.clash form { max-width:480px;margin-block:24px; }
+.clash-lineup { display:grid;gap:12px;margin-block:20px; }
+.clash-lineup label { display:flex;align-items:center;gap:12px;flex-wrap:wrap; }
+.clash-lineup span { color:var(--mono-muted); }
+.clash-reveal { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px; }
+@media(max-width:700px){ .clash-reveal { grid-template-columns:1fr; } .mono-theme main > nav button { flex-shrink:0; } }

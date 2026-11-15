@@ -259,3 +259,5 @@ export type Odds = z.infer<typeof Odds>;
 export type PurchaseStatus = z.infer<typeof PurchaseStatus>;
 
 export type { MarketCard, MarketListing, MarketOffer, MarketNotification } from './marketplace';
+
+export type { ClashClip, ClashState } from './clip-clash';
