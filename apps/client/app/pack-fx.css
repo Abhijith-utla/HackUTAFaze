@@ -42,8 +42,8 @@
 
 /* ---------- 2. Deal: rise from the pack, spread, flip one by one ---------- */
 .pack-cinema .fx-stage::before{content:'';position:absolute;inset:0;margin:auto;width:calc(var(--fx-card-w) * 1.6);height:calc(var(--fx-card-h) * 1.35);border-radius:50%;z-index:-1;pointer-events:none;background:radial-gradient(closest-side,color-mix(in srgb,var(--rarity-glow) 60%,transparent),transparent);opacity:0}
-.pack-cinema .fx-stage .cinema-flipper{grid-area:1/1;z-index:1;transition:none;animation:fx-deal .46s var(--fx-ease) both}
-.pack-cinema .fx-first .cinema-flipper{animation:fx-rise .64s var(--fx-ease) both}
+.pack-cinema .fx-stage .cinema-flipper{grid-area:1/1;z-index:1;transition:none;animation:fx-deal .46s var(--fx-ease) backwards}
+.pack-cinema .fx-first .cinema-flipper{animation:fx-rise .64s var(--fx-ease) backwards}
 /* Remaining unrevealed cards fan out behind the current one. */
 .fx-deck{position:absolute;inset:0;z-index:0;pointer-events:none}
 .fx-deck>span{position:absolute;inset:0;margin:auto;width:var(--fx-card-w);height:var(--fx-card-h);border-radius:16px;border:1px solid #ffffff1f;background:repeating-linear-gradient(45deg,#ffffff07 0 2px,transparent 2px 18px),linear-gradient(145deg,#30343f,#080b13);box-shadow:0 10px 30px #0007;transform:translate(calc(14px + var(--i) * 11px),calc(var(--i) * -5px)) rotate(calc(4deg + var(--i) * 2.5deg)) scale(.95);opacity:calc(.85 - var(--i) * .17)}
@@ -55,8 +55,8 @@
 
 /* Flip: dip back (anticipation) then swing over. Epic/legendary dip deeper, hold longer and lift.
    Deal uses individual translate/rotate/scale, flip uses transform, so the two compose. */
-.pack-cinema .fx-stage .cinema-flipper.is-flipped{animation:fx-deal .46s var(--fx-ease) both,fx-flip var(--fx-flip) linear both}
-.pack-cinema .fx-first .cinema-flipper.is-flipped{animation:fx-rise .64s var(--fx-ease) both,fx-flip var(--fx-flip) linear both}
+.pack-cinema .fx-stage .cinema-flipper.is-flipped{animation:fx-deal .46s var(--fx-ease) backwards,fx-flip var(--fx-flip) linear both}
+.pack-cinema .fx-first .cinema-flipper.is-flipped{animation:fx-rise .64s var(--fx-ease) backwards,fx-flip var(--fx-flip) linear both}
 .pack-cinema .fx-r-epic .cinema-flipper.is-flipped,.pack-cinema .fx-r-legendary .cinema-flipper.is-flipped{animation-name:fx-deal,fx-flip-big}
 .pack-cinema .fx-first.fx-r-epic .cinema-flipper.is-flipped,.pack-cinema .fx-first.fx-r-legendary .cinema-flipper.is-flipped{animation-name:fx-rise,fx-flip-big}
 @keyframes fx-flip{
