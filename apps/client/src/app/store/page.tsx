@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import type { Pack, CardInstance } from "@faze/shared";
 import { api } from "@/lib/api";
 import { CardTile } from "@/components/CardTile";
+import { BuyCoins } from "@/components/BuyCoins";
 
 export default function Store() {
   const [packs, setPacks] = useState<Pack[]>([]);
@@ -18,6 +19,7 @@ export default function Store() {
   }
   return (<>
     <h1>Store</h1>
+    <BuyCoins onBalance={() => window.location.reload()} />
     {err && <p className="err" role="alert">{err}</p>}
     {packs.map((p) => (
       <div className="card" key={p.id} style={{ marginBottom: 12 }}>

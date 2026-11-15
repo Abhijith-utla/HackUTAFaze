@@ -11,7 +11,7 @@ export function Header() {
   return (
     <header className="top">
       <Link href="/" className="logo">FAZE CARDS</Link>
-      <nav><Link href="/store">Store</Link></nav>
+      <nav><Link href="/store">Store</Link><Link href="/collection">Collection</Link><Link href="/trades">Trades</Link><Link href="/leaderboard">Leaderboard</Link></nav>
       {me ? (
         <span>{me.name} · {me.balance} coins <span className="badge">demo</span></span>
       ) : (
