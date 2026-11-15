@@ -48,9 +48,17 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   if (simulate && env.NODE_ENV === "production") {
     throw new Error("payments: PAYMENTS_SIMULATE is test-only and is refused when NODE_ENV=production");
   }
+  const databaseUrl = req(env, "DATABASE_URL");
+  const database = new URL(databaseUrl);
+  if (!["postgres:", "postgresql:"].includes(database.protocol)) throw new Error("Database must use PostgreSQL URL");
+  const local = ["localhost", "127.0.0.1", "[::1]"].includes(database.hostname);
+  if (!local && !["require", "verify-ca", "verify-full"].includes(database.searchParams.get("sslmode") || "")) {
+    throw new Error("Remote Tiger Cloud connections require TLS sslmode=require or stricter");
+  }
+  if (env.NODE_ENV === 'production' && env.PAYMENTS_STANDALONE === '1') throw new Error('Standalone payments are test-only');
   return {
     port: Number(env.PAYMENTS_PORT ?? 4100),
-    databaseUrl: req(env, "DATABASE_URL"),
+    databaseUrl,
     jwtSecret: req(env, "JWT_SECRET"),
     internalSecret: req(env, "INTERNAL_SECRET"),
     apiUrl: env.API_URL ?? "http://localhost:4000",

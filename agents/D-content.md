@@ -16,3 +16,6 @@ Consumes: A's admin endpoints and DB tables listed in `docs/data-model.md`.
 ## Coordinate
 - Needs admin endpoints from @toosh-legacy (work against stubs until then).
 - Tell @Jaideepo7 the art URL format once storage is decided.
+
+## Current payment and database requirements
+Persist moderation, jobs, engagement events and stats in shared Tiger Cloud by Tiger Data via server-only DATABASE_URL with TLS and pooling. Coordinate migrations with A; preserve atomic event/stat updates and job row locks. Admin accesses data through the API.

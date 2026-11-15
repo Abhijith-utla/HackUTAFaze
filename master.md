@@ -31,7 +31,7 @@ Anything not on this list is a stretch goal (§9).
 ## 4. Architecture
 
 ```
-apps/client  (Next.js web, responsive mobile)  ──HTTP/JSON──▶  services/api  (Node/TS, Postgres)
+apps/client  (Next.js web, responsive mobile)  ──HTTP/JSON──▶  services/api  (Node/TS, Tiger Cloud)
 apps/admin   (Next.js, staff only)             ──HTTP/JSON──▶  services/api
 services/payments  (Solana devnet verify)       ──internal──▶  services/api ledger
                    ◀──RPC── api.devnet.solana.com      (client signs with Phantom)
@@ -39,9 +39,9 @@ services/worker    (queues: moderation, engagement sim, set publishing)
 packages/shared    (TS types + zod schemas generated from docs/api.md, docs/data-model.md)
 ```
 
-- One Postgres database. Migrations live in `services/api/migrations/` (Agent A owns them; others request schema changes on the board).
+- One Tiger Cloud database by Tiger Data (managed PostgreSQL with TimescaleDB), shared by all services. Preserve SQL transactions, row locks and unique constraints. Migrations live in `services/api/migrations/` (Agent A owns them; others request schema changes on the board).
 - Auth: email + password with JWT (httpOnly cookie). Roles: `fan`, `admin`.
-- Local dev: `docker compose up` for Postgres; each service has `npm run dev`.
+- Development: server services use a dedicated Tiger Cloud development database through DATABASE_URL with TLS and connection pooling; each service has `npm run dev`. Integration tests use an isolated Tiger Cloud test database. Never expose database credentials to browser apps.
 
 ## 5. Contract
 
@@ -83,6 +83,6 @@ Card crafting (burn 5 duplicates → 1 higher rarity), daily login reward, push 
 |---|---|
 | H+2 | Contract frozen, repo skeleton runs, board live, every agent posted once |
 | H+8 | Signup, wallet, pack open working via API; client renders a pull from the real API |
-| H+14 | Payments webhook credits coins; trades work; admin can publish a set |
+| H+14 | Server-verified Solana devnet payment credits coins; trades work; admin can publish a set |
 | H+20 | Full demo flow (§2) passes the integration test on `main` |
 | H+22 | Feature freeze. Bug fixes, demo seed, pitch recording only |

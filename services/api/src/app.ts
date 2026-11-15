@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import { readFile } from "node:fs/promises";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import { config } from "./config.js";
@@ -9,8 +10,8 @@ import { packsRoutes } from "./routes/packs.js";
 import { collectionRoutes } from "./routes/collection.js";
 import { tradesRoutes } from "./routes/trades.js";
 import { leaderboardRoutes } from "./routes/leaderboard.js";
-import { adminRoutes } from "./routes/admin.js";
 import { artRoutes } from "./routes/art.js";
+import { adminRoutes } from "./routes/admin.js";
 
 export async function buildApp() {
   const app = Fastify({ logger: process.env.VITEST ? false : { level: "info" } });
@@ -19,6 +20,16 @@ export async function buildApp() {
   registerErrorHandler(app);
 
   app.get("/health", async () => ({ ok: true }));
+  app.get<{ Params: { file: string } }>("/demo-art/:file", async (req, reply) => {
+    if (!/^[a-f0-9-]{36}\.svg$/i.test(req.params.file)) return reply.code(404).send({ error: { code: "NOT_FOUND", message: "Art not found" } });
+    try {
+      const art = await readFile(new URL("../../../content/seed/art/" + req.params.file, import.meta.url));
+      return reply.type("image/svg+xml").header("X-Content-Type-Options", "nosniff").header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox").send(art);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      return reply.code(404).send({ error: { code: "NOT_FOUND", message: "Art not found" } });
+    }
+  });
   await app.register(authRoutes);
   await app.register(internalRoutes);
   await app.register(packsRoutes);
@@ -26,6 +37,6 @@ export async function buildApp() {
   await app.register(tradesRoutes);
   await app.register(leaderboardRoutes);
   await app.register(adminRoutes);
-  await app.register(artRoutes);
+  await artRoutes(app);
   return app;
 }

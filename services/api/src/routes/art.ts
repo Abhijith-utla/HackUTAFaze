@@ -1,90 +1,66 @@
-// Contract v1.3: admin art upload + public art route. Files live on disk under ART_DIR with
-// server-generated names; content type comes from the verified file signature, never from the client.
-import { randomUUID } from "node:crypto";
+﻿import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { requireAdmin } from "../auth.js";
+import { requireAdmin, requireUser } from "../auth.js";
 import { config } from "../config.js";
 import { fail } from "../errors.js";
 
-const MAX_BYTES = 2 * 1024 * 1024;
-const MAX_B64 = Math.ceil(MAX_BYTES / 3) * 4;
+import { tx } from "../db.js";
+import { toSubmission } from "../mappers.js";
 
-const TYPES = { png: "image/png", jpg: "image/jpeg", webp: "image/webp" } as const;
-type Ext = keyof typeof TYPES;
+const LIMIT = 2 * 1024 * 1024;
+const MAX_BASE64 = 4 * Math.ceil(LIMIT / 3);
+const Body = z.object({ base64: z.string().max(MAX_BASE64), mimeType: z.enum(["image/png", "image/jpeg", "image/webp"]) }).strict();
+const types = { png: "image/png", jpg: "image/jpeg", webp: "image/webp" } as const;
 
-const ArtBody = z.object({
-  filename: z.string().min(1).max(200),
-  contentType: z.enum(["image/png", "image/jpeg", "image/webp"]),
-  dataBase64: z.string().min(1).max(MAX_B64 + 4),
-});
-
-function sniff(b: Buffer): Ext | null {
-  if (b.length >= 8 && b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "png";
-  if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "jpg";
-  if (b.length >= 12 && b.toString("ascii", 0, 4) === "RIFF" && b.toString("ascii", 8, 12) === "WEBP") return "webp";
-  return null;
+export function decodeArt(body: unknown): { bytes: Buffer; extension: keyof typeof types } {
+  const { base64, mimeType } = Body.parse(body);
+  if (!base64.length || base64.length % 4 !== 0 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(base64)) fail("VALIDATION", "Invalid base64 image");
+  const bytes = Buffer.from(base64, "base64");
+  if (bytes.length > LIMIT || !bytes.length || bytes.toString("base64") !== base64) fail("VALIDATION", "Image must be at most 2MB with canonical base64");
+  let extension: keyof typeof types;
+  if (bytes.length >= 24 && bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10])) && bytes.subarray(12,16).toString() === "IHDR") extension = "png";
+  else if (bytes.length >= 4 && bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255 && bytes[bytes.length-2] === 255 && bytes[bytes.length-1] === 217) extension = "jpg";
+  else if (bytes.length >= 16 && bytes.toString("ascii",0,4) === "RIFF" && bytes.toString("ascii",8,12) === "WEBP" && ["VP8 ", "VP8L", "VP8X"].includes(bytes.toString("ascii",12,16))) extension = "webp";
+  else return fail("VALIDATION", "Image signature is not PNG, JPEG or WebP");
+  if (types[extension] !== mimeType) fail("VALIDATION", "Image content does not match MIME type");
+  return { bytes, extension };
 }
 
-export function decodeArt(body: unknown): { bytes: Buffer; ext: Ext } {
-  const b = ArtBody.parse(body);
-  const b64 = b.dataBase64.replace(/^data:[^,]*,/, "").replace(/\s+/g, "");
-  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(b64) || b64.length % 4 !== 0) fail("VALIDATION", "dataBase64 is not valid base64");
-  const bytes = Buffer.from(b64, "base64");
-  if (bytes.length === 0) fail("VALIDATION", "Empty image");
-  if (bytes.length > MAX_BYTES) fail("VALIDATION", "Image must be at most 2 MB");
-  const ext = sniff(bytes) ?? fail("VALIDATION", "Only PNG, JPEG or WebP images are accepted");
-  if (TYPES[ext] !== b.contentType) fail("VALIDATION", `File content is ${TYPES[ext]}, not ${b.contentType}`);
-  return { bytes, ext };
-}
-
-const DEMO_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.svg$/;
-const FILE_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(png|jpg|webp)$/;
-
-export async function artRoutes(app: FastifyInstance) {
-  app.post("/admin/art", { bodyLimit: MAX_B64 + 64 * 1024 }, async (req, reply) => {
+export async function artRoutes(app: FastifyInstance, uploadDir = config.uploadDir) {
+  app.post("/admin/art", { bodyLimit: MAX_BASE64 + 1024 }, async (req, reply) => {
     requireAdmin(req);
-    const { bytes, ext } = decodeArt(req.body);
-    await mkdir(config.artDir, { recursive: true });
-    const file = `${randomUUID()}.${ext}`;
-    await writeFile(path.join(config.artDir, file), bytes, { flag: "wx" });
-    return reply.status(201).send({ artUrl: `${config.publicUrl}/art/${file}` });
+    const input = req.body as Record<string, unknown>;
+    const legacy = input && 'dataBase64' in input;
+    const { bytes, extension } = decodeArt(legacy ? { base64: input.dataBase64, mimeType: input.contentType } : req.body);
+    await mkdir(uploadDir, { recursive: true });
+    const filename = `${randomUUID()}.${extension}`;
+    await writeFile(path.join(uploadDir, filename), bytes, { flag: "wx" });
+    const origin = (process.env.PUBLIC_API_URL || process.env.API_URL || 'http://localhost:4000').replace(/\/$/, '');
+    return reply.code(201).send({ artUrl: legacy ? origin + '/art/' + filename : '/uploaded-art/' + filename });
   });
-
-  // D's committed demo art (content/seed/art/<uuid>.svg). Repo files only, never uploads, so SVG is OK here;
-  // CSP sandbox + nosniff stop any script if someone opens the file directly.
-  app.get<{ Params: { file: string } }>("/demo-art/:file", async (req, reply) => {
-    if (!DEMO_RE.test(req.params.file)) fail("NOT_FOUND", "Image not found");
-    let bytes: Buffer;
-    try {
-      bytes = await readFile(path.join(config.demoArtDir, req.params.file));
-    } catch {
-      return fail("NOT_FOUND", "Image not found");
-    }
-    return reply
-      .type("image/svg+xml")
-      .header("X-Content-Type-Options", "nosniff")
-      .header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
-      .header("Cache-Control", "public, max-age=3600")
-      .send(bytes);
+  app.post("/submissions/fan-art", { bodyLimit: MAX_BASE64 + 2048 }, async (req, reply) => {
+    const user = requireUser(req);
+    const body = z.object({ name: z.string().trim().min(1).max(80), base64: z.string().max(MAX_BASE64), mimeType: z.enum(["image/png", "image/jpeg", "image/webp"]) }).strict().parse(req.body);
+    decodeArt({ base64: body.base64, mimeType: body.mimeType });
+    const submission = await tx(async c => {
+      const result = await c.query("INSERT INTO submissions(user_id,kind,payload,status) VALUES($1,'fan_art',$2,'pending') RETURNING *", [user.sub, { name: body.name, imageData: 'data:' + body.mimeType + ';base64,' + body.base64 }]);
+      await c.query("INSERT INTO jobs(kind,payload) VALUES('moderate',$1)", [{ submissionId: result.rows[0].id }]);
+      return result.rows[0];
+    });
+    return reply.code(201).send({ submission: toSubmission(submission) });
   });
-
-  app.get<{ Params: { file: string } }>("/art/:file", async (req, reply) => {
-    const m = FILE_RE.exec(req.params.file);
-    if (!m) fail("NOT_FOUND", "Image not found");
-    let bytes: Buffer;
+  for (const route of ["/uploaded-art/:file", "/art/:file"]) app.get<{ Params: { file: string } }>(route, async (req, reply) => {
+    const match = /^([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\.(png|jpg|webp)$/i.exec(req.params.file);
+    if (!match) return fail("NOT_FOUND", "Image not found");
     try {
-      bytes = await readFile(path.join(config.artDir, req.params.file));
-    } catch {
-      return fail("NOT_FOUND", "Image not found");
+      const bytes = await readFile(path.join(uploadDir, req.params.file));
+      return reply.type(types[match[2]!.toLowerCase() as keyof typeof types]).header("X-Content-Type-Options", "nosniff").header("Content-Security-Policy", "default-src 'none'; sandbox").send(bytes);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return fail("NOT_FOUND", "Image not found");
+      throw error;
     }
-    return reply
-      .type(TYPES[m[1] as Ext])
-      .header("X-Content-Type-Options", "nosniff")
-      .header("Content-Security-Policy", "default-src 'none'; sandbox")
-      .header("Cache-Control", "public, max-age=31536000, immutable")
-      .send(bytes);
   });
 }

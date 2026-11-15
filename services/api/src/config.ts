@@ -1,6 +1,7 @@
 import { config as loadEnv } from "dotenv";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { databaseUrlFor } from "./database-config.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 // services/api/.env first, then the repo-root .env (first value wins).
@@ -16,7 +17,8 @@ function required(name: string, testFallback?: string): string {
 }
 
 export const config = {
-  databaseUrl: process.env.DATABASE_URL || "postgres://faze:faze@localhost:5432/faze",
+  uploadDir: path.resolve(process.env.UPLOAD_DIR || process.env.ART_DIR || path.join(here, "..", "..", "..", ".data", "uploads")),
+  databaseUrl: databaseUrlFor(process.env, isTest),
   jwtSecret: required("JWT_SECRET", "test-jwt-secret"),
   internalSecret: required("INTERNAL_SECRET", "test-internal-secret"),
   port: Number(process.env.PORT || 4000),

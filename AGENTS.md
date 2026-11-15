@@ -58,3 +58,6 @@ One owner per area; matches master.md §8. Task briefs per person are in `agents
 | Board tooling | Lead (@Abhijith-utla) | `tools/`, `.claude/`, `.github/` | |
 
 Team lead: **@Abhijith-utla**.
+
+## User-authorized stack requirements
+All agents use Solana devnet (Phantom wallet, server-verified payments) and Tiger Cloud by Tiger Data for the shared database. Follow master.md, the current API/data contracts and updated briefs. Implementation ownership remains unchanged.

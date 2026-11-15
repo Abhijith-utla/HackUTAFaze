@@ -1,7 +1,57 @@
+﻿# Dependencies
 node_modules/
+.pnpm-store/
+.npm/
+
+# Build and framework output
 dist/
+build/
+out/
 .next/
-.env
-*.log
-coverage/
+.turbo/
+.vercel/
 *.tsbuildinfo
+next-env.d.ts
+
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local database state and runtime uploads (keep original content/seed art)
+.data/
+postgres-data/
+pgdata/
+*.pid
+*.pid.lock
+
+# Test, coverage, and browser artifacts
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+blob-report/
+
+# Logs and caches
+*.log
+.cache/
+.eslintcache
+.stylelintcache
+
+# Editor and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# Temporary review harness
+review-db.mjs

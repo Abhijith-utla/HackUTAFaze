@@ -22,6 +22,9 @@ beforeAll(async () => {
     users: await routeExists(`${apiUrl}/users?q=it`),
   };
   console.log("[integration] live endpoints:", has);
+  expect(Object.values(has).every(Boolean), "All required demo endpoints must exist").toBe(true);
+  const catalog = await fetch(`${apiUrl}/packs`).then(r => r.json());
+  expect(catalog.packs.length, "Demo seed must include a live pack").toBeGreaterThan(0);
 });
 
 async function buy(fan: Fan, bundleId = "coins_1000") {

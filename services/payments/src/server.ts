@@ -43,7 +43,7 @@ const timer = setInterval(async () => {
   } finally {
     busy = false;
   }
-}, 30_000);
+}, Number(process.env.PAYMENT_RECONCILE_INTERVAL_SECONDS ?? 15) * 1000);
 timer.unref();
 app.addHook("onClose", async () => clearInterval(timer));
 

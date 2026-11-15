@@ -210,6 +210,14 @@ describe("payments (Solana devnet)", () => {
     expect(await reconcile(t.repo, t.ledger, t.chain, { maxAgeMs: 60_000, limit: 10 })).toBe(0);
   });
 
+  it("reconciles reserved credits after the discovery window expires", async () => {
+    const c = (await checkout()).json();
+    await t.repo.reserveSignature(c.purchaseId, sig());
+    t.repo.rows.find(row => row.id === c.purchaseId)!.createdAt = new Date(0).toISOString();
+    expect(await reconcile(t.repo, t.ledger, t.chain, { maxAgeMs: 60000, limit: 10 })).toBe(1);
+    expect(t.ledger.balances.get(userId)).toBe(1000);
+  });
+
   it("cannot confirm someone else's purchase", async () => {
     const c = (await checkout()).json();
     const res = await confirm({ purchaseId: c.purchaseId, signature: sig() }, randomUUID());
@@ -291,9 +299,13 @@ describe("simulatedReader", () => {
 });
 
 describe("config", () => {
-  const base = { DATABASE_URL: "postgres://x", JWT_SECRET: "j", INTERNAL_SECRET: "i", SOLANA_TREASURY_PUBKEY: TREASURY };
+  const base = { DATABASE_URL: "postgres://localhost/test", JWT_SECRET: "j", INTERNAL_SECRET: "i", SOLANA_TREASURY_PUBKEY: TREASURY };
   it("defaults to devnet", () => {
     expect(loadConfig(base)).toMatchObject({ cluster: "devnet", rpcUrl: "https://api.devnet.solana.com" });
+  });
+  it("requires remote Tiger Cloud TLS", () => {
+    expect(() => loadConfig({ ...base, DATABASE_URL: 'postgres://remote.example/db' })).toThrow(/TLS/);
+    expect(loadConfig({ ...base, DATABASE_URL: 'postgres://remote.example/db?sslmode=require' }).databaseUrl).toContain('sslmode=require');
   });
   it("refuses mainnet", () => {
     expect(() => loadConfig({ ...base, SOLANA_CLUSTER: "mainnet-beta" })).toThrow(/never mainnet/);
