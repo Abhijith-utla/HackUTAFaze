@@ -1,4 +1,4 @@
-# Data model — v1 FROZEN (2026-11-15; changes only via the lead on the board)
+# Data model — v1.1 FROZEN (2026-11-15, payments → Solana devnet; changes only via the lead on the board)
 
 Postgres, one database shared by all services. Migrations owned by Agent A in `services/api/migrations/` (including tables other agents write, e.g. `purchases`, `card_stats`, `engagement_events`). All ids are UUIDs; all timestamps `timestamptz`. `demo boolean` marks seeded or simulated rows.
 
@@ -13,7 +13,7 @@ Postgres, one database shared by all services. Migrations owned by Agent A in `s
 | `card_instances` | id, card_id, owner_id, serial (int, unique per card_id), locked_by_trade_id (nullable), acquired_at | A |
 | `pulls` | id, user_id, pack_id, odds_version, card_instance_ids (uuid[]), created_at | A |
 | `trades` | id, from_user_id, to_user_id, offered_instance_ids, requested_instance_ids, message, message_status, status (`open`\|`accepted`\|`declined`\|`cancelled`), created_at, resolved_at | A |
-| `purchases` | id, user_id, stripe_session_id (unique), stripe_event_id (unique), bundle_id, coins, amount_cents, test_mode (always true for demo), status, created_at | B |
+| `purchases` | id, user_id, bundle_id, coins, lamports (bigint), reference (unique, Solana Pay reference pubkey), recipient (treasury pubkey), tx_signature (unique, nullable), cluster (`devnet`), test_mode (always true), status (`pending`\|`paid`\|`expired`), created_at, paid_at | B |
 | `submissions` | id, user_id, kind (`display_name`\|`trade_message`\|`fan_art`), ref_id (user or trade id), payload (jsonb), status (`pending`\|`approved`\|`rejected`), auto_flags (text[]), reviewed_by, reviewed_at, created_at | A inserts `pending` rows (same transaction as signup / trade create); D's worker sets `auto_flags`; admin decides via A's admin API |
 | `jobs` | id, kind (`engagement_spike`\|`publish_set`\|`moderate`), payload (jsonb), status (`queued`\|`running`\|`done`\|`failed`), error, created_at, updated_at | A inserts; D's worker polls with `FOR UPDATE SKIP LOCKED` |
 | `engagement_events` | id, faze_member, metric (`views`\|`likes`\|`mentions`), value, simulated (always true for demo), created_at | D (worker) |
@@ -23,7 +23,8 @@ Postgres, one database shared by all services. Migrations owned by Agent A in `s
 
 ## Invariants
 - Balance = `SUM(ledger.amount)` per user; never negative (checked in the same transaction as the debit).
-- `ledger.idempotency_key` unique → retries and replayed webhooks cannot double-credit.
+- `ledger.idempotency_key` unique → retries and repeated confirms cannot double-credit.
+- `purchases.tx_signature` unique → one Solana transaction pays for at most one purchase.
 - A `card_instance` with `locked_by_trade_id` set cannot be offered in another trade.
 - Trade accept: verify both sides still own and have locked the instances, swap `owner_id`, clear locks — one transaction.
 - Serial = `max(serial)+1` per card, assigned under a row lock on `cards`. A card at `max_supply` is sold out.

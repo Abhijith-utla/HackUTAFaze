@@ -117,20 +117,29 @@ export const Trade = z.object({
   resolvedAt: z.string().nullable(),
 });
 
+// Payments: Phantom wallet + Solana, DEVNET only (devnet SOL has no value; test payments).
+export const SolanaCluster = z.enum(["devnet", "testnet", "localnet"]);
+export const LAMPORTS_PER_SOL = 1_000_000_000;
+
 export const Bundle = z.object({
   id: z.string(),
   coins: z.number().int().positive(),
-  priceCents: z.number().int().positive(),
+  lamports: z.number().int().positive(),
 });
 
+export const PurchaseStatus = z.enum(["pending", "paid", "expired"]);
 export const Purchase = z.object({
   id: z.string().uuid(),
   bundleId: z.string(),
   coins: z.number().int(),
-  amountCents: z.number().int(),
+  lamports: z.number().int(),
+  reference: z.string(),
+  txSignature: z.string().nullable(),
+  cluster: SolanaCluster,
   testMode: z.boolean(),
-  status: z.enum(["pending", "paid", "failed"]),
+  status: PurchaseStatus,
   createdAt: z.string(),
+  paidAt: z.string().nullable(),
 });
 
 export const Submission = z.object({
@@ -167,6 +176,7 @@ export const CreateTradeBody = z.object({
   message: z.string().max(200).optional(),
 });
 export const CheckoutBody = z.object({ bundleId: z.string() });
+export const ConfirmBody = z.object({ purchaseId: z.string().uuid(), signature: z.string().min(32).max(128).optional() });
 export const LedgerCreditBody = z.object({
   userId: z.string().uuid(),
   amount: z.number().int().positive(),
@@ -192,8 +202,25 @@ export const LeaderboardResponse = z.object({
   trending: z.array(z.object({ card: Card, hype: z.number().int() })),
 });
 export const MyTradesResponse = z.object({ incoming: z.array(Trade), outgoing: z.array(Trade) });
-export const BundlesResponse = z.object({ bundles: z.array(Bundle), testMode: z.literal(true) });
-export const CheckoutResponse = z.object({ checkoutUrl: z.string().url() });
+export const BundlesResponse = z.object({
+  bundles: z.array(Bundle),
+  cluster: SolanaCluster,
+  recipient: z.string(),
+  testMode: z.literal(true),
+});
+export const CheckoutResponse = z.object({
+  purchaseId: z.string().uuid(),
+  recipient: z.string(),
+  lamports: z.number().int().positive(),
+  reference: z.string(),
+  cluster: SolanaCluster,
+  solanaPayUrl: z.string(),
+});
+export const ConfirmResponse = z.object({
+  status: z.literal("paid"),
+  credited: z.number().int(),
+  balance: z.number().int(),
+});
 export const PurchasesResponse = z.object({ purchases: z.array(Purchase) });
 export const LedgerCreditResponse = z.object({ balance: z.number().int() });
 
@@ -220,4 +247,6 @@ export type OpenPackResponse = z.infer<typeof OpenPackResponse>;
 export type LeaderboardResponse = z.infer<typeof LeaderboardResponse>;
 export type BundlesResponse = z.infer<typeof BundlesResponse>;
 export type CheckoutResponse = z.infer<typeof CheckoutResponse>;
+export type ConfirmResponse = z.infer<typeof ConfirmResponse>;
+export type SolanaCluster = z.infer<typeof SolanaCluster>;
 export type PurchasesResponse = z.infer<typeof PurchasesResponse>;

@@ -1,0 +1,63 @@
+// Env config. Every var is documented in /.env.example. No secrets: the treasury is a PUBLIC key.
+import { PublicKey } from "@solana/web3.js";
+import { SolanaCluster } from "@faze/shared";
+
+export interface Config {
+  port: number;
+  databaseUrl: string;
+  jwtSecret: string;
+  internalSecret: string;
+  apiUrl: string;
+  clientUrl: string;
+  cluster: SolanaCluster;
+  rpcUrl: string;
+  treasury: string;
+  /** Test-only: accept simulated signatures instead of reading the chain. Refused in production. */
+  simulate: boolean;
+}
+
+function req(env: NodeJS.ProcessEnv, name: string): string {
+  const v = env[name];
+  if (!v) throw new Error(`payments: missing env var ${name} (see .env.example)`);
+  return v;
+}
+
+const DEFAULT_RPC: Record<SolanaCluster, string> = {
+  devnet: "https://api.devnet.solana.com",
+  testnet: "https://api.testnet.solana.com",
+  localnet: "http://127.0.0.1:8899",
+};
+
+export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
+  const parsedCluster = SolanaCluster.safeParse(env.SOLANA_CLUSTER ?? "devnet");
+  if (!parsedCluster.success) {
+    throw new Error(`payments: refusing to start — SOLANA_CLUSTER must be devnet, testnet or localnet (never mainnet)`);
+  }
+  const cluster = parsedCluster.data;
+  const rpcUrl = env.SOLANA_RPC_URL ?? DEFAULT_RPC[cluster];
+  if (/mainnet/i.test(rpcUrl)) {
+    throw new Error("payments: refusing to start — SOLANA_RPC_URL points at mainnet; test payments only");
+  }
+  const treasury = req(env, "SOLANA_TREASURY_PUBKEY");
+  try {
+    new PublicKey(treasury);
+  } catch {
+    throw new Error("payments: SOLANA_TREASURY_PUBKEY is not a valid Solana public key");
+  }
+  const simulate = env.PAYMENTS_SIMULATE === "1";
+  if (simulate && env.NODE_ENV === "production") {
+    throw new Error("payments: PAYMENTS_SIMULATE is test-only and is refused when NODE_ENV=production");
+  }
+  return {
+    port: Number(env.PAYMENTS_PORT ?? 4100),
+    databaseUrl: req(env, "DATABASE_URL"),
+    jwtSecret: req(env, "JWT_SECRET"),
+    internalSecret: req(env, "INTERNAL_SECRET"),
+    apiUrl: env.API_URL ?? "http://localhost:4000",
+    clientUrl: env.CLIENT_URL ?? "http://localhost:3000",
+    cluster,
+    rpcUrl,
+    treasury,
+    simulate,
+  };
+}

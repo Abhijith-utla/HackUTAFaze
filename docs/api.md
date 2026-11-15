@@ -1,4 +1,4 @@
-# API contract — v1 FROZEN (2026-11-15; changes only via the lead on the board)
+# API contract — v1.1 FROZEN (2026-11-15, payments → Solana devnet; changes only via the lead on the board)
 
 Base URL `services/api`: `http://localhost:4000`. Payments `services/payments`: `http://localhost:4100`. JSON in and out. Auth via httpOnly JWT cookie `session`: HS256 signed with `JWT_SECRET`, claims `{sub: userId, role: "fan"|"admin", exp}`, 7-day expiry, `SameSite=Lax`, `Path=/`. Every service that needs the user verifies this cookie with the shared `JWT_SECRET`.
 
@@ -33,13 +33,15 @@ Leaderboard score = sum over owned instances of rarity weight: common 1, rare 3,
 | GET | `/me/trades` | → `{incoming: [Trade], outgoing: [Trade]}` |
 | POST | `/trades/:id/accept` \| `/decline` \| `/cancel` | → `{trade}` |
 
-## Payments (B)
+## Payments (B) — Phantom wallet + Solana, DEVNET only
 | Method | Path | Body → Response |
 |---|---|---|
-| GET | `/payments/bundles` | → `{bundles: [{id, coins, priceCents}], testMode: true}` |
-| POST | `/payments/checkout` | `{bundleId}` → `{checkoutUrl}` |
-| POST | `/payments/webhook` | Stripe-signed event → `200` (credits via A) |
+| GET | `/payments/bundles` | → `{bundles: [{id, coins, lamports}], cluster: "devnet", recipient, testMode: true}` |
+| POST | `/payments/checkout` | `{bundleId}` → `{purchaseId, recipient, lamports, reference, cluster, solanaPayUrl}` (creates a `pending` purchase; `reference` is a fresh pubkey) |
+| POST | `/payments/confirm` | `{purchaseId, signature?}` → `{status: "paid", credited, balance}`; `409 CONFLICT` if no matching confirmed tx yet (client retries every 2 s); `400 VALIDATION` if the tx does not match |
 | GET | `/me/purchases` | → `{purchases: [Purchase]}` |
+
+Payment rules: the client builds `SystemProgram.transfer(payer → recipient, lamports)` with `reference` appended as a read-only, non-signer key, signs it in Phantom and sends it. The server credits coins **only** after fetching the transaction from the devnet RPC and checking: no error, `confirmed` commitment, `reference` is in the account keys, `recipient` balance rose by ≥ `lamports`. If `signature` is omitted the server finds it via `getSignaturesForAddress(reference)`. A signature can pay for one purchase only. Credit idempotency key: `purchase:<purchaseId>`. Mainnet is refused at boot.
 
 ## Internal (service-to-service, header `X-Internal-Secret`)
 | Method | Path | Body → Response |

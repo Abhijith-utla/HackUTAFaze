@@ -5,7 +5,7 @@ Consumes: `docs/api.md` via `packages/shared` types. Never computes pulls, odds,
 
 ## Features
 1. **Auth screens** — signup, login, logout; balance in the header from `GET /me`.
-2. **Store** — pack list with price and published odds table; buy-coins button (calls B's checkout) and success/cancel pages.
+2. **Store** — pack list with price and published odds table; buy-coins with Phantom wallet on Solana devnet (calls B's checkout + confirm, see `docs/phantom-checkout.md`).
 3. **Pack opening** — animation that reveals the cards the server returned, rarity effects, "demo" label on demo coins.
 4. **Collection** — grid by set/rarity, duplicate counts, serials, card detail page with hype stat.
 5. **Trades** — pick a user, choose cards on both sides, send offer; inbox to accept/decline; status updates.
