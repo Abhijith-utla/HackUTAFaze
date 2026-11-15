@@ -27,7 +27,7 @@ async function closeOffers(c: pg.PoolClient, listingId: string, acceptedId?: str
 export async function marketplaceRoutes(app: FastifyInstance) {
     app.get('/marketplace/listings', async (req) => {
         const q = z.object({ q: z.string().max(100).default(''), rarity: z.enum(['common', 'rare', 'epic', 'legendary']).optional(), page: z.coerce.number().int().min(1).max(10000).default(1) }).parse(req.query);
-        const r = await pool.query(`SELECT l.*,u.id AS id_user,u.display_name,u.display_name_status FROM market_listings l JOIN users u ON u.id=l.owner_id JOIN card_instances i ON i.id=l.instance_id JOIN cards c ON c.id=i.card_id WHERE l.status='open' AND ($1='' OR c.name ILIKE '%'||$1||'%' OR c.faze_member ILIKE '%'||$1||'%') AND ($2::text IS NULL OR c.rarity=$2) ORDER BY l.created_at DESC,l.id LIMIT 25 OFFSET $3`, [q.q, q.rarity ?? null, (q.page - 1) * 25]);
+        const r = await pool.query(`SELECT l.*,u.id AS id_user,u.display_name,u.display_name_status FROM market_listings l JOIN users u ON u.id=l.owner_id JOIN card_instances i ON i.id=l.instance_id JOIN cards c ON c.id=i.card_id WHERE l.status='open' AND ($1='' OR c.name ILIKE '%'||$1||'%' ESCAPE '\\' OR c.faze_member ILIKE '%'||$1||'%' ESCAPE '\\') AND ($2::text IS NULL OR c.rarity=$2) ORDER BY l.created_at DESC,l.id LIMIT 25 OFFSET $3`, [q.q.replace(/[\\%_]/g, (ch) => '\\' + ch), q.rarity ?? null, (q.page - 1) * 25]);
         return { listings: await renderListings(pool, r.rows) };
     });
     app.post('/marketplace/listings', async (req, reply) => {

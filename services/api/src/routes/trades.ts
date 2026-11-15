@@ -16,6 +16,12 @@ async function render(db: pg.PoolClient | pg.Pool, rows: any[], viewerId: string
   return rows.map((r) => toTrade(r, byId.get(r.from_user_id)!, byId.get(r.to_user_id)!, viewerId));
 }
 
+// Direct trades reuse the marketplace notification kinds (offer_received / trade_completed / offer_closed)
+// so the existing /me/notifications feed and client badge pick them up. offer_id stays NULL (no market offer).
+async function notify(c: pg.PoolClient, userId: string, kind: string, message: string) {
+  await c.query("INSERT INTO notifications (user_id, kind, message) VALUES ($1,$2,$3)", [userId, kind, message]);
+}
+
 async function lockTrade(c: pg.PoolClient, id: string, userId: string) {
   if (!UUID.test(id)) fail("NOT_FOUND", "Trade not found");
   const r = await c.query("SELECT * FROM trades WHERE id=$1 FOR UPDATE", [id]);
@@ -67,6 +73,7 @@ export async function tradesRoutes(app: FastifyInstance) {
           [s.sub, trade.id, { message }],
         );
       }
+      await notify(c, b.toUserId, "offer_received", "You received a direct trade offer.");
       return trade;
     });
     const [trade] = await render(pool, [row], s.sub);
@@ -109,18 +116,20 @@ export async function tradesRoutes(app: FastifyInstance) {
         fail("CONFLICT", "Cards in this trade changed hands");
       }
       if (t.offered_instance_ids.length) {
-        await c.query("UPDATE card_instances SET owner_id=$1, locked_by_trade_id=NULL WHERE id = ANY($2::uuid[])", [
+        await c.query("UPDATE card_instances SET owner_id=$1, locked_by_trade_id=NULL, acquired_at=now() WHERE id = ANY($2::uuid[])", [
           t.to_user_id,
           t.offered_instance_ids,
         ]);
       }
       if (t.requested_instance_ids.length) {
-        await c.query("UPDATE card_instances SET owner_id=$1, locked_by_trade_id=NULL WHERE id = ANY($2::uuid[])", [
+        await c.query("UPDATE card_instances SET owner_id=$1, locked_by_trade_id=NULL, acquired_at=now() WHERE id = ANY($2::uuid[])", [
           t.from_user_id,
           t.requested_instance_ids,
         ]);
       }
       const u = await c.query("UPDATE trades SET status='accepted', resolved_at=now() WHERE id=$1 RETURNING *", [t.id]);
+      await notify(c, t.from_user_id, "trade_completed", "Your direct trade offer was accepted.");
+      await notify(c, t.to_user_id, "trade_completed", "Direct trade completed.");
       return u.rows[0];
     });
     const [trade] = await render(pool, [row], s.sub);
@@ -140,6 +149,12 @@ export async function tradesRoutes(app: FastifyInstance) {
         await unlock(c, t.id);
         const status = action === "decline" ? "declined" : "cancelled";
         const u = await c.query("UPDATE trades SET status=$2, resolved_at=now() WHERE id=$1 RETURNING *", [t.id, status]);
+        await notify(
+          c,
+          action === "decline" ? t.from_user_id : t.to_user_id,
+          "offer_closed",
+          action === "decline" ? "Your direct trade offer was declined." : "A direct trade offer to you was cancelled.",
+        );
         return u.rows[0];
       });
       const [trade] = await render(pool, [row], s.sub);

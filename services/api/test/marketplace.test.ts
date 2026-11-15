@@ -21,6 +21,14 @@ it('public browsing hides unapproved names, reserves inventory and prevents dire
     const own = (await app.inject({ url: '/me/cards', headers: { cookie: s.seller.cookie } })).json();
     expect(own.cards.some((c: any) => c.instances.some((i: any) => i.id === s.listed && i.locked))).toBe(true);
 });
+it('search treats % and _ literally instead of as LIKE wildcards', async () => {
+    await setup();
+    for (const q of ['%', '_', '%25%', '\\']) {
+        const r = await app.inject(`/marketplace/listings?q=${encodeURIComponent(q)}`);
+        expect(r.statusCode).toBe(200);
+        expect(r.json().listings).toEqual([]);
+    }
+});
 it('concurrent accepts choose one winner, swap exact copies, release losing bids and notify both owners exactly once', async () => {
     const s = await setup();
     const oa = (await post(`/marketplace/listings/${s.l.id}/offers`, s.a.cookie, { instanceIds: [s.ai] }, 201)).offer;

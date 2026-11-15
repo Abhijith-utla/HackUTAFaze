@@ -101,6 +101,32 @@ describe("trades", () => {
     expect(again.json().error.code).toBe("TRADE_NOT_OPEN");
   });
 
+  it("notifies both parties on offer, accept, decline and cancel; accept stamps acquired_at", async () => {
+    const kinds = async (userId: string) =>
+      (await pool.query("SELECT kind FROM notifications WHERE user_id=$1 ORDER BY created_at, id", [userId])).rows.map((r) => r.kind);
+    const t1 = await setup();
+    expect(await kinds(t1.b.id)).toEqual(["offer_received"]);
+    const before = (await pool.query("SELECT acquired_at FROM card_instances WHERE id=$1", [t1.ai])).rows[0].acquired_at;
+    expect((await act(t1.tradeId, "accept", t1.b.cookie)).statusCode).toBe(200);
+    expect(await kinds(t1.a.id)).toEqual(["trade_completed"]);
+    expect(await kinds(t1.b.id)).toEqual(["offer_received", "trade_completed"]);
+    const after = (await pool.query("SELECT acquired_at FROM card_instances WHERE id=$1", [t1.ai])).rows[0].acquired_at;
+    expect(new Date(after).getTime()).toBeGreaterThanOrEqual(new Date(before).getTime());
+    const feed = await app.inject({ method: "GET", url: "/me/notifications", headers: { cookie: t1.a.cookie } });
+    expect(feed.statusCode).toBe(200);
+
+    const t2 = await setup();
+    expect((await act(t2.tradeId, "decline", t2.b.cookie)).statusCode).toBe(200);
+    expect(await kinds(t2.a.id)).toEqual(["offer_closed"]);
+    const t3 = await setup();
+    expect((await act(t3.tradeId, "cancel", t3.a.cookie)).statusCode).toBe(200);
+    expect(await kinds(t3.b.id)).toEqual(["offer_received", "offer_closed"]);
+    // A rejected action (wrong party) must not leave a notification behind.
+    const t4 = await setup();
+    expect((await act(t4.tradeId, "accept", t4.a.cookie)).statusCode).toBe(403);
+    expect(await kinds(t4.a.id)).toEqual([]);
+  });
+
   it("concurrent accepts → exactly one success", async () => {
     const { b, tradeId } = await setup();
     const results = await Promise.all(Array.from({ length: 5 }, () => act(tradeId, "accept", b.cookie)));
