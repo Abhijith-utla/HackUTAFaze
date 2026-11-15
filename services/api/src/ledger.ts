@@ -1,7 +1,7 @@
 import type pg from "pg";
 import { fail } from "./errors.js";
 
-type Reason = "signup_bonus" | "pack_open" | "purchase" | "admin_grant";
+type Reason = "signup_bonus" | "pack_open" | "purchase" | "admin_grant" | "moment_claim";
 
 export async function balanceOf(db: pg.PoolClient | pg.Pool, userId: string): Promise<number> {
   const r = await db.query<{ b: string }>("SELECT COALESCE(SUM(amount),0)::bigint AS b FROM ledger WHERE user_id=$1", [

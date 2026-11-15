@@ -115,3 +115,64 @@ describe("GET /twitch/live", () => {
     await a.close();
   });
 });
+
+describe("Call of Duty live discovery", () => {
+  afterEach(() => setTwitchClientForTests(null));
+  const stream = (login: string, viewers: number, game_id = "512710") => ({ user_id: login + "-id", user_login: login, user_name: login.toUpperCase(), title: "Ranked grind", viewer_count: viewers, game_id, game_name: "Call of Duty: Warzone", language: "en", started_at: "2026-11-15T10:00:00Z" });
+  const helix = (calls: { url: string }[]) => (u: string) => {
+    calls.push({ url: u });
+    if (isToken(u)) return token();
+    if (u.includes("/search/categories")) return json({ data: [{ id: "512710", name: "Call of Duty: Warzone" }, { id: "1", name: "Call of Duty: Black Ops 6" }, { id: "2", name: "Calls of Cthulhu" }] });
+    if (u.includes("/streams")) return json({ data: [stream("scump", 5400), stream("hitch", 1200)] });
+    return json({ data: [] });
+  };
+  async function app() {
+    const Fastify = (await import("fastify")).default;
+    const { registerErrorHandler } = await import("../src/errors.js");
+    const { twitchRoutes } = await import("../src/routes/twitch.js");
+    const a = Fastify(); registerErrorHandler(a); await a.register(twitchRoutes); return a;
+  }
+
+  it("client: searches categories and lists live streams for several game ids", async () => {
+    const calls: { url: string }[] = [];
+    const c = new TwitchClient({ clientId: "i", clientSecret: "s", fetch: async (u) => helix(calls)(u) });
+    expect(await c.searchCategories("Call of Duty")).toEqual([{ id: "512710", name: "Call of Duty: Warzone" }, { id: "1", name: "Call of Duty: Black Ops 6" }, { id: "2", name: "Calls of Cthulhu" }]);
+    const live = await c.getStreamsByGames(["512710", "1"], { first: 500, language: "en" });
+    const url = calls.find((x) => x.url.includes("/streams"))!.url;
+    expect(url).toContain("game_id=512710&game_id=1");
+    expect(url).toContain("first=100"); // clamped
+    expect(url).toContain("language=en");
+    expect(live[0]).toMatchObject({ login: "scump", viewers: 5400, gameName: "Call of Duty: Warzone" });
+    expect(await c.getStreamsByGames([])).toEqual([]);
+  });
+
+  it("route: only 'Call of Duty*' categories are used, results are cached, and fields are trimmed", async () => {
+    const calls: { url: string }[] = [];
+    setTwitchClientForTests(new TwitchClient({ clientId: "i", clientSecret: "s", fetch: async (u) => helix(calls)(u) }));
+    const a = await app();
+    const r = (await a.inject({ url: "/twitch/live-cod" })).json();
+    expect(r.configured).toBe(true);
+    expect(r.streams.map((s: any) => s.login)).toEqual(["scump", "hitch"]);
+    expect(r.streams[0]).toEqual({ login: "scump", name: "SCUMP", title: "Ranked grind", viewers: 5400, game: "Call of Duty: Warzone", language: "en" });
+    const streamsCall = calls.find((x) => x.url.includes("/streams"))!.url;
+    expect(streamsCall).toContain("game_id=512710&game_id=1");
+    expect(streamsCall).not.toContain("game_id=2"); // "Calls of Cthulhu" is not Call of Duty
+    const n = calls.length;
+    await a.inject({ url: "/twitch/live-cod" });
+    expect(calls.length).toBe(n); // 60 s cache
+    await a.close();
+  });
+
+  it("route: unconfigured -> empty list; Twitch down -> empty list with twitch_unavailable (never a 500)", async () => {
+    setTwitchClientForTests(new TwitchClient({}));
+    let a = await app();
+    expect((await a.inject({ url: "/twitch/live-cod" })).json()).toEqual({ configured: false, streams: [] });
+    await a.close();
+    setTwitchClientForTests(new TwitchClient({ clientId: "i", clientSecret: "s", fetch: async (u) => (isToken(u) ? token() : json({}, 500)) }));
+    a = await app();
+    const r = await a.inject({ url: "/twitch/live-cod" });
+    expect(r.statusCode).toBe(200);
+    expect(r.json()).toMatchObject({ configured: true, streams: [], error: "twitch_unavailable" });
+    await a.close();
+  });
+});

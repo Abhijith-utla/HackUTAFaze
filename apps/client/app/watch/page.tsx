@@ -1,263 +1,145 @@
 'use client';
-import type { Card, CollectionEntry, LeaderboardResponse, MeResponse, Pack } from '@faze/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ApiError, art, request } from '../../lib/api';
-import ClipLab, { type Stamp } from './clip-lab';
-import { canonicalUrl, chatSrc, formatTime, iframeSrc, loadEmbedJs, parseTwitchUrl, sourceLabel, type TwitchGlobal, type TwitchSource } from './twitch';
+import { ApiError, request } from '../../lib/api';
+import { HypeMeter, type HypeSnapshot } from '../../lib/hype';
+import { connectChat, type ChatStatus } from '../../lib/twitch-chat';
+import HypePopup, { type Offer } from './hype-popup';
+import HypeWave from './hype-wave';
+import { chatSrc, loadEmbedJs, parseTwitchUrl } from './twitch';
 import './watch.css';
 
 /*
- * /watch: Twitch watch-along. Any Twitch channel / VOD / clip link can be pasted (kept in ?src= so it's shareable).
- * Channel + VOD use Embed JS (plain iframe fallback); clips use the clip iframe. Card tie-ins use existing public
- * endpoints only (/leaderboard trending, /packs, optional /me/cards). The client-side ONLINE/OFFLINE signal is
- * display-only and never gates rewards.
+ * /watch: the stream, its chat, and a hype wave. The page finds a live Call of Duty stream by itself (Twitch API when configured,
+ * else a list of known COD streamers tried in order), reads chat energy, and when it spikes offers a limited card to collect.
+ * ?src=<channel> pins a specific channel (kept for sharing; there is no link box).
  */
-const CHANNEL = (process.env.NEXT_PUBLIC_TWITCH_CHANNEL ?? 'faze').trim().toLowerCase() || 'faze';
-const DEFAULT_SOURCE: TwitchSource = { kind: 'channel', channel: CHANNEL };
-const EXTRA_PARENTS = list(process.env.NEXT_PUBLIC_TWITCH_PARENTS);
-const ON_STREAM = list(process.env.NEXT_PUBLIC_TWITCH_ON_STREAM);
+const FALLBACK_COD = ['symfuhny', 'scump', 'hitch', 'nickmercs', 'timthetatman', 'metaphor', 'tommey', 'nadeshot', 'aydan', 'dashy', 'hutch', 'cleanx', 'shotzzy', 'simp', 'kenny', 'dougisraw', 'jgod', 'acehart', 'swagg', 'teepee', 'zlaner'];
 const LOOPBACK = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/;
-const POLL_MS = 30_000;
-type Live = 'unknown' | 'online' | 'offline';
-type Trending = LeaderboardResponse['trending'];
-
-function list(v: string | undefined) { return (v ?? '').split(',').map(s => s.trim()).filter(Boolean); }
-const sameSource = (a: TwitchSource, b: TwitchSource) => canonicalUrl(a) === canonicalUrl(b);
-
-function MiniCard({ card, note }: { card: Card; note?: React.ReactNode }) {
-  return <article className={`watch-card ${card.rarity}`}>
-    <div className="watch-card-art"><img src={art(card.artUrl)} alt={card.name} loading="lazy" />{card.demo && <span className="watch-demo">DEMO</span>}</div>
-    <small>{card.fazeMember}</small><h4>{card.name}</h4>{note}
-  </article>;
-}
+const EXTRA_PARENTS = (process.env.NEXT_PUBLIC_TWITCH_PARENTS ?? '').split(',').map(s => s.trim()).filter(Boolean);
+const CHECK_MS = 9000;
+type Live = 'checking' | 'online' | 'offline' | 'none';
 
 export default function Watch() {
-  const [host, setHost] = useState<string | null>(null);
+  const [host, setHost] = useState('');
   const [embeddable, setEmbeddable] = useState(true);
-  const [source, setSource] = useState<TwitchSource>(DEFAULT_SOURCE);
-  const [linkInput, setLinkInput] = useState('');
-  const [linkError, setLinkError] = useState('');
-  const [live, setLive] = useState<Live>('unknown');
-  const [fallbackIframe, setFallbackIframe] = useState(false);
-  const [showChat, setShowChat] = useState(true);
-  const [trending, setTrending] = useState<Trending>([]);
-  const [tickerState, setTickerState] = useState<'loading' | 'ok' | 'error'>('loading');
-  const prevHype = useRef<Record<string, number>>({});
-  const [delta, setDelta] = useState<Record<string, number>>({});
-  const [focus, setFocus] = useState<string[]>(ON_STREAM);
-  const [me, setMe] = useState<MeResponse | null>(null);
-  const [mine, setMine] = useState<CollectionEntry[]>([]);
-  const [packs, setPacks] = useState<Pack[]>([]);
-  const playerBox = useRef<HTMLDivElement>(null);
-  const embedRef = useRef<TwitchGlobal>(null);
+  const [candidates, setCandidates] = useState<string[] | null>(null);
+  const [pinned, setPinned] = useState(false);
+  const [idx, setIdx] = useState(0);
+  const [live, setLive] = useState<Live>('checking');
+  const [chatStatus, setChatStatus] = useState<ChatStatus>('closed');
+  const [snap, setSnap] = useState<HypeSnapshot | null>(null);
+  const [offer, setOffer] = useState<Offer | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
+  const [coins, setCoins] = useState<number | null>(null);
+  const [popup, setPopup] = useState<{ score: number; demo: boolean } | null>(null);
+  const [demo, setDemo] = useState(false);
+  const meter = useRef(new HypeMeter());
+  const popupOpen = useRef(false);
+  const offerRef = useRef<Offer | null>(null);
+  offerRef.current = offer; popupOpen.current = !!popup;
 
-  // Host + SSL precondition (Twitch needs HTTPS; http://localhost is tolerated, plain-http LAN IPs are not) + ?src=.
+  const parents = useMemo(() => (host ? [...new Set([host.replace(/^\[|\]$/g, ''), ...EXTRA_PARENTS])] : []), [host]);
+  const current = candidates?.[idx] ?? '';
+
+  // Page setup + which channels to try.
   useEffect(() => {
     const { hostname, protocol, search } = window.location;
     setHost(hostname);
     setEmbeddable(protocol === 'https:' || LOOPBACK.test(hostname));
-    const src = new URLSearchParams(search).get('src');
-    if (src) {
-      const parsed = parseTwitchUrl(src);
-      if (parsed) { setSource(parsed); setLinkInput(src); } else setLinkError(`“${src}” in the link isn’t a Twitch channel, VOD or clip. Showing twitch.tv/${CHANNEL}.`);
-    }
+    const q = new URLSearchParams(search);
+    const src = q.get('src') ?? q.get('channel');
+    const parsed = src ? parseTwitchUrl(src.includes('.') ? src : `twitch.tv/${src}`) : null;
+    if (parsed?.kind === 'channel') { setCandidates([parsed.channel]); setPinned(true); return; }
+    request<{ streams: { login: string }[] }>('/twitch/live-cod')
+      .then(r => setCandidates([...new Set([...r.streams.map(s => s.login.toLowerCase()), ...FALLBACK_COD])]))
+      .catch(() => setCandidates(FALLBACK_COD));
   }, []);
 
-  function applySource(next: TwitchSource) {
-    setSource(next); setLive('unknown'); setFallbackIframe(false); setLinkError('');
-    const url = new URL(window.location.href);
-    if (sameSource(next, DEFAULT_SOURCE)) url.searchParams.delete('src'); else url.searchParams.set('src', canonicalUrl(next));
-    window.history.replaceState(null, '', url.toString());
-  }
-  function submitLink(e: React.FormEvent) {
-    e.preventDefault();
-    const parsed = parseTwitchUrl(linkInput);
-    if (!parsed) { setLinkError('Paste a Twitch link: a channel (twitch.tv/faze), a VOD (twitch.tv/videos/123?t=1h2m3s) or a clip.'); return; }
-    applySource(parsed);
-  }
-
-  // `parent` = the bare hostname serving this page (no scheme/port), so localhost, LAN/Tailscale and deploy hosts all match.
-  const parents = useMemo(() => (host ? [...new Set([host.replace(/^\[|\]$/g, ''), ...EXTRA_PARENTS])] : []), [host]);
-  const sourceKey = canonicalUrl(source);
-  const useEmbedJs = source.kind !== 'clip' && !fallbackIframe;
-
-  // Everything Embed (video only) for channels + VODs: gives ONLINE/OFFLINE and getCurrentTime(). Blocked → plain iframe.
+  // The signed-in fan's coins and the popup card's offer (a 401 just means "show a sign-in prompt in the popup").
   useEffect(() => {
-    if (!host || !embeddable || !useEmbedJs) return;
-    let cancelled = false;
-    const s = source;
+    request<{ balance: number }>('/me').then(m => { setCoins(m.balance); setSignedIn(true); }).catch(e => { if (!(e instanceof ApiError)) console.warn('watch: /me failed', e); });
+    request<Offer>('/moments/hype/offer').then(setOffer).catch(() => {});
+  }, []);
+
+  const nextChannel = useCallback(() => {
+    setIdx(i => { if (candidates && i + 1 < candidates.length) return i + 1; setLive('none'); return i; });
+  }, [candidates]);
+
+  // Player: Twitch Embed for the current channel. OFFLINE (or silence for a while) -> try the next candidate.
+  useEffect(() => {
+    if (!current || !host || !embeddable) return;
+    let cancelled = false, settled = false;
+    setLive('checking'); meter.current.reset(); setSnap(null);
+    const giveUp = () => { if (cancelled || settled) return; settled = true; if (pinned) setLive('offline'); else nextChannel(); };
+    const timer = setTimeout(giveUp, CHECK_MS);
     loadEmbedJs().then(() => {
       if (cancelled) return;
       const T = window.Twitch;
       const ONLINE = T.Player?.ONLINE ?? 'online', OFFLINE = T.Player?.OFFLINE ?? 'offline';
-      const opts = s.kind === 'video' ? { video: s.id, ...(s.seconds ? { time: formatTime(s.seconds) } : {}), autoplay: false } : { channel: s.kind === 'channel' ? s.channel : CHANNEL, autoplay: true };
-      const embed = new T.Embed('twitch-player', { ...opts, parent: parents, width: '100%', height: '100%', layout: 'video', muted: true });
-      embedRef.current = embed;
-      // The Embed object re-dispatches the player's events (ONLINE/OFFLINE/PLAYING...).
-      if (s.kind === 'channel') {
-        embed.addEventListener(ONLINE, () => !cancelled && setLive('online'));
-        embed.addEventListener(OFFLINE, () => !cancelled && setLive('offline'));
-        embed.addEventListener(T.Embed.VIDEO_PLAY, () => !cancelled && setLive('online'));
-      }
-    }).catch(() => { if (!cancelled) setFallbackIframe(true); });
-    return () => { cancelled = true; embedRef.current = null; document.getElementById('twitch-player')?.replaceChildren(); };
+      const embed = new T.Embed('twitch-player', { channel: current, autoplay: true, parent: parents, width: '100%', height: '100%', layout: 'video', muted: true });
+      embed.addEventListener(ONLINE, () => { if (cancelled) return; settled = true; clearTimeout(timer); setLive('online'); });
+      embed.addEventListener(T.Embed.VIDEO_PLAY, () => { if (cancelled) return; settled = true; clearTimeout(timer); setLive('online'); });
+      embed.addEventListener(OFFLINE, () => { clearTimeout(timer); giveUp(); });
+    }).catch(() => { if (!cancelled) setLive('offline'); });
+    return () => { cancelled = true; clearTimeout(timer); document.getElementById('twitch-player')?.replaceChildren(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [host, embeddable, parents, useEmbedJs, sourceKey]);
+  }, [current, host, embeddable, parents, pinned]);
 
-  // Hype ticker: public /leaderboard trending every 30 s, skipped while the tab is hidden.
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>, stopped = false;
-    const poll = async () => {
-      if (!document.hidden) {
-        try {
-          const b = await request<LeaderboardResponse>('/leaderboard');
-          if (stopped) return;
-          const d: Record<string, number> = {};
-          for (const t of b.trending) { const p = prevHype.current[t.card.id]; if (p !== undefined && p !== t.hype) d[t.card.id] = t.hype - p; }
-          prevHype.current = Object.fromEntries(b.trending.map(t => [t.card.id, t.hype]));
-          setTrending(b.trending); setDelta(d); setTickerState('ok');
-        } catch { if (!stopped) setTickerState(s => (s === 'ok' ? s : 'error')); }
-      }
-      if (!stopped) timer = setTimeout(poll, POLL_MS);
-    };
-    poll();
-    return () => { stopped = true; clearTimeout(timer); };
+  const openPopup = useCallback((score: number, isDemo: boolean) => {
+    if (popupOpen.current || !offerRef.current || offerRef.current.owned) return;
+    setPopup({ score, demo: isDemo });
   }, []);
 
-  // Optional: cheapest pack for the CTA, and the signed-in fan's own cards (401 just hides that section).
+  // Chat energy: only while the stream is actually live. One snapshot per second drives the graph and the popup.
   useEffect(() => {
-    request<{ packs: Pack[] }>('/packs').then(r => setPacks(r.packs)).catch(() => {});
-    request<MeResponse>('/me').then(async m => {
-      setMe(m);
-      setMine((await request<{ cards: CollectionEntry[] }>('/me/cards')).cards);
-    }).catch(e => { if (!(e instanceof ApiError)) console.warn('watch: session check failed', e); });
-  }, []);
+    if (live !== 'online' || !current) return;
+    const stop = connectChat(current, m => meter.current.push(m.text, m.emotes, Date.now()), setChatStatus);
+    const tick = setInterval(() => {
+      const s = meter.current.snapshot(Date.now());
+      setSnap(s);
+      if (s.triggered) openPopup(s.recent, false);
+    }, 1000);
+    return () => { stop(); clearInterval(tick); setChatStatus('closed'); };
+  }, [live, current, openPopup]);
 
-  /** Moment timestamp: VOD position from the player; clips/live/fallback iframes have no readable position → wall clock. */
-  const getStamp = useCallback((): Stamp => {
-    const now = new Date().toISOString();
-    if (source.kind === 'video') {
-      try {
-        const t = embedRef.current?.getPlayer?.()?.getCurrentTime?.();
-        if (typeof t === 'number' && Number.isFinite(t)) return { timestampMs: Math.round(t * 1000), label: `VOD ${source.id} @ ${formatTime(t)}` };
-      } catch { /* fall through */ }
-      return { timestampIso: now, label: `VOD ${source.id}, position unavailable · captured ${new Date(now).toLocaleString()}` };
-    }
-    if (source.kind === 'clip') return { timestampIso: now, label: `Clip ${source.slug}, offset unavailable · captured ${new Date(now).toLocaleString()}` };
-    return { timestampIso: now, label: `${live === 'online' ? 'Live' : 'Channel'} · ${new Date(now).toLocaleString()}` };
-  }, [source, live]);
+  // Demo: a short burst of synthetic hype through the SAME meter (so the graph really surges), then the popup. Clearly labelled.
+  const simulate = useCallback(() => {
+    if (demo) return;
+    setDemo(true);
+    const lines = ['LETS GOOOO POG!!!', 'CLIP IT CLIP IT', 'OMG WTF INSANE', 'NO WAY HOLY', 'POGGERS W W W', 'CLUTCH!!!'];
+    let n = 0;
+    const pump = setInterval(() => { for (let k = 0; k < 4; k++) meter.current.push(lines[(n++) % lines.length], 3, Date.now()); setSnap(meter.current.snapshot(Date.now())); }, 120);
+    setTimeout(() => { clearInterval(pump); openPopup(meter.current.snapshot(Date.now()).recent || 60, true); setDemo(false); }, 3500);
+  }, [demo, openPopup]);
 
-  const members = useMemo(() => [...new Set([...ON_STREAM, ...trending.map(t => t.card.fazeMember)])], [trending]);
-  const inFocus = (m: string) => focus.length === 0 || focus.includes(m);
-  const pack = useMemo(() => [...packs].sort((a, b) => a.priceCoins - b.priceCoins)[0], [packs]);
-  const focusedTrending = trending.filter(t => inFocus(t.card.fazeMember));
-  const focusedMine = mine.filter(c => inFocus(c.card.fazeMember));
-
-  const channelForLinks = source.kind === 'channel' ? source.channel : source.kind === 'clip' && source.channel ? source.channel : CHANNEL;
-  const twitchUrl = canonicalUrl(source);
-  const chat = source.kind === 'channel' && parents.length ? chatSrc(source.channel, parents) : '';
-  const chatOn = showChat && embeddable && !!chat;
-  const label = sourceLabel(source);
-  const status = !embeddable ? 'Embed unavailable on this address'
-    : source.kind === 'video' ? 'VOD · REPLAY' : source.kind === 'clip' ? 'CLIP'
-    : live === 'online' ? '● LIVE NOW' : live === 'offline' ? 'OFFLINE' : 'Checking stream…';
+  const chat = current && parents.length && embeddable ? chatSrc(current, parents) : '';
+  const status = !embeddable ? 'Embed unavailable on this address (Twitch needs https or localhost)'
+    : live === 'online' ? `● LIVE NOW · twitch.tv/${current}`
+    : live === 'none' ? 'No live Call of Duty streams found right now. Try again in a few minutes.'
+    : live === 'offline' ? `twitch.tv/${current} is offline`
+    : candidates ? 'Finding a live Call of Duty stream…' : 'Loading…';
 
   return <div className="watch-root">
     <header>
       <a className="brand" href="/">F<span>Λ</span>ZE <b>CLIPDECK</b></a>
       <div className="account">
-        {me && <strong>{me.balance.toLocaleString()} <small>COINS</small></strong>}
+        {coins !== null && <strong>{coins.toLocaleString()} <small>COINS</small></strong>}
         <a className="watch-back" href="/">← Back to ClipDeck</a>
       </div>
     </header>
     <main className="watch">
       <section className="watch-head">
-        <p className="eyebrow">WATCH ALONG / {label.toUpperCase()}</p>
+        <p className="eyebrow">WATCH ALONG / LIVE CALL OF DUTY</p>
         <h1>Watch live. <span>Pull what you see.</span></h1>
-        <p className={`watch-status ${source.kind === 'channel' ? live : source.kind}`} role="status">{status}</p>
+        <p className={`watch-status ${live}`} role="status">{status}{!pinned && live === 'online' && candidates && idx + 1 < candidates.length && <button type="button" className="watch-next" onClick={nextChannel}>Next stream ›</button>}</p>
       </section>
-
-      <form className="watch-link" onSubmit={submitLink}>
-        <label htmlFor="watch-src">Paste a Twitch channel, VOD or clip link</label>
-        <div className="watch-link-row">
-          <input id="watch-src" type="text" inputMode="url" value={linkInput} onChange={e => setLinkInput(e.target.value)}
-            placeholder={`twitch.tv/${CHANNEL} · twitch.tv/videos/123?t=1h2m3s · clips.twitch.tv/…`} autoComplete="off" spellCheck={false}
-            aria-invalid={!!linkError || undefined} aria-describedby={linkError ? 'watch-src-error' : undefined} />
-          <button className="primary" type="submit">Load</button>
-          {!sameSource(source, DEFAULT_SOURCE) && <button type="button" onClick={() => { setLinkInput(''); applySource(DEFAULT_SOURCE); }}>Back to twitch.tv/{CHANNEL}</button>}
-        </div>
-        {linkError && <p id="watch-src-error" className="watch-lab-msg error" role="alert">{linkError}</p>}
-      </form>
-
-      <div className="watch-ticker" aria-label="Trending card hype, simulated engagement">
-        <span className="watch-ticker-label">HYPE · SIMULATED</span>
-        <div className="watch-ticker-window">
-          {trending.length > 0
-            ? <div className="watch-ticker-track">
-                {[...trending, ...trending].map((t, i) => <span key={`${t.card.id}-${i}`} aria-hidden={i >= trending.length || undefined}>
-                  {t.card.name} <b>{t.hype}</b>{delta[t.card.id] ? <em className={delta[t.card.id] > 0 ? 'up' : 'down'}>{delta[t.card.id] > 0 ? '▲' : '▼'}{Math.abs(delta[t.card.id])}</em> : null}
-                </span>)}
-              </div>
-            : <span className="watch-ticker-empty">{tickerState === 'loading' ? 'Loading hype…' : tickerState === 'error' ? 'Hype feed unavailable right now.' : 'No trending cards yet.'}</span>}
-        </div>
+      <div className="watch-stage">
+        <div className="watch-player"><div id="twitch-player" />{live !== 'online' && <div className="watch-wait" aria-hidden="true">{live === 'none' || live === 'offline' ? 'No live stream' : 'Finding a live stream…'}</div>}</div>
+        {chat && <iframe className="watch-chat" title="Twitch chat" src={chat} />}
       </div>
-
-      <div className={`watch-stage${chatOn ? ' with-chat' : ''}`}>
-        <div className="watch-player" ref={playerBox}>
-          {!embeddable
-            ? <div className="watch-fallback">
-                <p className="eyebrow">EMBED NEEDS HTTPS</p>
-                <h2>Open the stream on Twitch</h2>
-                <p>Twitch only plays embedded streams on HTTPS sites. This page is on plain HTTP ({host}), so Twitch would refuse the player.</p>
-                <a className="watch-button primary" href={twitchUrl} target="_blank" rel="noreferrer">Open on Twitch ↗</a>
-              </div>
-            : !parents.length ? null
-            : useEmbedJs
-              ? <div id="twitch-player" key={sourceKey} />
-              : <iframe key={sourceKey} title={`${label} on Twitch`} src={iframeSrc(source, parents)} allowFullScreen />}
-        </div>
-        {chatOn && <iframe className="watch-chat" title="Twitch chat" src={chat} />}
-      </div>
-
-      {source.kind === 'channel' && live === 'offline' && embeddable && <section className="watch-offline" aria-live="polite">
-        <div><p className="eyebrow">STREAM OFFLINE</p><h2>{source.channel === 'faze' ? 'FaZe' : source.channel} isn’t live right now.</h2>
-          <p>Follow the channel to catch the next broadcast. The player above shows recent videos meanwhile. Keep collecting below.</p></div>
-        <a className="watch-button" href={`https://www.twitch.tv/${source.channel}`} target="_blank" rel="noreferrer">Follow on Twitch ↗</a>
-      </section>}
-
-      <div className="watch-controls">
-        {embeddable && chat && <button onClick={() => setShowChat(v => !v)} aria-pressed={!showChat}>{showChat ? 'Hide chat' : 'Show chat'}</button>}
-        <a className="watch-button" href={twitchUrl} target="_blank" rel="noreferrer">Open on Twitch ↗</a>
-        {source.kind !== 'channel' && <a className="watch-button" href={`https://www.twitch.tv/${channelForLinks}`} target="_blank" rel="noreferrer">twitch.tv/{channelForLinks} ↗</a>}
-      </div>
-
-      <ClipLab playerEl={() => playerBox.current} getStamp={getStamp} sourceUrl={twitchUrl} sourceLabel={label} members={members} canEmbed={embeddable} />
-
-      <section className="watch-cta panel">
-        <div><p className="eyebrow">WHILE YOU WATCH</p><h2>{pack ? pack.name : 'Open a pack'}</h2>
-          <p>{pack ? `${pack.cardsPerPack} cards · ${pack.priceCoins} coins · published odds v${pack.oddsVersion}` : 'Packs open in the ClipDeck store. Every pull is decided by the server.'}</p></div>
-        <a className="watch-button primary" href="/">{me ? 'Open a pack in the store →' : 'Sign in to open a pack →'}</a>
-      </section>
-
-      <section className="watch-focus">
-        <h3>WHO’S ON STREAM?</h3>
-        <p className="watch-hint">{ON_STREAM.length ? 'Preselected by FaZe staff for this stream.' : 'Pick the members you see.'} Tap to filter the cards.</p>
-        {members.length > 0 && <div className="watch-chips">
-          {members.map(m => <button key={m} aria-pressed={focus.includes(m)} onClick={() => setFocus(f => f.includes(m) ? f.filter(x => x !== m) : [...f, m])}>{m}</button>)}
-          {focus.length > 0 && <button className="watch-chip-clear" onClick={() => setFocus([])}>Show all</button>}
-        </div>}
-        <h3>TRENDING / SIMULATED ENGAGEMENT</h3>
-        <div className="watch-grid">
-          {focusedTrending.map(t => <MiniCard key={t.card.id} card={t.card} note={<p className="hype">HYPE {t.hype}/100 · SIMULATED</p>} />)}
-        </div>
-        {focusedTrending.length === 0 && <p className="empty">{tickerState === 'error' ? 'Trending cards could not be loaded.' : trending.length ? 'No trending cards for these members.' : 'No trending cards yet.'}</p>}
-        {me && <>
-          <h3>YOUR CARDS OF THEM</h3>
-          <div className="watch-grid">{focusedMine.map(c => <MiniCard key={c.card.id} card={c.card} note={<p>{c.count} owned</p>} />)}</div>
-          {focusedMine.length === 0 && <p className="empty">None yet. Open a pack.</p>}
-        </>}
-      </section>
+      <HypeWave snap={snap} status={chatStatus} channel={live === 'online' ? current : ''} demo={demo} onDemo={simulate} />
     </main>
-    <footer>FΛZE CLIPDECK / DEMO COLLECTIBLES <span>Stream embedded from Twitch. Hype is simulated engagement.</span></footer>
+    {popup && offer && <HypePopup offer={offer} channel={current} score={popup.score} demo={popup.demo} signedIn={signedIn}
+      onClose={() => setPopup(null)} onCollected={b => { setCoins(b); setOffer(o => (o ? { ...o, owned: true, balance: b } : o)); }} />}
   </div>;
 }

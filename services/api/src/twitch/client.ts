@@ -5,6 +5,8 @@ export class TwitchError extends Error {
 }
 
 export type TwitchStream = { id: string; title: string; viewerCount: number; startedAt: string; gameName: string };
+export type TwitchLiveStream = { userId: string; login: string; name: string; title: string; viewers: number; gameId: string; gameName: string; language: string; startedAt: string };
+export type TwitchCategory = { id: string; name: string };
 export type TwitchUser = { id: string; login: string; displayName: string; broadcasterType: string };
 
 type FetchLike = (url: string, init?: RequestInit) => Promise<Response>;
@@ -63,6 +65,33 @@ export class TwitchClient {
     const j = await this.get<{ data: any[] }>("/users", { login: login.toLowerCase() });
     const u = j.data[0];
     return u ? { id: u.id, login: u.login, displayName: u.display_name, broadcasterType: u.broadcaster_type } : null;
+  }
+
+  /** Categories matching a search (e.g. "Call of Duty"): Twitch's own list, nothing scraped. */
+  async searchCategories(query: string, first = 20): Promise<TwitchCategory[]> {
+    const j = await this.get<{ data: any[] }>("/search/categories", { query, first: Math.min(Math.max(first, 1), 100) });
+    return j.data.map((c) => ({ id: String(c.id), name: String(c.name) }));
+  }
+
+  /** Live streams in the given categories, most viewers first (Twitch's default order). Bounded to 100. */
+  async getStreamsByGames(gameIds: string[], o: { first?: number; language?: string } = {}): Promise<TwitchLiveStream[]> {
+    if (!gameIds.length) return [];
+    const qs = new URLSearchParams();
+    for (const id of gameIds.slice(0, 100)) qs.append("game_id", id);
+    qs.set("first", String(Math.min(Math.max(o.first ?? 20, 1), 100)));
+    if (o.language) qs.set("language", o.language);
+    const token = await this.appToken();
+    const run = async (t: string) => this.call(`${API}/streams?${qs}`, { headers: { "Client-Id": this.o.clientId!, Authorization: `Bearer ${t}` } });
+    let res = await run(token);
+    if (res.status === 401) res = await run(await this.appToken(true));
+    if (res.status === 429) throw new TwitchError("rate_limited", "Twitch rate limit reached; try again in a minute", 429);
+    if (res.status === 401 || res.status === 403) throw new TwitchError("auth", "Twitch rejected the access token", res.status);
+    if (!res.ok) throw new TwitchError("upstream", `Twitch API error (${res.status})`, res.status);
+    const j = (await res.json()) as { data: any[] };
+    return j.data.map((x) => ({
+      userId: String(x.user_id), login: String(x.user_login), name: String(x.user_name), title: String(x.title ?? ""), viewers: Number(x.viewer_count) || 0,
+      gameId: String(x.game_id), gameName: String(x.game_name ?? ""), language: String(x.language ?? ""), startedAt: String(x.started_at ?? ""),
+    }));
   }
 
   async getStream(userId: string): Promise<TwitchStream | null> {

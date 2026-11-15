@@ -9,12 +9,16 @@ let client: TwitchClient | null = null;
 const tc = () => (client ??= new TwitchClient({ clientId: config.twitch.clientId, clientSecret: config.twitch.clientSecret }));
 let channelId: { login: string; id: string } | null = null;
 let liveCache: { at: number; body: object } | null = null;
+let codCache: { at: number; body: object } | null = null;
+let codCategories: { at: number; ids: string[] } | null = null;
 
 /** Test hook: swap the Twitch client and clear caches. */
 export function setTwitchClientForTests(c: TwitchClient | null) {
   client = c;
   channelId = null;
   liveCache = null;
+  codCache = null;
+  codCategories = null;
 }
 
 async function broadcaster(): Promise<string> {
@@ -39,6 +43,30 @@ export async function twitchRoutes(app: FastifyInstance) {
       else throw e;
     }
     liveCache = { at: Date.now(), body };
+    return body;
+  });
+
+  // Live Call of Duty streams (any streamer), most viewers first. Official Helix only: category search + Get Streams.
+  // Cached 60 s (categories 1 h). Without working credentials it answers {configured, streams: []} and the page falls back.
+  app.get("/twitch/live-cod", async () => {
+    if (!tc().configured) return { configured: false, streams: [] };
+    if (codCache && Date.now() - codCache.at < 60_000) return codCache.body;
+    let body: object;
+    try {
+      if (!codCategories || Date.now() - codCategories.at > 3_600_000) {
+        const cats = await tc().searchCategories("Call of Duty", 25);
+        codCategories = { at: Date.now(), ids: cats.filter((c) => /^call of duty/i.test(c.name)).map((c) => c.id) };
+      }
+      const streams = await tc().getStreamsByGames(codCategories.ids, { first: 25 });
+      body = {
+        configured: true,
+        streams: streams.map((s) => ({ login: s.login, name: s.name, title: s.title, viewers: s.viewers, game: s.gameName, language: s.language })),
+      };
+    } catch (e) {
+      if (e instanceof TwitchError) body = { configured: true, streams: [], error: "twitch_unavailable" };
+      else throw e;
+    }
+    codCache = { at: Date.now(), body };
     return body;
   });
 }
