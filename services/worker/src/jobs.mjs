@@ -92,7 +92,7 @@ export async function moderatePending(c, id) {
         [id],
       )
     : await c.query(
-        "SELECT * FROM submissions WHERE status='pending' ORDER BY created_at LIMIT 100 FOR UPDATE SKIP LOCKED",
+        "SELECT * FROM submissions WHERE status='pending' ORDER BY created_at FOR UPDATE SKIP LOCKED",
       );
   for (const row of r.rows)
     await c.query(

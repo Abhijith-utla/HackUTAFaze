@@ -1,4 +1,8 @@
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
+import { fileURLToPath } from "node:url";
+// Resolve configuration independently of npm workspace or terminal working directory.
+loadEnv({ path: fileURLToPath(new URL("../.env", import.meta.url)) });
+loadEnv({ path: fileURLToPath(new URL("../../../.env", import.meta.url)) });
 import pg from "pg";
 import { processOne, tick } from "./jobs.mjs";
 const url = process.env.DATABASE_URL;
