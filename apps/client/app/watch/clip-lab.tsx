@@ -198,7 +198,7 @@ export default function ClipLab({ playerEl, getStamp, sourceUrl, sourceLabel, me
             <div className="watch-card-art"><img src={art(result.artUrl)} alt={draftName} /><span className="watch-demo">{draftStatus.toUpperCase()}</span></div>
             <small>{fazeMember}</small><h4>{draftName}</h4>
           </article>
-          <a className="watch-button" href="/admin/control/studio">Continue in Control Room Studio →</a>
+          <a className="watch-button" href={typeof result.draft?.link === 'string' && result.draft.link.startsWith('/admin/') ? result.draft.link : '/admin/control/studio'}>Continue to the draft in Control Room →</a>
         </div>}
       </div>
     </div>}
