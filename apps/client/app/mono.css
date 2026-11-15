@@ -89,6 +89,10 @@
 .mono-theme main .card::before, .mono-theme main .card::after { content: none; }
 .mono-theme main .card:hover .art img { transform: none; }
 .mono-theme main .card .art { border-radius: 3px 3px 0 0; }
+.mono-theme main .card .art { aspect-ratio: 2 / 3; }
+.mono-theme main .card .art img { object-fit: contain; }
+.mono-theme .market-card img, .mono-theme .cinema-lineup img { aspect-ratio: 2 / 3; object-fit: contain; }
+.mono-theme .cinema-card-front > img { object-fit: contain; }
 .mono-theme main .card > :is(h3, small, .card-meta, p) { margin-inline: 16px; }
 .mono-theme main .rarity { border-radius: 2px; font-size: 10px; }
 .mono-theme main :is(input, select, textarea) { border-radius: 4px; background: #111; border-color: #555; }

@@ -1,5 +1,16 @@
 # Demo content
 
-Run `node content/seed/generate.mjs` from the repository root to regenerate the deterministic three-set, 40-card catalog and original SVG geometric artwork. No images are scraped and no portraits or logos are copied. All characters and moments are demo collectibles; imagery is abstract placeholder art.
+The current catalog uses the 40 cards from the user-supplied `faze_chain_reaction_40_cards.zip`. These are AI-generated demo concept illustrations, not archival photographs. Their PNG bytes are stored in Tiger Data's `card_art` table; `catalog.json` references database-backed `/art/<UUID>.png` URLs. No replacement PNG files are needed in the repository or on the API filesystem.
 
-Agent A's seed command imports `catalog.json` and preserves IDs. Art is served by the API at `/demo-art/<UUID>.svg`; clients resolve these paths against the API origin. Seeds are live/active for the demo flow and every set/card is labelled demo. New sets created through admin start as drafts. Card stats are initialized by the importer.
+The import preserves the existing 40 card IDs, sets, pack configurations and owned instances. Source bronze/silver/elite/legendary map to common/rare/epic/legendary. The source cards are distributed across the three existing sets with every rarity in each set. Source metadata is retained on each catalog entry under `sourceCard`.
+
+To import into another database, configure its private `DATABASE_URL`, run migrations and the normal seed to create the catalog rows, then run from the repository root (requires Python's standard ZIP reader):
+
+```powershell
+node --import tsx services/api/src/import-card-pack.ts 'C:/path/to/faze_chain_reaction_40_cards.zip'
+node --import tsx services/api/src/import-card-pack.ts 'C:/path/to/faze_chain_reaction_40_cards.zip' --apply
+```
+
+The first command validates without writing. `--apply` imports directly from ZIP memory, replaces the definitions in one transaction, verifies stored image hashes and unchanged ownership, and updates catalog URLs for that database. A pre-import metadata backup is kept in ignored `.data/card-replacement/`. Preserve the original ZIP as a backup; database URLs alone cannot recreate missing image bytes in a fresh database.
+
+The legacy `generate.mjs` regenerates the original geometric SVG placeholders and overwrites this catalog. Do not run it for the Chain Reaction collection. The old SVGs can remain as legacy fixtures; current cards no longer reference them. Every replacement card remains labelled demo.
