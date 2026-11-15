@@ -14,8 +14,8 @@ jobs:
           --health-cmd "pg_isready -U faze" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       DATABASE_URL: postgres://faze:faze@localhost:5432/faze
-      JWT_SECRET: ci-only-jwt-secret
-      INTERNAL_SECRET: ci-only-internal-secret
+      JWT_SECRET: test-jwt-secret
+      INTERNAL_SECRET: test-internal-secret
       SOLANA_CLUSTER: devnet
       SOLANA_TREASURY_PUBKEY: 11111111111111111111111111111112
       PAYMENTS_SIMULATE: "1"
