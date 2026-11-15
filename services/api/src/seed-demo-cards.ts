@@ -23,6 +23,7 @@ type Demo = {
   sets: { stream: { id: string; name: string; description: string } };
   special: { id: string; setId: string; name: string; tier: string; rarity: keyof typeof POWER; lore: string; voiceScript: string; art: string }[];
   lore: Record<string, string>;
+  extraVoices?: { id: string; text: string }[];
 };
 
 export async function importDemoCards(counts: Record<string, number>): Promise<boolean> {
@@ -50,6 +51,8 @@ export async function importDemoCards(counts: Record<string, number>): Promise<b
       counts.cards += r.rowCount ?? 0;
       await c.query("INSERT INTO card_stats (card_id, hype) VALUES ($1,60) ON CONFLICT DO NOTHING", [s.id]);
     }
+    // Narration scripts for catalog Epic cards (audio lives in the client's public/voice).
+    for (const v of demo.extraVoices ?? []) await c.query("UPDATE cards SET voice_script=$2 WHERE id=$1", [v.id, v.text]);
     // One unique description per catalog card.
     for (const [cardId, lore] of Object.entries(demo.lore)) await c.query("UPDATE cards SET lore=$2 WHERE id=$1", [cardId, lore]);
 
