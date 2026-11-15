@@ -35,6 +35,11 @@ function toAsset(r: any) {
     id: r.id, position: r.position, name: r.name, fazeMember: r.faze_member, rarity: r.rarity as Rarity, lore: r.lore,
     artUrl: r.art_url, basePower: r.base_power, maxSupply: r.max_supply,
     duplicateOf: r.duplicate_of, duplicateName: r.duplicate_name ?? null, similarity: r.similarity === null ? null : Number(r.similarity), cardId: r.card_id,
+    // v1.9 draft: where pipeline-made art came from (clip/frame + timestamp), shown to the reviewer.
+    artSource: r.src_label == null ? null : {
+      jobId: r.src_job_id, rank: r.src_rank, box: r.src_box, frameMs: r.src_frame_ms, frameAt: r.src_frame_at,
+      sourceLabel: r.src_label, sourceUrl: r.src_url, rightsNote: r.src_rights_note, pickedAt: r.src_picked_at, current: r.src_art_url === r.art_url,
+    },
   };
 }
 
@@ -42,7 +47,11 @@ async function loadCampaign(db: Db, id: string) {
   const c = await db.query("SELECT * FROM campaigns WHERE id = $1", [id]);
   if (!c.rowCount) fail("NOT_FOUND", "Campaign not found");
   const assets = await db.query(
-    "SELECT a.*, d.name AS duplicate_name FROM campaign_assets a LEFT JOIN cards d ON d.id = a.duplicate_of WHERE a.campaign_id = $1 ORDER BY a.position",
+    `SELECT a.*, d.name AS duplicate_name, s.job_id AS src_job_id, s.rank AS src_rank, s.crop_box AS src_box, s.frame_ms AS src_frame_ms,
+            s.frame_at AS src_frame_at, s.source_label AS src_label, s.source_url AS src_url, s.rights_note AS src_rights_note,
+            s.picked_at AS src_picked_at, s.art_url AS src_art_url
+       FROM campaign_assets a LEFT JOIN cards d ON d.id = a.duplicate_of LEFT JOIN campaign_asset_art_sources s ON s.asset_id = a.id
+      WHERE a.campaign_id = $1 ORDER BY a.position`,
     [id],
   );
   const moment = c.rows[0].moment_id ? (await db.query("SELECT * FROM archive_moments WHERE id = $1", [c.rows[0].moment_id])).rows[0] : null;
@@ -246,6 +255,7 @@ export async function controlRoutes(app: FastifyInstance) {
       const camp = await c.query("SELECT * FROM campaigns WHERE id=$1 FOR UPDATE", [id]);
       if (!camp.rowCount) fail("NOT_FOUND", "Campaign not found");
       if (!["draft", "rejected"].includes(camp.rows[0].status)) fail("CONFLICT", "Only draft campaigns can be regenerated");
+      if (!camp.rows[0].moment_id) fail("CONFLICT", "This draft was built from a clip, not an archive moment; edit its cards instead");
       const m = toMoment((await c.query("SELECT * FROM archive_moments WHERE id=$1", [camp.rows[0].moment_id])).rows[0]);
       const generator = await generateAssets(c, id, m);
       await c.query("UPDATE campaigns SET status='draft' WHERE id=$1", [id]);
