@@ -22,13 +22,14 @@ declare module "vitest" {
 const procs: ChildProcess[] = [];
 
 function run(cwd: string, script: string, env: NodeJS.ProcessEnv, name: string): ChildProcess {
-  const child = spawn(path.join(root, "node_modules/.bin/tsx"), [script], {
+  const child = spawn(process.execPath, [path.join(root, "node_modules/tsx/dist/cli.mjs"), script], {
     cwd,
     env: { ...process.env, ...env },
     stdio: ["ignore", "pipe", "pipe"],
   });
   const log = (b: Buffer) => process.env.STACK_LOGS === "1" && process.stdout.write(`[${name}] ${b}`);
   child.stdout?.on("data", log);
+  child.on("error", error => process.stderr.write(`[${name}] ${error.message}\n`));
   child.stderr?.on("data", (b: Buffer) => process.stderr.write(`[${name}] ${b}`));
   return child;
 }
@@ -49,26 +50,18 @@ async function waitFor(url: string, child?: ChildProcess, ms = 60_000) {
 
 async function runOnce(cwd: string, script: string, env: NodeJS.ProcessEnv) {
   const child = run(cwd, script, env, path.basename(script));
-  const code: number = await new Promise((r) => child.on("exit", (c) => r(c ?? 1)));
+  const code: number = await new Promise((r) => child.on("exit", (c) => r(c ?? 1)).on("error", () => r(1)));
   if (code !== 0) throw new Error(`${script} failed with exit code ${code}`);
 }
 
 export default async function setup({ provide }: GlobalSetupContext) {
-  if (process.env.API_URL && process.env.PAYMENTS_URL) {
-    await waitFor(`${process.env.API_URL}/health`);
-    await waitFor(`${process.env.PAYMENTS_URL}/health`);
-    provide("apiUrl", process.env.API_URL);
-    provide("paymentsUrl", process.env.PAYMENTS_URL);
-    provide("treasury", process.env.SOLANA_TREASURY_PUBKEY ?? TREASURY);
-    provide("seeded", true);
-    return;
-  }
-
+  if (!process.env.TEST_DATABASE_URL) throw new Error("TEST_DATABASE_URL must identify an isolated test database; no application database fallback");
   const env = {
-    DATABASE_URL: process.env.DATABASE_URL ?? "postgres://faze:faze@localhost:5432/faze",
+    DATABASE_URL: process.env.DATABASE_URL,
+    TEST_DATABASE_URL: process.env.TEST_DATABASE_URL,
     JWT_SECRET: process.env.JWT_SECRET ?? "test-jwt-secret",
     INTERNAL_SECRET: process.env.INTERNAL_SECRET ?? "test-internal-secret",
-    NODE_ENV: "development",
+    NODE_ENV: "test",
   };
   const apiPort = 4400;
   const payPort = 4500;
@@ -92,6 +85,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
     "src/server.ts",
     {
       ...env,
+      DATABASE_URL: process.env.TEST_DATABASE_URL,
       PAYMENTS_PORT: String(payPort),
       API_URL: apiUrl,
       SOLANA_CLUSTER: "devnet",

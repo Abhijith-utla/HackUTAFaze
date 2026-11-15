@@ -1,17 +1,14 @@
 {
   "name": "@faze/integration",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "tsx demo.ts",
     "typecheck": "tsc -p .",
-    "test:integration": "vitest run"
+    "test:integration": "vitest run",
+    "test": "tsx demo.ts"
   },
   "dependencies": {
-    "@faze/api": "*",
-    "@faze/payments": "*",
-    "pg": "^8.13.3",
-    "tsx": "^4.19.3",
     "@faze/shared": "*"
   },
   "devDependencies": {

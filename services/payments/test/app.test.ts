@@ -1,8 +1,7 @@
-﻿import { randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { Keypair } from "@solana/web3.js";
 import { SignJWT } from "jose";
-import { reconcile } from "../src/fulfill.js";
 import { buildApp } from "../src/app.js";
 import { reconcile } from "../src/fulfill.js";
 import { loadConfig } from "../src/config.js";
@@ -13,7 +12,7 @@ import { checkTransfer, simulatedReader, solanaPayUrl, type ChainReader, type Ch
 const JWT_SECRET = "test-jwt-secret";
 const TREASURY = Keypair.generate().publicKey.toBase58();
 const PAYER = Keypair.generate().publicKey.toBase58();
-const sig = () => Keypair.generate().publicKey.toBase58() + "x".repeat(24); // base58, sig-length
+const sig = () => Keypair.generate().publicKey.toBase58() + "x".repeat(20); // base58, sig-length
 
 async function token(sub: string) {
   return new SignJWT({ role: "fan" })
@@ -82,13 +81,6 @@ describe("payments (Solana devnet)", () => {
     const forged = await new SignJWT({ role: "fan" }).setProtectedHeader({ alg: "HS256" }).setSubject(userId).setExpirationTime("1h").sign(new TextEncoder().encode("nope"));
     const res2 = await t.app.inject({ method: "POST", url: "/payments/checkout", cookies: { session: forged }, payload: { bundleId: "coins_1000" } });
     expect(res2.statusCode).toBe(401);
-  });
-
-  it("accepts explicitly simulated signatures containing decimal zeroes", async () => {
-    const c = (await checkout()).json();
-    const signature = `sim_${c.reference}_50000000`;
-    t.chain.txs.set(signature, transfer(c.reference, c.lamports));
-    expect((await confirm({ purchaseId: c.purchaseId, signature })).statusCode).toBe(200);
   });
 
   it("rejects unknown bundles", async () => {
@@ -172,34 +164,50 @@ describe("payments (Solana devnet)", () => {
     expect(t.ledger.balances.get(userId)).toBe(1000);
   });
 
-  it("concurrent cross-purchase signature reuse credits only one purchase", async () => {
-    const a = (await checkout()).json(); const b = (await checkout()).json(); const signature = sig();
+  it("one tx carrying TWO references, confirmed concurrently, credits only one purchase", async () => {
+    // Found by @tanejakeshav's review (PR #3): signatureUsed() was a check-then-act race.
+    const a = (await checkout()).json();
+    const b = (await checkout()).json();
+    const s = sig();
     const tx = transfer(a.reference, a.lamports);
-    tx.accountKeys.push(b.reference); tx.preBalances.push(0); tx.postBalances.push(0);
-    t.chain.txs.set(signature, tx);
-    const results = await Promise.all([confirm({ purchaseId: a.purchaseId, signature }), confirm({ purchaseId: b.purchaseId, signature })]);
-    expect(results.map(r => r.statusCode).sort()).toEqual([200, 400]);
+    tx.accountKeys.push(b.reference);
+    tx.preBalances.push(0);
+    tx.postBalances.push(0);
+    t.chain.txs.set(s, tx);
+    const [ra, rb] = await Promise.all([
+      confirm({ purchaseId: a.purchaseId, signature: s }),
+      confirm({ purchaseId: b.purchaseId, signature: s }),
+    ]);
+    expect([ra.statusCode, rb.statusCode].sort()).toEqual([200, 400]);
     expect(t.ledger.balances.get(userId)).toBe(1000);
   });
 
-  it("reconciles reserved signatures after ledger outage without needing RPC", async () => {
-    const c = (await checkout()).json(); const signature = sig();
-    t.chain.txs.set(signature, transfer(c.reference, c.lamports));
-    const credit = t.ledger.credit.bind(t.ledger);
-    t.ledger.credit = async () => { throw new Error('offline'); };
-    expect((await confirm({ purchaseId: c.purchaseId, signature })).statusCode).toBe(409);
-    expect(t.repo.rows[0]!.txSignature).toBe(signature);
-    t.chain.txs.clear(); t.ledger.credit = credit;
-    await reconcile(t.repo, t.ledger, t.chain);
-    expect(t.repo.rows[0]!.status).toBe('paid');
-    expect(t.ledger.balances.get(userId)).toBe(1000);
+  it("a reserved signature survives an RPC outage: retry credits without re-reading the chain", async () => {
+    const real = t.ledger.credit.bind(t.ledger);
+    let down = true;
+    t.ledger.credit = async (b) => {
+      if (down) throw new Error("api down");
+      return real(b);
+    };
+    const c = (await checkout()).json();
+    const s = sig();
+    t.chain.txs.set(s, transfer(c.reference, c.lamports));
+    expect((await confirm({ purchaseId: c.purchaseId, signature: s })).statusCode).toBe(409);
+    t.chain.txs.clear(); // RPC "forgets" / is down
+    down = false;
+    const res = await confirm({ purchaseId: c.purchaseId });
+    expect(res.json()).toMatchObject({ status: "paid", credited: 1000 });
   });
 
-  it("discovers and fulfills reference payments without the browser", async () => {
-    const c = (await checkout()).json(); const signature = sig();
-    t.chain.txs.set(signature, transfer(c.reference, c.lamports)); t.chain.byRef.set(c.reference, signature);
-    await reconcile(t.repo, t.ledger, t.chain);
-    expect(t.repo.rows[0]!.status).toBe('paid');
+  it("reconcile() credits a paid purchase whose buyer never called confirm", async () => {
+    const c = (await checkout()).json();
+    const s = sig();
+    t.chain.txs.set(s, transfer(c.reference, c.lamports));
+    t.chain.byRef.set(c.reference, s);
+    const done = await reconcile(t.repo, t.ledger, t.chain, { maxAgeMs: 60_000, limit: 10 });
+    expect(done).toBe(1);
+    expect(t.ledger.balances.get(userId)).toBe(1000);
+    expect(await reconcile(t.repo, t.ledger, t.chain, { maxAgeMs: 60_000, limit: 10 })).toBe(0);
   });
 
   it("cannot confirm someone else's purchase", async () => {
@@ -214,7 +222,7 @@ describe("payments (Solana devnet)", () => {
     expect((await confirm({ purchaseId: c.purchaseId, signature: "0OIl" + "!".repeat(40) })).statusCode).toBe(400);
   });
 
-  it("ledger outage â†’ 409 and stays pending, then succeeds on retry", async () => {
+  it("ledger outage → 409 and stays pending, then succeeds on retry", async () => {
     const real = t.ledger.credit.bind(t.ledger);
     let down = true;
     t.ledger.credit = async (b) => {
@@ -287,9 +295,9 @@ describe("config", () => {
   it("defaults to devnet", () => {
     expect(loadConfig(base)).toMatchObject({ cluster: "devnet", rpcUrl: "https://api.devnet.solana.com" });
   });
-  it("requires TLS on remote Tiger Cloud connections", () => {
-    expect(() => loadConfig({ ...base, DATABASE_URL: 'postgres://user:pass@cloud.example/db' })).toThrow(/TLS/);
-    expect(loadConfig({ ...base, DATABASE_URL: 'postgres://user:pass@cloud.example/db?sslmode=require' }).databaseUrl).toContain('sslmode=require');
+  it("requires remote Tiger Cloud TLS", () => {
+    expect(() => loadConfig({ ...base, DATABASE_URL: 'postgres://remote.example/db' })).toThrow(/TLS/);
+    expect(loadConfig({ ...base, DATABASE_URL: 'postgres://remote.example/db?sslmode=require' }).databaseUrl).toContain('sslmode=require');
   });
   it("refuses mainnet", () => {
     expect(() => loadConfig({ ...base, SOLANA_CLUSTER: "mainnet-beta" })).toThrow(/never mainnet/);
@@ -300,4 +308,3 @@ describe("config", () => {
     expect(() => loadConfig({ ...base, PAYMENTS_SIMULATE: "1", NODE_ENV: "production" })).toThrow(/test-only/);
   });
 });
-

@@ -1,7 +1,7 @@
-﻿# Full demo integration test
+﻿# Full demo integration
 
-Set TEST_DATABASE_URL to an isolated Tiger Cloud test database and run `npm run test:integration` from the repo root. The script applies migrations and writes uniquely labelled test fixtures. Use a disposable test database; it does not delete unrelated data. Never point it at production.
+Set TEST_DATABASE_URL to an isolated Tiger Cloud test database, keep DATABASE_URL pointed at a distinct development database, then run npm run test:integration. There is no application database fallback or unverified external-stack reuse. API/payments start as real processes on ports 4400/4500. API uses its dedicated test database selection; payments receives the same test URL privately. Requires the API test-database configuration from Agent A.
 
-It starts a real local API listener, injects payment HTTP requests using PostgreSQL purchase persistence, and credits through the real internal ledger HTTP boundary. Solana RPC is explicitly simulated; no real currency is transferred. It covers signup bonus, packs, publishing, payment confirmation/replay, moderation, trade acceptance/replay, collection ownership and leaderboard.
+The runner seeds demo data and tests the HTTP flow using explicitly simulated Solana transactions, not real currency. Required endpoints and a live seeded pack must exist; missing implementations fail setup. STACK_LOGS=1 prints service stdout. tests/integration/demo.ts also provides a direct injected demo smoke script.
 
-Live Tiger Cloud and real Phantom/devnet verification remains a separate manual smoke test described in services/payments/README.md. The script fails clearly if TEST_DATABASE_URL is absent rather than silently using a default database.
+Use disposable test data: fixtures may remain after a run. Never use production. Native PostgreSQL can be used for local protocol-compatible checks; live Tiger Cloud TLS/connectivity and actual Phantom/devnet payments require a separate manual smoke test and are not established by simulation or unit tests.
