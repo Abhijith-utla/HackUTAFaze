@@ -20,7 +20,10 @@ export function toPublicUser(r: { id: string; display_name: string; display_name
   return { id: r.id, displayName: r.display_name_status === "approved" ? r.display_name : "New collector" };
 }
 
-export function toCard(r: any): Card {
+/** Additive card fields: the description, whether the artwork already contains the card face, and whether a hype narration exists. */
+export type CardExtras = { lore: string; faceBaked: boolean; hasVoice: boolean };
+
+export function toCard(r: any): Card & CardExtras {
   return {
     id: r.id,
     setId: r.set_id,
@@ -31,6 +34,9 @@ export function toCard(r: any): Card {
     basePower: r.base_power,
     maxSupply: r.max_supply,
     demo: r.demo,
+    lore: r.lore ?? "",
+    faceBaked: r.face_baked ?? false,
+    hasVoice: !!r.voice_script,
   };
 }
 

@@ -11,7 +11,16 @@ import { balanceOf, lockUser, postEntry } from "../ledger.js";
 import { toCard } from "../mappers.js";
 import { pickCard, rollRarity, type CardSlot } from "../pulls.js";
 
-export function toPack(r: any): Pack {
+/** Guaranteed slots published with the pack (demo packs): what card 4 and card 5 are, and how cards 1-3 are drawn. */
+export function guaranteedOf(r: any): string[] {
+  const fixed: { slot: number; label?: string }[] = Array.isArray(r.fixed_slots) ? r.fixed_slots : [];
+  if (!fixed.length) return [];
+  const o = r.odds ?? {};
+  const mix = `Cards 1-${Math.min(...fixed.map((f) => f.slot)) - 1}: common ${o.common ?? 0}%, rare ${o.rare ?? 0}%, epic ${(o.epic ?? 0) + (o.legendary ?? 0)}%`;
+  return [mix, ...fixed.sort((a, b) => a.slot - b.slot).map((f) => `Card ${f.slot}: guaranteed ${f.label ?? "special card"}`)];
+}
+
+export function toPack(r: any): Pack & { guaranteed: string[] } {
   return {
     id: r.id,
     name: r.name,
@@ -21,6 +30,7 @@ export function toPack(r: any): Pack {
     cardsPerPack: r.cards_per_pack,
     odds: r.odds,
     oddsVersion: r.odds_version,
+    guaranteed: guaranteedOf(r),
   };
 }
 

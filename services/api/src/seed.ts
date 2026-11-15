@@ -11,6 +11,7 @@ import { config } from "./config.js";
 import { pool, tx } from "./db.js";
 import { postEntry } from "./ledger.js";
 import { migrate } from "./migrate.js";
+import { importDemoCards } from "./seed-demo-cards.js";
 import { encodeKey } from "./pack-payment.js";
 
 type R = "common" | "rare" | "epic" | "legendary";
@@ -359,6 +360,7 @@ async function main() {
   }
 
   const fromCatalog = await importCatalog(counts);
+  await importDemoCards(counts); // finished card faces + unique descriptions + guaranteed pack slots (demo)
   for (const s of fromCatalog ? [] : SETS) {
     await tx(async (c) => {
       let setId: string;
