@@ -62,8 +62,11 @@ describe("Moment Studio (pure)", () => {
     expect(d.map((x) => x.rarity)).toEqual(["common", "common", "rare", "epic", "legendary"]);
     for (const x of d) {
       expect(x.fazeMember).toBe("FaZe Temperrr");
-      const sentence = x.lore.replace(/\s*\(2010 · .*\)$/, "").replace(/…$/, "");
-      expect(moment.summary).toContain(sentence.slice(0, 30));
+      const text = x.lore.replace(/\s*\(2010 · .*\)$/, "").replace(/…$/, "");
+      // either one of the archive's own sentences, or a plain caption naming the moment (no invented facts)
+      const fromArchive = moment.summary.includes(text.slice(0, 30));
+      const caption = /^(Origin|Crowd|Highlight|Signature|Legend) card from “Introducing FaZe Temperrr”, 2010\.$/.test(text);
+      expect(fromArchive || caption).toBe(true);
     }
     expect(d[4].maxSupply).toBe(50);
     expect(new Set(d.map((x) => x.lore)).size).toBe(5); // no repeated lore
