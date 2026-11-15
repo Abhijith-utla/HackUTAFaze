@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { FastifyInstance } from "fastify";
 import { buildApp } from "../src/app.js";
-import { checkContributionTransfer, type ContributionChain, type ContributionPayout } from "../src/contributions.js";
+import { checkContributionTransfer, isSolanaPublicKey, newContributionReference, type ContributionChain, type ContributionPayout } from "../src/contributions.js";
 import { fail } from "../src/errors.js";
 import { encodeKey } from "../src/pack-payment.js";
 import { makeAdmin, pool, signup } from "./helpers.js";
@@ -46,6 +46,12 @@ describe("contribution transfer verification (pure)", () => {
       mutate(candidate);
       expect(checkContributionTransfer(candidate, quote)).toMatchObject({ ok: false });
     }
+  });
+
+  it("creates valid unique Solana Pay references", () => {
+    const references = new Set(Array.from({ length: 20 }, () => newContributionReference()));
+    expect(references.size).toBe(20);
+    for (const value of references) expect(isSolanaPublicKey(value)).toBe(true);
   });
 });
 

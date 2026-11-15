@@ -50,11 +50,16 @@ export function isSolanaPublicKey(value: string): boolean {
 }
 
 export function newContributionReference(): string {
-  let n = BigInt(`0x${randomBytes(32).toString("hex")}`);
+  const bytes = randomBytes(32);
+  let n = BigInt(`0x${bytes.toString("hex")}`);
   let output = "";
   while (n) {
     output = BASE58[Number(n % 58n)] + output;
     n /= 58n;
+  }
+  for (const byte of bytes) {
+    if (byte !== 0) break;
+    output = `1${output}`;
   }
   return output || "1";
 }

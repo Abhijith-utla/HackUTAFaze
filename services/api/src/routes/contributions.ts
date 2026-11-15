@@ -11,7 +11,7 @@ const ProposalBody = z.object({
   title: z.string().trim().min(3).max(100),
   pitch: z.string().trim().min(10).max(2000),
   fazeMember: z.string().trim().min(2).max(80),
-  sourceUrl: z.string().url().max(2000).optional().default(""),
+  sourceUrl: z.union([z.string().url().max(2000), z.literal("")]).optional().default(""),
   recipientWallet: z.string().trim().refine(isSolanaPublicKey, "recipientWallet must be a Solana public key"),
 });
 const ReviewBody = z.object({ bountyLamports: z.number().int().min(1).max(1_000_000_000), note: z.string().trim().max(1000).optional().default("") });

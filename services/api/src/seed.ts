@@ -10,6 +10,7 @@ import { config } from "./config.js";
 import { pool, tx } from "./db.js";
 import { postEntry } from "./ledger.js";
 import { migrate } from "./migrate.js";
+import { encodeKey } from "./pack-payment.js";
 
 type R = "common" | "rare" | "epic" | "legendary";
 const POWER: Record<R, number> = { common: 20, rare: 45, epic: 70, legendary: 95 };
@@ -215,6 +216,57 @@ async function importCatalog(counts: Record<string, number>): Promise<boolean> {
   return true;
 }
 
+/** A visible, idempotent queue makes the staff review flow usable in a fresh demo database. */
+async function seedContributions() {
+  const ideas = [
+    {
+      email: "fan1@demo.faze",
+      title: "The return trickshot",
+      pitch: "A high-energy card for the clip that brought the original trickshot audience back into the conversation.",
+      member: "FaZe Rain",
+      source: "https://www.youtube.com/@FaZeClan",
+      wallet: encodeKey(Buffer.alloc(32, 31)),
+      status: "pending",
+      bounty: 0,
+    },
+    {
+      email: "fan2@demo.faze",
+      title: "Five years of house streams",
+      pitch: "A collector card built around the fan-favorite late-night squad stream format and its community rituals.",
+      member: "FaZe Rug",
+      source: "https://www.youtube.com/@rug",
+      wallet: encodeKey(Buffer.alloc(32, 32)),
+      status: "pending",
+      bounty: 0,
+    },
+    {
+      email: "fan3@demo.faze",
+      title: "The championship point call",
+      pitch: "An approved community pitch for a decisive esports comms moment, with a small test reward ready for admin confirmation.",
+      member: "FaZe Jev",
+      source: "https://www.youtube.com/@FaZeClan",
+      wallet: encodeKey(Buffer.alloc(32, 33)),
+      status: "approved",
+      bounty: 50_000_000,
+    },
+  ] as const;
+  let added = 0;
+  for (const idea of ideas) {
+    const user = await pool.query("SELECT id, display_name FROM users WHERE email=$1", [idea.email]);
+    if (!user.rowCount) continue;
+    const exists = await pool.query("SELECT 1 FROM contribution_proposals WHERE demo AND title=$1", [idea.title]);
+    if (exists.rowCount) continue;
+    await pool.query(
+      `INSERT INTO contribution_proposals
+       (creator_user_id, contributor_name, title, pitch, faze_member, source_url, recipient_wallet, bounty_lamports, status, review_note, reviewed_by, reviewed_at, demo)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,CASE WHEN $9='approved' THEN now() ELSE NULL END,true)`,
+      [user.rows[0].id, user.rows[0].display_name, idea.title, idea.pitch, idea.member, idea.source, idea.wallet, idea.bounty, idea.status, idea.status === "approved" ? "Demo review: source and collector value confirmed." : "", idea.status === "approved" ? user.rows[0].id : null],
+    );
+    added++;
+  }
+  return added;
+}
+
 async function main() {
   await migrate();
   const counts = { users: 0, sets: 0, cards: 0, packs: 0 };
@@ -262,10 +314,11 @@ async function main() {
       }
     });
   }
+  const contributions = await seedContributions();
 
   console.log(
     `seed done (demo, ${fromCatalog ? "content/seed catalog" : "built-in sets"}): +${counts.users} users, +${counts.sets} sets, ` +
-      `+${counts.cards} cards, +${counts.packs} packs. Logins: admin@demo.faze / demo-admin-pass, fan1-4@demo.faze / demo-fan-pass`,
+      `+${counts.cards} cards, +${counts.packs} packs, +${contributions} contribution pitches. Logins: admin@demo.faze / demo-admin-pass, fan1-4@demo.faze / demo-fan-pass`,
   );
 }
 
