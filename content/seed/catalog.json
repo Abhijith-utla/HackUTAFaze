@@ -30,442 +30,1122 @@
     {
       "id": "d0000000-0000-4000-8000-000000001001",
       "setId": "d0000000-0000-4000-8000-000000000001",
-      "name": "Banks / OG Era 1",
-      "fazeMember": "FaZe Banks",
-      "rarity": "common",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001001.svg",
-      "basePower": 25,
+      "name": "FaZe Clan Founded",
+      "fazeMember": "FaZe Clan",
+      "rarity": "legendary",
+      "artUrl": "/art/91d87899-57dd-4b98-9e75-db60d09fe7db.png",
+      "basePower": 85,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "L001",
+        "title": "FaZe Clan Founded",
+        "rarity": "legendary",
+        "year": 2010,
+        "date": "2010-05-30",
+        "era": "origins",
+        "connection_tags": [
+          "founders",
+          "trickshotting"
+        ],
+        "lore": "Three players start the FaZe Sniping channel.",
+        "image": "L001_faze-clan-founded.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001002",
       "setId": "d0000000-0000-4000-8000-000000000001",
-      "name": "Apex / OG Era 2",
-      "fazeMember": "FaZe Apex",
-      "rarity": "rare",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001002.svg",
-      "basePower": 45,
+      "name": "Antwerp Major Win",
+      "fazeMember": "FaZe Clan",
+      "rarity": "legendary",
+      "artUrl": "/art/8e0438c9-2c2a-4b0d-96db-a6345bec8c27.png",
+      "basePower": 85,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "L004",
+        "title": "Antwerp Major Win",
+        "rarity": "legendary",
+        "year": 2022,
+        "date": "2022-05-22",
+        "era": "esports",
+        "connection_tags": [
+          "cs:go",
+          "trophies"
+        ],
+        "lore": "FaZe wins the PGL Major Antwerp title.",
+        "image": "L004_antwerp-major-win.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001003",
       "setId": "d0000000-0000-4000-8000-000000000001",
-      "name": "Rain / OG Era 3",
-      "fazeMember": "FaZe Rain",
+      "name": "ELEAGUE Premier",
+      "fazeMember": "FaZe Clan",
       "rarity": "epic",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001003.svg",
+      "artUrl": "/art/7a9ad198-d06e-4902-bac8-70e11c4d8172.png",
       "basePower": 65,
       "maxSupply": 100,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "E002",
+        "title": "ELEAGUE Premier",
+        "rarity": "elite",
+        "year": 2017,
+        "date": "2017-10-13",
+        "era": "esports",
+        "connection_tags": [
+          "cs:go",
+          "trophies"
+        ],
+        "lore": "FaZe wins ELEAGUE Premier 2017.",
+        "image": "E002_eleague-premier.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001004",
       "setId": "d0000000-0000-4000-8000-000000000001",
-      "name": "Adapt / OG Era 4",
-      "fazeMember": "FaZe Adapt",
-      "rarity": "legendary",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001004.svg",
-      "basePower": 85,
+      "name": "The 2024 Reboot",
+      "fazeMember": "FaZe Clan",
+      "rarity": "epic",
+      "artUrl": "/art/f4cfc759-e834-41d6-b378-e08cb91a36b4.png",
+      "basePower": 65,
       "maxSupply": 25,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "E005",
+        "title": "The 2024 Reboot",
+        "rarity": "elite",
+        "year": 2024,
+        "date": "2024-04-27",
+        "era": "rebirth",
+        "connection_tags": [
+          "creator roster",
+          "reboot"
+        ],
+        "lore": "FaZe reboots the brand and reshapes its creator roster.",
+        "image": "E005_the-2024-reboot.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001005",
       "setId": "d0000000-0000-4000-8000-000000000001",
-      "name": "Rug / OG Era 5",
-      "fazeMember": "FaZe Rug",
-      "rarity": "common",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001005.svg",
-      "basePower": 25,
+      "name": "Four Million Subs",
+      "fazeMember": "FaZe Clan",
+      "rarity": "rare",
+      "artUrl": "/art/53c25187-fb2a-4965-91eb-f3081cd4bc67.png",
+      "basePower": 45,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "S003",
+        "title": "Four Million Subs",
+        "rarity": "silver",
+        "year": 2016,
+        "date": "2016",
+        "era": "house",
+        "connection_tags": [
+          "youtube",
+          "milestones"
+        ],
+        "lore": "FaZe celebrates four million YouTube subscribers.",
+        "image": "S003_four-million-subs.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001006",
       "setId": "d0000000-0000-4000-8000-000000000001",
-      "name": "Banks / OG Era 6",
-      "fazeMember": "FaZe Banks",
+      "name": "Champion Pop-Up",
+      "fazeMember": "FaZe Clan",
       "rarity": "rare",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001006.svg",
+      "artUrl": "/art/e8bd5217-7389-4d38-8d56-5b3f6c60af91.png",
       "basePower": 45,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "S006",
+        "title": "Champion Pop-Up",
+        "rarity": "silver",
+        "year": 2019,
+        "date": "2019",
+        "era": "culture",
+        "connection_tags": [
+          "merch",
+          "partnership"
+        ],
+        "lore": "FaZe and Champion connect gaming culture with streetwear.",
+        "image": "S006_champion-pop-up.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001007",
       "setId": "d0000000-0000-4000-8000-000000000001",
-      "name": "Apex / OG Era 7",
-      "fazeMember": "FaZe Apex",
-      "rarity": "epic",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001007.svg",
-      "basePower": 65,
+      "name": "Pro League S15",
+      "fazeMember": "FaZe Clan",
+      "rarity": "rare",
+      "artUrl": "/art/4da387b3-b866-4cc1-b882-271ce4b8742f.png",
+      "basePower": 45,
       "maxSupply": 100,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "S009",
+        "title": "Pro League S15",
+        "rarity": "silver",
+        "year": 2022,
+        "date": "2022-04-10",
+        "era": "esports",
+        "connection_tags": [
+          "cs:go",
+          "trophies"
+        ],
+        "lore": "FaZe wins ESL Pro League Season 15.",
+        "image": "S009_pro-league-s15.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001008",
       "setId": "d0000000-0000-4000-8000-000000000001",
-      "name": "Rain / OG Era 8",
-      "fazeMember": "FaZe Rain",
-      "rarity": "legendary",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001008.svg",
-      "basePower": 85,
+      "name": "Historic Montage",
+      "fazeMember": "FaZe Clan",
+      "rarity": "common",
+      "artUrl": "/art/a5ed4839-e85e-4c0d-9caf-197edf04ae4f.png",
+      "basePower": 25,
       "maxSupply": 25,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B002",
+        "title": "Historic Montage",
+        "rarity": "bronze",
+        "year": 2011,
+        "date": "2011-05-31",
+        "era": "trickshot",
+        "connection_tags": [
+          "montage",
+          "killcams"
+        ],
+        "lore": "An early FaZe community trickshot montage.",
+        "image": "B002_historic-montage.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001009",
       "setId": "d0000000-0000-4000-8000-000000000001",
-      "name": "Adapt / OG Era 9",
-      "fazeMember": "FaZe Adapt",
+      "name": "Funniest Moments #1",
+      "fazeMember": "FaZe Clan",
       "rarity": "common",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001009.svg",
+      "artUrl": "/art/d68aca73-7263-47ba-93cf-b43de6bd4e61.png",
       "basePower": 25,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B005",
+        "title": "Funniest Moments #1",
+        "rarity": "bronze",
+        "year": 2015,
+        "date": "2015-05-04",
+        "era": "house",
+        "connection_tags": [
+          "comedy",
+          "compilations"
+        ],
+        "lore": "A funny-moments collection featuring FaZe creators.",
+        "image": "B005_funniest-moments-1.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001010",
       "setId": "d0000000-0000-4000-8000-000000000001",
-      "name": "Rug / OG Era 10",
-      "fazeMember": "FaZe Rug",
-      "rarity": "rare",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001010.svg",
-      "basePower": 45,
+      "name": "Back to Old House",
+      "fazeMember": "FaZe Clan",
+      "rarity": "common",
+      "artUrl": "/art/6ca9b813-8fbc-436e-8f05-c8655c4e1fce.png",
+      "basePower": 25,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B008",
+        "title": "Back to Old House",
+        "rarity": "bronze",
+        "year": 2017,
+        "date": "2017-05-07",
+        "era": "house",
+        "connection_tags": [
+          "faze house",
+          "nostalgia"
+        ],
+        "lore": "FaZe Rain revisits an old FaZe House.",
+        "image": "B008_back-to-old-house.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001011",
       "setId": "d0000000-0000-4000-8000-000000000001",
-      "name": "Banks / OG Era 11",
-      "fazeMember": "FaZe Banks",
-      "rarity": "epic",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001011.svg",
-      "basePower": 65,
+      "name": "Adapt vs Tfue Bet",
+      "fazeMember": "FaZe Clan",
+      "rarity": "common",
+      "artUrl": "/art/2cb41e8e-e908-4434-9b3f-a7898a12ca66.png",
+      "basePower": 25,
       "maxSupply": 100,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B011",
+        "title": "Adapt vs Tfue Bet",
+        "rarity": "bronze",
+        "year": 2018,
+        "date": "2018-06-19",
+        "era": "trickshot",
+        "connection_tags": [
+          "adapt",
+          "trickshot"
+        ],
+        "lore": "Adapt challenges Tfue to a $1,000 trickshot bet.",
+        "image": "B011_adapt-vs-tfue-bet.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001012",
       "setId": "d0000000-0000-4000-8000-000000000001",
-      "name": "Apex / OG Era 12",
-      "fazeMember": "FaZe Apex",
-      "rarity": "legendary",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001012.svg",
-      "basePower": 85,
+      "name": "Atlanta FaZe Champs",
+      "fazeMember": "FaZe Clan",
+      "rarity": "common",
+      "artUrl": "/art/a75638cf-8049-4669-a85b-328f404d9563.png",
+      "basePower": 25,
       "maxSupply": 25,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B014",
+        "title": "Atlanta FaZe Champs",
+        "rarity": "bronze",
+        "year": 2021,
+        "date": "2021",
+        "era": "esports",
+        "connection_tags": [
+          "cdl",
+          "call of duty"
+        ],
+        "lore": "Atlanta FaZe wins the Call of Duty League Championship.",
+        "image": "B014_atlanta-faze-champs.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001013",
       "setId": "d0000000-0000-4000-8000-000000000001",
-      "name": "Rain / OG Era 13",
-      "fazeMember": "FaZe Rain",
+      "name": "Silky Joins",
+      "fazeMember": "FaZe Clan",
       "rarity": "common",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001013.svg",
+      "artUrl": "/art/359ecfcf-da09-4966-abce-f65d3e57a535.png",
       "basePower": 25,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B017",
+        "title": "Silky Joins",
+        "rarity": "bronze",
+        "year": 2024,
+        "date": "2024-04-29",
+        "era": "rebirth",
+        "connection_tags": [
+          "reboot",
+          "creators"
+        ],
+        "lore": "Silky joins the rebooted FaZe creator lineup.",
+        "image": "B017_silky-joins.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001014",
       "setId": "d0000000-0000-4000-8000-000000000001",
-      "name": "Adapt / OG Era 14",
-      "fazeMember": "FaZe Adapt",
-      "rarity": "rare",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001014.svg",
-      "basePower": 45,
+      "name": "McDonald’s Impersonator",
+      "fazeMember": "FaZe Clan",
+      "rarity": "common",
+      "artUrl": "/art/7ba8f44a-e346-4e6c-a103-8b248fdcc5cb.png",
+      "basePower": 25,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B020",
+        "title": "McDonald’s Impersonator",
+        "rarity": "bronze",
+        "year": 2024,
+        "date": "2024-09",
+        "era": "rebirth",
+        "connection_tags": [
+          "subathon",
+          "pranks"
+        ],
+        "lore": "Creators stage a viral McDonald’s bit with a Kanye impersonator.",
+        "image": "B020_mcdonald-s-impersonator.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001015",
       "setId": "d0000000-0000-4000-8000-000000000002",
-      "name": "Banks / Creators 1",
-      "fazeMember": "FaZe Banks",
-      "rarity": "common",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001015.svg",
-      "basePower": 25,
+      "name": "ILLCAMS #1",
+      "fazeMember": "FaZe Clan",
+      "rarity": "legendary",
+      "artUrl": "/art/77e777dd-39d9-4b4e-aeaf-caf31b66b842.png",
+      "basePower": 85,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "L002",
+        "title": "ILLCAMS #1",
+        "rarity": "legendary",
+        "year": 2010,
+        "date": "2010-06-02",
+        "era": "trickshot",
+        "connection_tags": [
+          "illcams",
+          "killcams"
+        ],
+        "lore": "The original ILLCAMS episode launches the classic series.",
+        "image": "L002_illcams-1.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001016",
       "setId": "d0000000-0000-4000-8000-000000000002",
-      "name": "Apex / Creators 2",
-      "fazeMember": "FaZe Apex",
-      "rarity": "rare",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001016.svg",
-      "basePower": 45,
+      "name": "Subathon Finale",
+      "fazeMember": "FaZe Clan",
+      "rarity": "legendary",
+      "artUrl": "/art/df352cb7-8faa-47d6-9b70-656def664cb6.png",
+      "basePower": 85,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "L005",
+        "title": "Subathon Finale",
+        "rarity": "legendary",
+        "year": 2024,
+        "date": "2024-09-30",
+        "era": "rebirth",
+        "connection_tags": [
+          "subathon",
+          "creator era"
+        ],
+        "lore": "The September 2024 month-long subathon closes.",
+        "image": "L005_subathon-finale.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001017",
       "setId": "d0000000-0000-4000-8000-000000000002",
-      "name": "Rain / Creators 3",
-      "fazeMember": "FaZe Rain",
+      "name": "IEM Cologne 2022",
+      "fazeMember": "FaZe Clan",
       "rarity": "epic",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001017.svg",
+      "artUrl": "/art/e2393206-e794-4d70-bcb3-fcee9577138c.png",
       "basePower": 65,
       "maxSupply": 100,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "E003",
+        "title": "IEM Cologne 2022",
+        "rarity": "elite",
+        "year": 2022,
+        "date": "2022-07-17",
+        "era": "esports",
+        "connection_tags": [
+          "cs:go",
+          "trophies"
+        ],
+        "lore": "FaZe defeats NAVI in the IEM Cologne final.",
+        "image": "E003_iem-cologne-2022.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001018",
       "setId": "d0000000-0000-4000-8000-000000000002",
-      "name": "Adapt / Creators 4",
-      "fazeMember": "FaZe Adapt",
-      "rarity": "legendary",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001018.svg",
-      "basePower": 85,
+      "name": "ILLCAMS #30",
+      "fazeMember": "FaZe Clan",
+      "rarity": "rare",
+      "artUrl": "/art/23286f7f-f1fc-4537-84ba-fd0f58786cb6.png",
+      "basePower": 45,
       "maxSupply": 25,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "S001",
+        "title": "ILLCAMS #30",
+        "rarity": "silver",
+        "year": 2011,
+        "date": "2011-07-04",
+        "era": "trickshot",
+        "connection_tags": [
+          "illcams",
+          "killcams"
+        ],
+        "lore": "An early entry in the long-running FaZe montage series.",
+        "image": "S001_illcams-30.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001019",
       "setId": "d0000000-0000-4000-8000-000000000002",
-      "name": "Rug / Creators 5",
-      "fazeMember": "FaZe Rug",
-      "rarity": "common",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001019.svg",
-      "basePower": 25,
+      "name": "ECS Season 4",
+      "fazeMember": "FaZe Clan",
+      "rarity": "rare",
+      "artUrl": "/art/5776cd1d-8144-4102-abad-4bea125e9536.png",
+      "basePower": 45,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "S004",
+        "title": "ECS Season 4",
+        "rarity": "silver",
+        "year": 2017,
+        "date": "2017-12-17",
+        "era": "esports",
+        "connection_tags": [
+          "cs:go",
+          "trophies"
+        ],
+        "lore": "FaZe wins the ECS Season 4 Finals.",
+        "image": "S004_ecs-season-4.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001020",
       "setId": "d0000000-0000-4000-8000-000000000002",
-      "name": "Banks / Creators 6",
-      "fazeMember": "FaZe Banks",
+      "name": "Juice WRLD Collab",
+      "fazeMember": "FaZe Clan",
       "rarity": "rare",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001020.svg",
+      "artUrl": "/art/ebd1aeb8-4fdf-47d8-bc61-5d5868bed40b.png",
       "basePower": 45,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "S007",
+        "title": "Juice WRLD Collab",
+        "rarity": "silver",
+        "year": 2020,
+        "date": "2020",
+        "era": "culture",
+        "connection_tags": [
+          "music",
+          "merch"
+        ],
+        "lore": "The FaZe and Juice WRLD collaboration launches.",
+        "image": "S007_juice-wrld-collab.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001021",
       "setId": "d0000000-0000-4000-8000-000000000002",
-      "name": "Apex / Creators 7",
-      "fazeMember": "FaZe Apex",
-      "rarity": "epic",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001021.svg",
-      "basePower": 65,
+      "name": "Pro League S17",
+      "fazeMember": "FaZe Clan",
+      "rarity": "rare",
+      "artUrl": "/art/620ec3d3-0b3b-4782-abe3-3ae15f55d175.png",
+      "basePower": 45,
       "maxSupply": 100,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "S010",
+        "title": "Pro League S17",
+        "rarity": "silver",
+        "year": 2023,
+        "date": "2023-03-26",
+        "era": "esports",
+        "connection_tags": [
+          "cs:go",
+          "trophies"
+        ],
+        "lore": "FaZe wins ESL Pro League Season 17.",
+        "image": "S010_pro-league-s17.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001022",
       "setId": "d0000000-0000-4000-8000-000000000002",
-      "name": "Rain / Creators 8",
-      "fazeMember": "FaZe Rain",
-      "rarity": "legendary",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001022.svg",
-      "basePower": 85,
+      "name": "CoD Competitive",
+      "fazeMember": "FaZe Clan",
+      "rarity": "common",
+      "artUrl": "/art/c68506d3-8ca3-49ed-baff-d223be971e6f.png",
+      "basePower": 25,
       "maxSupply": 25,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B003",
+        "title": "CoD Competitive",
+        "rarity": "bronze",
+        "year": 2011,
+        "date": "2011",
+        "era": "esports",
+        "connection_tags": [
+          "call of duty",
+          "debut"
+        ],
+        "lore": "FaZe moves into competitive Call of Duty.",
+        "image": "B003_cod-competitive.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001023",
       "setId": "d0000000-0000-4000-8000-000000000002",
-      "name": "Adapt / Creators 9",
-      "fazeMember": "FaZe Adapt",
+      "name": "Funniest Moments #2",
+      "fazeMember": "FaZe Clan",
       "rarity": "common",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001023.svg",
+      "artUrl": "/art/d579a5ee-7aa7-4b61-86e8-e774067f1bb5.png",
       "basePower": 25,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B006",
+        "title": "Funniest Moments #2",
+        "rarity": "bronze",
+        "year": 2015,
+        "date": "2015-06-06",
+        "era": "house",
+        "connection_tags": [
+          "comedy",
+          "compilations"
+        ],
+        "lore": "The second early FaZe funniest-moments compilation.",
+        "image": "B006_funniest-moments-2.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001024",
       "setId": "d0000000-0000-4000-8000-000000000002",
-      "name": "Rug / Creators 10",
-      "fazeMember": "FaZe Rug",
-      "rarity": "rare",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001024.svg",
-      "basePower": 45,
+      "name": "First 2017 Trickshot",
+      "fazeMember": "FaZe Clan",
+      "rarity": "common",
+      "artUrl": "/art/fe802fd0-654e-4e53-a1e3-102754a09331.png",
+      "basePower": 25,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B009",
+        "title": "First 2017 Trickshot",
+        "rarity": "bronze",
+        "year": 2017,
+        "date": "2017-04-18",
+        "era": "trickshot",
+        "connection_tags": [
+          "trickshot",
+          "nostalgia"
+        ],
+        "lore": "FaZe Rain posts his first trickshot of 2017.",
+        "image": "B009_first-2017-trickshot.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001025",
       "setId": "d0000000-0000-4000-8000-000000000002",
-      "name": "Banks / Creators 11",
-      "fazeMember": "FaZe Banks",
-      "rarity": "epic",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001025.svg",
-      "basePower": 65,
+      "name": "NICKMERCS Joins",
+      "fazeMember": "FaZe Clan",
+      "rarity": "common",
+      "artUrl": "/art/9cc875c1-1131-42a2-9797-e36152b2edbf.png",
+      "basePower": 25,
       "maxSupply": 100,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B012",
+        "title": "NICKMERCS Joins",
+        "rarity": "bronze",
+        "year": 2019,
+        "date": "2019",
+        "era": "creators",
+        "connection_tags": [
+          "recruitment",
+          "warzone"
+        ],
+        "lore": "NICKMERCS joins FaZe as a content creator.",
+        "image": "B012_nickmercs-joins.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001026",
       "setId": "d0000000-0000-4000-8000-000000000002",
-      "name": "Apex / Creators 12",
-      "fazeMember": "FaZe Apex",
-      "rarity": "legendary",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001026.svg",
-      "basePower": 85,
+      "name": "FaZe Goes Public",
+      "fazeMember": "FaZe Clan",
+      "rarity": "common",
+      "artUrl": "/art/39351afe-f3e4-4d99-aae7-0927c9e62026.png",
+      "basePower": 25,
       "maxSupply": 25,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B015",
+        "title": "FaZe Goes Public",
+        "rarity": "bronze",
+        "year": 2022,
+        "date": "2022-07-20",
+        "era": "culture",
+        "connection_tags": [
+          "brand",
+          "nasdaq"
+        ],
+        "lore": "FaZe Holdings begins trading publicly on Nasdaq.",
+        "image": "B015_faze-goes-public.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001027",
       "setId": "d0000000-0000-4000-8000-000000000002",
-      "name": "Rain / Creators 13",
-      "fazeMember": "FaZe Rain",
+      "name": "JasonTheWeen Joins",
+      "fazeMember": "FaZe Clan",
       "rarity": "common",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001027.svg",
+      "artUrl": "/art/a0fbb1ce-5eeb-4b73-957d-0a6575033585.png",
       "basePower": 25,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B018",
+        "title": "JasonTheWeen Joins",
+        "rarity": "bronze",
+        "year": 2024,
+        "date": "2024-04-30",
+        "era": "rebirth",
+        "connection_tags": [
+          "reboot",
+          "creators"
+        ],
+        "lore": "JasonTheWeen joins the rebuilt FaZe roster.",
+        "image": "B018_jasontheween-joins.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001028",
       "setId": "d0000000-0000-4000-8000-000000000003",
-      "name": "Banks / Esports Moments 1",
-      "fazeMember": "FaZe Banks",
-      "rarity": "common",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001028.svg",
-      "basePower": 25,
+      "name": "The FaZe House",
+      "fazeMember": "FaZe Clan",
+      "rarity": "legendary",
+      "artUrl": "/art/f8322722-79ca-46b3-82cf-067f73cfa2e7.png",
+      "basePower": 85,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "L003",
+        "title": "The FaZe House",
+        "rarity": "legendary",
+        "year": 2014,
+        "date": "2014",
+        "era": "house",
+        "connection_tags": [
+          "creator house",
+          "culture"
+        ],
+        "lore": "The early FaZe creator-house model takes shape.",
+        "image": "L003_the-faze-house.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001029",
       "setId": "d0000000-0000-4000-8000-000000000003",
-      "name": "Apex / Esports Moments 2",
-      "fazeMember": "FaZe Apex",
-      "rarity": "rare",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001029.svg",
-      "basePower": 45,
+      "name": "One Million Subs",
+      "fazeMember": "FaZe Clan",
+      "rarity": "epic",
+      "artUrl": "/art/1fcf9358-d634-40e1-92de-51dadbd47538.png",
+      "basePower": 65,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "E001",
+        "title": "One Million Subs",
+        "rarity": "elite",
+        "year": 2012,
+        "date": "2012",
+        "era": "origins",
+        "connection_tags": [
+          "youtube",
+          "milestones"
+        ],
+        "lore": "FaZe reaches one million YouTube subscribers.",
+        "image": "E001_one-million-subs.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001030",
       "setId": "d0000000-0000-4000-8000-000000000003",
-      "name": "Rain / Esports Moments 3",
-      "fazeMember": "FaZe Rain",
+      "name": "Intel Grand Slam",
+      "fazeMember": "FaZe Clan",
       "rarity": "epic",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001030.svg",
+      "artUrl": "/art/9684fd88-2fc5-4218-a07c-4566b5aa1c68.png",
       "basePower": 65,
       "maxSupply": 100,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "E004",
+        "title": "Intel Grand Slam",
+        "rarity": "elite",
+        "year": 2023,
+        "date": "2023-03-26",
+        "era": "esports",
+        "connection_tags": [
+          "cs:go",
+          "trophies"
+        ],
+        "lore": "FaZe completes Intel Grand Slam Season 4.",
+        "image": "E004_intel-grand-slam.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001031",
       "setId": "d0000000-0000-4000-8000-000000000003",
-      "name": "Adapt / Esports Moments 4",
-      "fazeMember": "FaZe Adapt",
-      "rarity": "legendary",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001031.svg",
-      "basePower": 85,
+      "name": "ILLCAMS #38",
+      "fazeMember": "FaZe Clan",
+      "rarity": "rare",
+      "artUrl": "/art/1851cb0e-0551-4e36-b9c4-af6b0b9cb451.png",
+      "basePower": 45,
       "maxSupply": 25,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "S002",
+        "title": "ILLCAMS #38",
+        "rarity": "silver",
+        "year": 2012,
+        "date": "2012",
+        "era": "trickshot",
+        "connection_tags": [
+          "illcams",
+          "killcams"
+        ],
+        "lore": "The classic trickshot series continues with episode 38.",
+        "image": "S002_illcams-38.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001032",
       "setId": "d0000000-0000-4000-8000-000000000003",
-      "name": "Rug / Esports Moments 5",
-      "fazeMember": "FaZe Rug",
-      "rarity": "common",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001032.svg",
-      "basePower": 25,
+      "name": "FaZe x Man City",
+      "fazeMember": "FaZe Clan",
+      "rarity": "rare",
+      "artUrl": "/art/096ba19c-78ee-4132-bb4d-5ebc69661241.png",
+      "basePower": 45,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "S005",
+        "title": "FaZe x Man City",
+        "rarity": "silver",
+        "year": 2019,
+        "date": "2019",
+        "era": "culture",
+        "connection_tags": [
+          "partnership",
+          "fashion"
+        ],
+        "lore": "FaZe announces a creative partnership with Manchester City.",
+        "image": "S005_faze-x-man-city.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001033",
       "setId": "d0000000-0000-4000-8000-000000000003",
-      "name": "Banks / Esports Moments 6",
-      "fazeMember": "FaZe Banks",
+      "name": "IEM Katowice 2022",
+      "fazeMember": "FaZe Clan",
       "rarity": "rare",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001033.svg",
+      "artUrl": "/art/ac0e50da-2c98-4981-a053-9bb7b27fa867.png",
       "basePower": 45,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "S008",
+        "title": "IEM Katowice 2022",
+        "rarity": "silver",
+        "year": 2022,
+        "date": "2022-02-27",
+        "era": "esports",
+        "connection_tags": [
+          "cs:go",
+          "trophies"
+        ],
+        "lore": "FaZe defeats G2 to win IEM Katowice.",
+        "image": "S008_iem-katowice-2022.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001034",
       "setId": "d0000000-0000-4000-8000-000000000003",
-      "name": "Apex / Esports Moments 7",
-      "fazeMember": "FaZe Apex",
-      "rarity": "epic",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001034.svg",
-      "basePower": 65,
+      "name": "FaZe Sniping Intro",
+      "fazeMember": "FaZe Clan",
+      "rarity": "common",
+      "artUrl": "/art/1576ec1c-f5e7-488c-a8a1-ca676d843b08.png",
+      "basePower": 25,
       "maxSupply": 100,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B001",
+        "title": "FaZe Sniping Intro",
+        "rarity": "bronze",
+        "year": 2010,
+        "date": "2010-05-30",
+        "era": "origins",
+        "connection_tags": [
+          "origins",
+          "montage"
+        ],
+        "lore": "The first FaZe channel video introduces the trickshotters.",
+        "image": "B001_faze-sniping-intro.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001035",
       "setId": "d0000000-0000-4000-8000-000000000003",
-      "name": "Rain / Esports Moments 8",
-      "fazeMember": "FaZe Rain",
-      "rarity": "legendary",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001035.svg",
-      "basePower": 85,
+      "name": "G FUEL Deal",
+      "fazeMember": "FaZe Clan",
+      "rarity": "common",
+      "artUrl": "/art/47d1c05d-c69e-4dc3-bde7-cd7fc29d8603.png",
+      "basePower": 25,
       "maxSupply": 25,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B004",
+        "title": "G FUEL Deal",
+        "rarity": "bronze",
+        "year": 2012,
+        "date": "2012",
+        "era": "culture",
+        "connection_tags": [
+          "partner",
+          "sponsorship"
+        ],
+        "lore": "An early FaZe partnership with G FUEL.",
+        "image": "B004_g-fuel-deal.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001036",
       "setId": "d0000000-0000-4000-8000-000000000003",
-      "name": "Adapt / Esports Moments 9",
-      "fazeMember": "FaZe Adapt",
+      "name": "How We Chose Names",
+      "fazeMember": "FaZe Clan",
       "rarity": "common",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001036.svg",
+      "artUrl": "/art/72166ef2-6a24-43d2-9a1e-4b84e1980721.png",
       "basePower": 25,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B007",
+        "title": "How We Chose Names",
+        "rarity": "bronze",
+        "year": 2017,
+        "date": "2017-05-04",
+        "era": "house",
+        "connection_tags": [
+          "faze house",
+          "vlogs"
+        ],
+        "lore": "A FaZe House video about how members chose their names.",
+        "image": "B007_how-we-chose-names.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001037",
       "setId": "d0000000-0000-4000-8000-000000000003",
-      "name": "Rug / Esports Moments 10",
-      "fazeMember": "FaZe Rug",
-      "rarity": "rare",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001037.svg",
-      "basePower": 45,
+      "name": "Mansion Hide & Seek",
+      "fazeMember": "FaZe Clan",
+      "rarity": "common",
+      "artUrl": "/art/0cc82cdd-8bba-426e-ba4b-b207dcef1cda.png",
+      "basePower": 25,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B010",
+        "title": "Mansion Hide & Seek",
+        "rarity": "bronze",
+        "year": 2017,
+        "date": "2017-08-05",
+        "era": "house",
+        "connection_tags": [
+          "adapt",
+          "mansion"
+        ],
+        "lore": "FaZe Adapt posts his mansion hide-and-seek challenge.",
+        "image": "B010_mansion-hide-seek.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001038",
       "setId": "d0000000-0000-4000-8000-000000000003",
-      "name": "Banks / Esports Moments 11",
-      "fazeMember": "FaZe Banks",
-      "rarity": "epic",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001038.svg",
-      "basePower": 65,
+      "name": "Swagg Joins",
+      "fazeMember": "FaZe Clan",
+      "rarity": "common",
+      "artUrl": "/art/10070a2c-6e7a-4ed7-b8ef-e0477f139561.png",
+      "basePower": 25,
       "maxSupply": 100,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B013",
+        "title": "Swagg Joins",
+        "rarity": "bronze",
+        "year": 2020,
+        "date": "2020",
+        "era": "creators",
+        "connection_tags": [
+          "recruitment",
+          "warzone"
+        ],
+        "lore": "FaZe welcomes Warzone creator Swagg.",
+        "image": "B013_swagg-joins.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001039",
       "setId": "d0000000-0000-4000-8000-000000000003",
-      "name": "Apex / Esports Moments 12",
-      "fazeMember": "FaZe Apex",
-      "rarity": "legendary",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001039.svg",
-      "basePower": 85,
+      "name": "PlaqueBoyMax Joins",
+      "fazeMember": "FaZe Clan",
+      "rarity": "common",
+      "artUrl": "/art/b5c67f21-0bb1-4f55-bb27-2869a5d418e3.png",
+      "basePower": 25,
       "maxSupply": 25,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B016",
+        "title": "PlaqueBoyMax Joins",
+        "rarity": "bronze",
+        "year": 2024,
+        "date": "2024-04-28",
+        "era": "rebirth",
+        "connection_tags": [
+          "reboot",
+          "creators"
+        ],
+        "lore": "PlaqueBoyMax becomes an early signing of the FaZe reboot.",
+        "image": "B016_plaqueboymax-joins.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     },
     {
       "id": "d0000000-0000-4000-8000-000000001040",
       "setId": "d0000000-0000-4000-8000-000000000003",
-      "name": "Rain / Esports Moments 13",
-      "fazeMember": "FaZe Rain",
+      "name": "White Room Challenge",
+      "fazeMember": "FaZe Clan",
       "rarity": "common",
-      "artUrl": "/demo-art/d0000000-0000-4000-8000-000000001040.svg",
+      "artUrl": "/art/a7e23820-48ab-4383-8b3f-f77e6af7fcce.png",
       "basePower": 25,
       "maxSupply": null,
-      "demo": true
+      "demo": true,
+      "sourceCard": {
+        "id": "B019",
+        "title": "White Room Challenge",
+        "rarity": "bronze",
+        "year": 2024,
+        "date": "2024-09",
+        "era": "rebirth",
+        "connection_tags": [
+          "subathon",
+          "challenges"
+        ],
+        "lore": "The subathon includes a white-room endurance challenge.",
+        "image": "B019_white-room-challenge.png",
+        "source_visual": "AI-generated concept illustration (not an archival still)",
+        "edition": "DEMO-001",
+        "pullable": true
+      }
     }
   ],
   "packs": [

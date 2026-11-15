@@ -33,7 +33,7 @@ export async function marketplaceRoutes(app: FastifyInstance) {
     app.post('/marketplace/listings', async (req, reply) => {
         const u = requireUser(req), b = z.object({ instanceId: z.string().uuid() }).parse(req.body);
         const listing = await tx(async (c) => { const r = await c.query('SELECT * FROM card_instances WHERE id=$1 FOR UPDATE', [b.instanceId]); const i = r.rows[0]; if (!i || i.owner_id !== u.sub)
-            fail('NOT_FOUND', 'Card not found in your collection'); if (i.locked_by_trade_id || i.market_listing_id || i.market_offer_id)
+            fail('NOT_FOUND', 'Card not found in your collection'); if (i.locked_by_trade_id || i.market_listing_id || i.market_offer_id || i.locked_by_game_match_id)
             fail('CARD_LOCKED', 'Card already committed to a trade'); const l = (await c.query('INSERT INTO market_listings(owner_id,instance_id) VALUES($1,$2) RETURNING *', [u.sub, i.id])).rows[0]; await c.query('UPDATE card_instances SET market_listing_id=$1 WHERE id=$2', [l.id, i.id]); return l; });
         return reply.code(201).send({ listing });
     });
@@ -52,7 +52,7 @@ export async function marketplaceRoutes(app: FastifyInstance) {
         const offer = await tx(async (c) => { const l = (await c.query('SELECT * FROM market_listings WHERE id=$1 FOR UPDATE', [id])).rows[0]; if (!l || l.status !== 'open')
             fail('CONFLICT', 'Listing unavailable'); if (l.owner_id === u.sub)
             fail('VALIDATION', 'Cannot offer on your own listing'); const cards = await c.query('SELECT * FROM card_instances WHERE id=ANY($1::uuid[]) ORDER BY id FOR UPDATE', [b.instanceIds]); if (cards.rowCount !== b.instanceIds.length || cards.rows.some(i => i.owner_id !== u.sub))
-            fail('NOT_FOUND', 'Offered cards must belong to you'); if (cards.rows.some(i => i.locked_by_trade_id || i.market_listing_id || i.market_offer_id))
+            fail('NOT_FOUND', 'Offered cards must belong to you'); if (cards.rows.some(i => i.locked_by_trade_id || i.market_listing_id || i.market_offer_id || i.locked_by_game_match_id))
             fail('CARD_LOCKED', 'An offered card is already committed'); const o = (await c.query('INSERT INTO market_offers(listing_id,bidder_id,offered_instance_ids) VALUES($1,$2,$3) RETURNING *', [id, u.sub, b.instanceIds])).rows[0]; await c.query('UPDATE card_instances SET market_offer_id=$1 WHERE id=ANY($2::uuid[])', [o.id, b.instanceIds]); await notify(c, l.owner_id, 'offer_received', 'You received an exchange offer on your card.', o.id); return o; });
         return reply.code(201).send({ offer });
     });
@@ -81,11 +81,11 @@ export async function marketplaceRoutes(app: FastifyInstance) {
                     const all = [l.instance_id, ...offers.rows.filter(x => x.status === 'open').flatMap(x => x.offered_instance_ids)];
                     const rows = await c.query('SELECT * FROM card_instances WHERE id=ANY($1::uuid[]) ORDER BY id FOR UPDATE', [all]);
                     const listed = rows.rows.find(i => i.id === l.instance_id);
-                    if (!listed || listed.owner_id !== l.owner_id || listed.market_listing_id !== l.id || listed.locked_by_trade_id || listed.market_offer_id)
+                    if (!listed || listed.owner_id !== l.owner_id || listed.market_listing_id !== l.id || listed.locked_by_trade_id || listed.market_offer_id || listed.locked_by_game_match_id)
                         fail('CONFLICT', 'Listed card is unavailable');
                     for (const iid of o.offered_instance_ids) {
                         const i = rows.rows.find(i => i.id === iid);
-                        if (!i || i.owner_id !== o.bidder_id || i.market_offer_id !== o.id || i.locked_by_trade_id || i.market_listing_id)
+                        if (!i || i.owner_id !== o.bidder_id || i.market_offer_id !== o.id || i.locked_by_trade_id || i.market_listing_id || i.locked_by_game_match_id)
                             fail('CONFLICT', 'Offered cards unavailable');
                     }
                     await c.query('UPDATE card_instances SET owner_id=$1,market_listing_id=NULL,acquired_at=now() WHERE id=$2', [o.bidder_id, l.instance_id]);

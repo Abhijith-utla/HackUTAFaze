@@ -6,7 +6,7 @@ import { DecodeText, GlitchGhosts, GlitchOverlay, RARITY_RANK, glitchLevel, trac
 import './pack-fx.css';
 
 const colors = { common: '#a9bed1', rare: '#42baff', epic: '#be75ff', legendary: '#ffd270' };
-export default function PackOpening({ cards, onClose }: { cards: CardInstance[]; onClose: () => void }) {
+export default function PackOpening({ cards, onClose }: { cards: CardInstance[]; packName?: string; onClose: () => void }) {
   const [stage, setStage] = useState<'sealed' | 'opening' | 'cards' | 'summary'>('sealed');
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);

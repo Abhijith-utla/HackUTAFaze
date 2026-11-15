@@ -5,7 +5,7 @@ import { toCard } from './mappers.js';
 import { fail } from './errors.js';
 import { pickCard, rollRarity, type CardSlot } from './pulls.js';
 export async function loadInstances(db: pg.PoolClient | pg.Pool, ids: string[]): Promise<CardInstance[]> {
-    const r = await db.query(`SELECT ci.id AS ci_id, ci.serial, ci.locked_by_trade_id, ci.market_listing_id, ci.market_offer_id, ci.acquired_at, c.*
+    const r = await db.query(`SELECT ci.id AS ci_id, ci.serial, ci.locked_by_trade_id, ci.market_listing_id, ci.market_offer_id, ci.locked_by_game_match_id, ci.acquired_at, c.*
        FROM card_instances ci JOIN cards c ON c.id = ci.card_id WHERE ci.id = ANY($1::uuid[])`, [ids]);
     const byId = new Map(r.rows.map((row) => [row.ci_id, row]));
     return ids
@@ -15,7 +15,7 @@ export async function loadInstances(db: pg.PoolClient | pg.Pool, ids: string[]):
         id: row.ci_id,
         card: toCard(row),
         serial: row.serial,
-        locked: row.locked_by_trade_id !== null || row.market_listing_id !== null || row.market_offer_id !== null,
+        locked: row.locked_by_trade_id !== null || row.market_listing_id !== null || row.market_offer_id !== null || row.locked_by_game_match_id !== null,
         acquiredAt: new Date(row.acquired_at).toISOString(),
     }));
 }

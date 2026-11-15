@@ -63,3 +63,12 @@ Migration 005 adds purchases.pack_snapshot (jsonb quote/config/payer/idempotency
 |---|---|---|
 | `sponsors` | name (unique), category (energy_drink…other), notes, status (`active`\|`paused`), demo | Control Room |
 | `sponsor_activations` | sponsor_id, campaign_id (unique pair), fee_usd (demo), deliverables, status (`active`\|`ended`), ended_at | Control Room |
+## Clip Clash / 007
+
+`cards` gains clip and thumbnail UUID asset references, optional bounded clip interval, description/game/event, member/tag arrays, approval status (pending by default), and rights reference. Existing art-only cards stay valid and unplayable. `clip_clash_assets` stores immutable video/thumbnail bytes in PostgreSQL (Tiger compatible), never arbitrary user video URLs. Clips need an approved status, video asset, interval and rights reference before play.
+
+`clip_clash_prompts` contains validated nonnegative JSON weights; five seeded prompts use Clutch (clutch 5, precision 2, teamwork 1), Comeback (comeback 5, resilience 3, clutch 1), Reaction (reaction 5, surprise 3, celebration 2), Comedy (comedy 5, surprise 2, reaction 1), Collab (collab 5, teamwork 3, creators 1).
+
+`clip_clash_matches` persists mode, invite, state, scores' outcome, round, expiry and a private frozen five-prompt pool. `clip_clash_players` holds unique seats and users/CPU consistency. `clip_clash_cpu_pool` is explicitly configured by staff; no auto-generated clips. `clip_clash_lineups` holds five slots, unique moment per seat, human instance references and frozen clip metadata. `clip_clash_rounds` freezes prompts and prevents repeat prompts. `clip_clash_submissions` prevents duplicate seat/round and reused seat/card, stores resolved scores and explanations.
+
+`card_instances.locked_by_game_match_id` participates in the single-reservation check with trades/listings/offers. All reservation paths and collection/purchase representations include game locks. Match writes serialize under a match row lock; human lineup selection locks instance rows in UUID order. Terminal updates release inventory locks through a database trigger. Card ownership, serials and balances do not change.
